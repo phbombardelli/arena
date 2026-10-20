@@ -214,11 +214,6 @@ export function wingDepth(obstacle: Obstacle): number {
 export function labelOffset(
   obstacle: Obstacle,
   which: 'numberLabel' | 'heightLabel',
-  /**
-   * Espaço a mais ao lado, em metros: com bandeirolas, o número passa
-   * por fora delas em vez de ficar por cima (decisão 54).
-   */
-  extraSideM = 0,
 ): Vec2 {
   const label = obstacle[which];
   if (!label.auto) return label.offsetM;
@@ -226,7 +221,7 @@ export function labelOffset(
   const ext = obstacleExtent(obstacle);
   const folga = 1.3;
   return which === 'numberLabel'
-    ? { x: ext.halfWidthM + folga + extraSideM, y: 0 }
+    ? { x: ext.halfWidthM + folga, y: 0 }
     : { x: 0, y: ext.backM + folga };
 }
 

@@ -13,7 +13,7 @@ import { obstacleDistancesAlong, pathSampler } from './obstacleDistances';
  *
  * Os rótulos nasciam numa posição fixa em relação ao objeto — o número ao
  * lado, a altura atrás, "Partida" acima, a distância no meio do trecho — e
- * caíam em cima da linha do traçado, de outro obstáculo, das bandeirolas
+ * caíam em cima da linha do traçado, de outro obstáculo, 
  * ou de outro rótulo. Ler o croqui ficava difícil.
  *
  * Agora cada rótulo tem uma lista de posições candidatas, da preferida à
@@ -91,7 +91,7 @@ interface Box {
 type Segment = [Vec2, Vec2];
 
 /** Pesos: o que mais atrapalha a leitura custa mais. */
-const PESO = { obstaculo: 100, rotulo: 90, seta: 60, tracado: 55, bandeirola: 40, pista: 12 };
+const PESO = { obstaculo: 100, rotulo: 90, seta: 60, tracado: 55, pista: 12 };
 
 /** Caixa estimada de um texto: 0,6 do corpo por caractere, bold um pouco mais. */
 function textBox(centro: Vec2, texto: string, fontMm: number, k: number, bold: boolean): Box {
@@ -222,23 +222,6 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
     setas.push([t.pos, add(rotate(ate, t.rotation), t.pos)]);
   }
 
-  // Bandeirolas: um quadrado em cada ponta, além do paraflanco.
-  const bandeirolas: Box[] = [];
-  if (doc.flags) {
-    const lado = 2.2 / k;
-    const ponto = (pos: Vec2, rot: number, x: number) => {
-      const c = add(rotate({ x, y: 0 }, rot), pos);
-      return { min: { x: c.x - lado, y: c.y - lado }, max: { x: c.x + lado, y: c.y + lado } };
-    };
-    for (const o of obstaculos) {
-      const meia = obstacleExtent(o).halfWidthM + (o.wings.style === 'paraflanco' ? o.wings.widthM : 0) + 1.8 / k;
-      bandeirolas.push(ponto(o.pos, o.rotation, meia), ponto(o.pos, o.rotation, -meia));
-    }
-    for (const t of cruzadas) {
-      const meia = t.widthM / 2 + 1.8 / k;
-      bandeirolas.push(ponto(t.pos, t.rotation, meia), ponto(t.pos, t.rotation, -meia));
-    }
-  }
 
   const linhasTracado: Segment[] = [];
   for (const p of tracados) {
@@ -273,7 +256,6 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
     c += PESO.seta * Math.min(3, hitsAny(gruposSetas, b));
     c += PESO.tracado * Math.min(4, hitsAny(gruposTracado, b));
     c += PESO.pista * Math.min(2, hitsAny(gruposPista, b));
-    for (const f of bandeirolas) if (boxesTouch(f, b)) c += PESO.bandeirola;
     for (const r of colocados) if (boxesTouch(r, b)) c += PESO.rotulo;
     return c;
   };
@@ -354,12 +336,11 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
     const e = timingExtent(t);
     // Preferência: atrás da linha (de onde o cavalo vem), depois os lados
     // e as diagonais. O traçado cruza a linha bem no meio, então atrás e na
-    // frente quase sempre têm linha; os lados ficam além das bandeirolas.
+    // frente quase sempre têm linha; os lados ficam livres.
     const tras = t.arrow.reversed ? -90 : 90;
     const angulos = [tras, 0, 180, tras - 40, tras + 40, -tras - 40, -tras + 40, -tras];
-    const comBandeirola = doc.flags ? (2 + 1.7 + 0.9) / k : 0;
     const raio = (d: Vec2) =>
-      Math.abs(d.x) * (e.halfWidthM + comBandeirola + 0.6) + Math.abs(d.y) * (e.backM + 1.2);
+      Math.abs(d.x) * (e.halfWidthM + 0.6) + Math.abs(d.y) * (e.backM + 1.2);
     const b = escolhe(emVolta(t.pos, t.rotation, angulos, raio, t.label, LABEL_FONT_MM.timing, true), idx);
     resultado.timing.set(t.id, centro(b));
   });
@@ -369,9 +350,8 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
   obstaculos.forEach((o, idx) => {
     const ext = obstacleExtent(o);
     const lateral = ext.halfWidthM + (o.wings.style === 'paraflanco' ? o.wings.widthM : 0);
-    const comBandeirola = doc.flags ? (2 + 1.7 + 0.9) / k : 0;
     const raio = (d: Vec2) =>
-      Math.abs(d.x) * (lateral + comBandeirola + 0.5) +
+      Math.abs(d.x) * (lateral + 0.5) +
       Math.abs(d.y) * (Math.max(ext.backM, -ext.frontM) + 0.6);
 
     const numero = obstacleLabel(o);
@@ -397,7 +377,7 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
 
   // Escritas sobre a linha: o candidato muda só de lugar AO LONGO do trecho.
   // A própria linha não conta como choque — o texto mora nela —, mas as
-  // outras linhas, obstáculos, setas, bandeirolas e rótulos contam.
+  // outras linhas, obstáculos, setas e rótulos contam.
   for (const p of tracados) {
     if (p.kind !== 'path') continue;
     const marcadas = p.obstacleDistances ?? {};
@@ -435,7 +415,6 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
         // no número mesmo quando o eixo não toca a caixa.
         c += PESO.seta * Math.min(3, hitsAny(gruposSetas, inflate(box, 1.5 / k)));
         c += PESO.tracado * Math.min(4, hitsAny(outrasLinhas, b));
-        for (const fl of bandeirolas) if (boxesTouch(fl, b)) c += PESO.bandeirola;
         for (const r of colocados) if (boxesTouch(r, b)) c += PESO.rotulo;
         if (c < melhorCusto) {
           melhorCusto = c;

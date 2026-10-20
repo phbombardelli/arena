@@ -140,13 +140,6 @@ export function Toolbar() {
           d.page.scaleLabel.visible = !d.page.scaleLabel.visible;
         }),
     },
-    {
-      label: check(doc.flags, 'Bandeirolas'),
-      onSelect: () =>
-        apply(doc.flags ? 'Ocultar bandeirolas' : 'Mostrar bandeirolas', (d) => {
-          d.flags = !d.flags;
-        }),
-    },
     'separator',
     {
       label: 'Imagem de fundo…',

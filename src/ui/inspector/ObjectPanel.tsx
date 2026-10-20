@@ -123,6 +123,22 @@ export function ObjectPanel() {
                   ))}
                 </select>
               </label>
+              {(single.type === 'entrada' || single.type === 'saida') && (
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={single.showLabel ?? false}
+                    disabled={single.locked}
+                    onChange={(e) =>
+                      apply('Rótulo da seta', (d) => {
+                        const o = d.objects.find((x) => x.id === single.id);
+                        if (o?.kind === 'ornament') o.showLabel = e.target.checked;
+                      })
+                    }
+                  />
+                  Escrever {single.type === 'entrada' ? 'ENTRADA' : 'SAÍDA'}
+                </label>
+              )}
               <NumberField
                 label="Tamanho"
                 unit="m"

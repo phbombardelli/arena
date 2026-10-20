@@ -155,7 +155,17 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   6: v6ToV7,
   7: v7ToV8,
   8: v8ToV9,
+  9: v9ToV10,
 };
+
+/**
+ * 9 -> 10: as bandeirolas saíram (decisão 62) — a seta de salto já diz a
+ * direção. O campo some do arquivo.
+ */
+function v9ToV10(doc: RawDocument): RawDocument {
+  delete doc.flags;
+  return doc;
+}
 
 /**
  * 8 -> 9: o ímã saiu do editor (B-38). Os campos do ímã somem do arquivo;

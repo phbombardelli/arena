@@ -1290,3 +1290,24 @@ arquivos antigos abrem sem vínculo, sem migração.
 
 **Modelo de pista entra vinculado.** Aplicar um modelo traz pista,
 construções, árvores e imagem num grupo só, que se arrasta inteiro.
+
+## 62. Sem bandeirolas
+
+As bandeirolas (decisão 54) saíram do editor: a seta de salto já diz a
+direção, e o desenho delas não convenceu. Sai o item do menu Inserir, a
+opção da folha, o desenho nos obstáculos e nas cruzadas de tempo e a
+folga que o leiaute de rótulos reservava para elas. Esquema 10: a
+migração apaga `flags` do arquivo.
+
+## 63. Entrada e saída da pista
+
+Entrada e Saída viram itens próprios do menu Ornamento (B-13, B-21),
+usando a mesma seta que já existia. Ao colocar, a seta nasce
+perpendicular à cerca mais próxima: para dentro na entrada (verde), para
+fora na saída (vermelha). Por padrão escrevem "ENTRADA" ou "SAÍDA" do
+lado de fora da pista, em texto horizontal; o painel tem a opção de
+esconder. Depois de colocada, a seta gira e se move como qualquer
+ornamento.
+
+O editor de cabeçalho (B-07) foi descartado: o nome da prova vai com a
+ferramenta de texto, e logos com a inserção de imagem.

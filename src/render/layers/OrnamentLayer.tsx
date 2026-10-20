@@ -2,6 +2,8 @@ import type { Vec2 } from '@core/geometry/vec';
 import type { Ornament } from '@core/model/types';
 import { mmPerMeter } from '@core/scale/units';
 import { OrnamentShape } from '@render/symbols/ornamentShapes';
+import { GATE_LABEL } from '@core/library/ornaments';
+import { font, text } from '@render/style/tokens';
 
 interface Props {
   ornament: Ornament;
@@ -17,15 +19,47 @@ export function OrnamentLayer({ ornament, printScale, originMm, onPointerDown }:
   // A forma é desenhada em raio 1; escala leva ao tamanho real em papel.
   const s = (ornament.sizeM / 2) * k;
 
+  // Entrada e saída escrevem o papel do lado de FORA da pista: atrás da
+  // cauda na entrada (que aponta para dentro), além da ponta na saída. O
+  // texto não gira, para ler sempre na horizontal.
+  const rotulo =
+    (ornament.type === 'entrada' || ornament.type === 'saida') && ornament.showLabel
+      ? (() => {
+          const a = (ornament.rotation * Math.PI) / 180;
+          const lado = ornament.type === 'entrada' ? -1 : 1;
+          const d = s + 1.2 + text.small * 1.6;
+          return {
+            x: x + Math.cos(a) * d * lado,
+            y: y + Math.sin(a) * d * lado,
+            texto: GATE_LABEL[ornament.type],
+          };
+        })()
+      : null;
+
   return (
-    <g
-      data-object={ornament.id}
-      data-kind="ornament"
-      transform={`translate(${round(x)} ${round(y)}) rotate(${ornament.rotation}) scale(${round(s)})`}
-      onPointerDown={onPointerDown}
-      style={{ cursor: 'move' }}
-    >
-      <OrnamentShape type={ornament.type} color={ornament.color} />
+    <g data-object={ornament.id} data-kind="ornament">
+      <g
+        transform={`translate(${round(x)} ${round(y)}) rotate(${ornament.rotation}) scale(${round(s)})`}
+        onPointerDown={onPointerDown}
+        style={{ cursor: 'move' }}
+      >
+        <OrnamentShape type={ornament.type} color={ornament.color} />
+      </g>
+      {rotulo && (
+        <text
+          x={round(rotulo.x)}
+          y={round(rotulo.y)}
+          fontFamily={font.family}
+          fontSize={text.small}
+          fontWeight="bold"
+          fill={ornament.color}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          pointerEvents="none"
+        >
+          {rotulo.texto}
+        </text>
+      )}
     </g>
   );
 }

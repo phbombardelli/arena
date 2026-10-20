@@ -400,3 +400,11 @@ describe('8 -> 9: o ímã saiu (B-38)', () => {
     expect(grid.angleSnapDeg).toBe(15);
   });
 });
+
+describe('9 -> 10: as bandeirolas saíram (decisão 62)', () => {
+  it('apaga o campo do arquivo', () => {
+    const antigo = { flags: true, objects: [] } as Record<string, unknown>;
+    const migrado = applyMigrations(antigo, 9, 10) as Record<string, unknown>;
+    expect('flags' in migrado).toBe(false);
+  });
+});

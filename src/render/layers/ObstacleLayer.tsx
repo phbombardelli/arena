@@ -3,15 +3,12 @@ import { rotate, type Vec2 } from '@core/geometry/vec';
 import type { Obstacle } from '@core/model/types';
 import { mmPerMeter } from '@core/scale/units';
 import { JumpArrow, ObstacleShape } from '@render/symbols/obstacleShapes';
-import { FLAG_SPAN_MM, SideFlags } from '@render/symbols/flags';
 import { color, font, text } from '@render/style/tokens';
 
 interface Props {
   obstacle: Obstacle;
   printScale: number;
   originMm: Vec2;
-  /** Bandeirolas do documento ligadas. */
-  flags?: boolean;
   /**
    * Centros escolhidos pelo leiaute de rótulos, em metros (decisão 55).
    * Ausentes, vale a posição fixa de antes.
@@ -25,7 +22,6 @@ export function ObstacleLayer({
   obstacle,
   printScale,
   originMm,
-  flags = false,
   numberAt,
   heightsAt,
   onPointerDown,
@@ -41,7 +37,7 @@ export function ObstacleLayer({
   // fugindo do corpo e da seta. O TEXTO em si nunca gira.
   const numeroEm = numberAt
     ? { x: numberAt.x - obstacle.pos.x, y: numberAt.y - obstacle.pos.y }
-    : rotate(labelOffset(obstacle, 'numberLabel', flags ? FLAG_SPAN_MM / k : 0), obstacle.rotation);
+    : rotate(labelOffset(obstacle, 'numberLabel'), obstacle.rotation);
   const alturasEm = heightsAt
     ? { x: heightsAt.x - obstacle.pos.x, y: heightsAt.y - obstacle.pos.y }
     : rotate(labelOffset(obstacle, 'heightLabel'), obstacle.rotation);
@@ -57,12 +53,6 @@ export function ObstacleLayer({
         {onPointerDown && <ObstacleHitArea obstacle={obstacle} k={k} />}
         <ObstacleShape obstacle={obstacle} k={k} />
         {obstacle.arrow.visible && <JumpArrow obstacle={obstacle} k={k} />}
-        {flags && (
-          <SideFlags
-            halfMm={(obstacleExtent(obstacle).halfWidthM + (obstacle.wings.style === 'paraflanco' ? obstacle.wings.widthM : 0)) * k}
-            reversed={obstacle.arrow.reversed}
-          />
-        )}
       </g>
 
       {/*

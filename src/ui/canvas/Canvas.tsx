@@ -6,7 +6,7 @@ import { addObject } from '@core/commands/ops';
 import { toMillimeterPrecision } from '@core/geometry/snap';
 import { distance, type Vec2 } from '@core/geometry/vec';
 import { createObstacle, nextObstacleNumber } from '@core/library/obstacles';
-import { createOrnament } from '@core/library/ornaments';
+import { createOrnament, gateRotation } from '@core/library/ornaments';
 import { createTextLabel } from '@core/library/annotations';
 import { createPath, createPathNode, smoothedNodes } from '@core/model/path';
 import { createPolygonArena, createRectangleArena } from '@core/model/arena';
@@ -283,10 +283,15 @@ export function Canvas() {
       }
 
       if (tool === 'ornament') {
+        const tipo = useEditorStore.getState().ornamentType;
         const ornament = createOrnament(
-          useEditorStore.getState().ornamentType,
+          tipo,
           snapped(toModel(e)),
         );
+        // Entrada e saída já nascem perpendiculares à cerca mais próxima.
+        if (tipo === 'entrada' || tipo === 'saida') {
+          ornament.rotation = gateRotation(tipo, ornament.pos, measureFrame(useDocumentStore.getState().doc).outline);
+        }
         useDocumentStore.getState().apply('Inserir ornamento', (d) => addObject(d, ornament));
         setSelection([ornament.id]);
         if (!e.shiftKey) setTool('select');

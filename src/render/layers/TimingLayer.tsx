@@ -3,14 +3,11 @@ import type { Vec2 } from '@core/geometry/vec';
 import type { TimingLine } from '@core/model/types';
 import { mmPerMeter } from '@core/scale/units';
 import { color, dashPattern, font, stroke, text } from '@render/style/tokens';
-import { SideFlags } from '@render/symbols/flags';
 
 interface Props {
   line: TimingLine;
   printScale: number;
   originMm: Vec2;
-  /** Bandeirolas do documento ligadas. */
-  flags?: boolean;
   /** Centro do rótulo escolhido pelo leiaute (decisão 55), em metros. */
   labelAt?: Vec2;
   onPointerDown?: (e: React.PointerEvent) => void;
@@ -21,7 +18,7 @@ interface Props {
  * de passagem. Mesmo sistema local do obstáculo — X ao longo da linha,
  * passagem para −Y —, então a seta é perpendicular por construção.
  */
-export function TimingLayer({ line, printScale, originMm, flags = false, labelAt, onPointerDown }: Props) {
+export function TimingLayer({ line, printScale, originMm, labelAt, onPointerDown }: Props) {
   const k = mmPerMeter(printScale);
   const cx = originMm.x + line.pos.x * k;
   const cy = originMm.y + line.pos.y * k;
@@ -65,13 +62,6 @@ export function TimingLayer({ line, printScale, originMm, flags = false, labelAt
               strokeWidth={stroke.hairline}
             />
           ))}
-
-        {flags && (
-          <SideFlags
-            halfMm={halfW + (line.wings.style === 'paraflanco' ? larguraAsa / 2 : 0)}
-            reversed={line.arrow.reversed}
-          />
-        )}
 
         {line.arrow.visible && (
           <g data-part="arrow">

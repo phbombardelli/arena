@@ -49,6 +49,8 @@ export function OrnamentShape({ type, color }: { type: OrnamentType; color: stri
         </g>
       );
     case 'seta':
+    case 'entrada':
+    case 'saida':
       return (
         <g fill={color}>
           <rect x={-1} y={-0.12} width={1.5} height={0.24} />

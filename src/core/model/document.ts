@@ -80,7 +80,6 @@ export function createDocument(opts: { arena?: boolean } = {}): CourseDocument {
     layers: defaultLayers(),
     objects: opts.arena ? [arena] : [],
     assets: {},
-    flags: false,
   };
 }
 

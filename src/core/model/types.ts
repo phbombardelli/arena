@@ -374,7 +374,15 @@ export interface BackgroundImage extends BaseObject {
   } | null;
 }
 
-export type OrnamentType = 'arvore' | 'arbusto' | 'vaso' | 'cerca' | 'cronometro' | 'seta';
+export type OrnamentType =
+  | 'arvore'
+  | 'arbusto'
+  | 'vaso'
+  | 'cerca'
+  | 'cronometro'
+  | 'seta'
+  | 'entrada'
+  | 'saida';
 
 export interface Ornament extends BaseObject {
   kind: 'ornament';
@@ -383,6 +391,8 @@ export interface Ornament extends BaseObject {
   rotation: number;
   sizeM: Meters;
   color: string;
+  /** Entrada e saída: escreve "ENTRADA"/"SAÍDA" ao lado da seta. */
+  showLabel?: boolean;
 }
 
 /* ------------------------------------------------------------ documento */
@@ -438,11 +448,6 @@ export interface CourseDocument {
   layers: Layer[];
   objects: SceneObject[];
   assets: Record<string, Asset>;
-  /**
-   * Bandeirolas nos obstáculos e nas cruzadas de tempo: vermelha à
-   * direita, branca à esquerda, no sentido do salto (decisão 54).
-   */
-  flags: boolean;
 }
 
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;

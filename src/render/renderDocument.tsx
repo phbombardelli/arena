@@ -101,7 +101,6 @@ export function RenderDocument(opts: RenderOptions) {
                 obstacle={obj}
                 printScale={doc.page.printScale}
                 originMm={doc.originMm}
-                flags={doc.flags}
                 numberAt={rotulos.number.get(obj.id)}
                 heightsAt={rotulos.heights.get(obj.id)}
                 onPointerDown={onPointerDown}
@@ -126,7 +125,6 @@ export function RenderDocument(opts: RenderOptions) {
                 line={obj}
                 printScale={doc.page.printScale}
                 originMm={doc.originMm}
-                flags={doc.flags}
                 labelAt={rotulos.timing.get(obj.id)}
                 onPointerDown={onPointerDown}
               />
