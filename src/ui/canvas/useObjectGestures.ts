@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { angleOf, normalizeAngle, type Vec2 } from '@core/geometry/vec';
 import { snapAngle, toMillimeterPrecision } from '@core/geometry/snap';
 import { moveObjects, rotateObjects } from '@core/commands/ops';
+import { withLinked } from '@core/commands/groupOps';
 import { moveArenaVertex, resizeArenaByCorner } from '@core/commands/arenaOps';
 import { bendLeg, legHalfPoint, moveHandle, moveNode } from '@core/commands/pathOps';
 import {
@@ -165,14 +166,17 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
   const beginDrag = useCallback(
     (e: React.PointerEvent, id: ObjectId) => {
       const editor = useEditorStore.getState();
+      const { doc } = useDocumentStore.getState();
+      // Vinculados vêm juntos; Alt + clique pega só este (decisão 61).
+      const alvo = e.altKey ? [id] : withLinked(doc, [id]);
       const already = editor.selection.includes(id);
       const selection = e.shiftKey
         ? already
-          ? editor.selection.filter((x) => x !== id)
-          : [...editor.selection, id]
+          ? editor.selection.filter((x) => !alvo.includes(x))
+          : [...editor.selection, ...alvo.filter((x) => !editor.selection.includes(x))]
         : already
           ? editor.selection
-          : [id];
+          : alvo;
       editor.setSelection(selection);
       if (selection.length === 0) return;
 
@@ -317,7 +321,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
             .filter((o) => !o.locked && o.visible && objectScope(o) === modo)
             .filter((o) => boundsContains(region, boundsIn(doc, o)))
             .map((o) => o.id);
-      useEditorStore.getState().setSelection(hits);
+      useEditorStore.getState().setSelection(withLinked(doc, hits));
       return true;
     }
     return g !== null;

@@ -38,7 +38,9 @@ import {
   copySelection,
   deleteSelection,
   duplicateSelection,
+  linkSelection,
   pasteClipboard,
+  unlinkSelection,
   selectAll,
 } from '@ui/actions/editActions';
 import { exportCurrentPdf } from '@ui/actions/exportActions';
@@ -413,6 +415,10 @@ export function Canvas() {
       } else if (ctrl && key === 'v') {
         // Quem cola é o evento 'paste', logo abaixo: só ele enxerga uma
         // imagem vinda de fora (um print do mapa, por exemplo).
+      } else if (ctrl && key === 'g') {
+        e.preventDefault();
+        if (e.shiftKey) unlinkSelection();
+        else linkSelection();
       } else if (ctrl && key === 'd') {
         e.preventDefault();
         duplicateSelection();

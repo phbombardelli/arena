@@ -1,5 +1,6 @@
 import type { Vec2 } from '@core/geometry/vec';
-import { createPolygonArena, createRectangleArena } from '@core/model/arena';
+import { longestEdgeAngle } from '@core/geometry/hatch';
+import { arenaPoints, createPolygonArena, createRectangleArena } from '@core/model/arena';
 import type { Arena, StructureType } from '@core/model/types';
 
 /**
@@ -59,3 +60,18 @@ export const createRectangleStructure = (
 
 export const createPolygonStructure = (points: Vec2[], type: StructureType): Arena =>
   asStructure(createPolygonArena(points), type);
+
+/** Tamanho padrão da letra do rótulo de construção, em mm de papel. */
+export const STRUCTURE_LABEL_MM = 2.8;
+
+/**
+ * Giro do rótulo de uma construção (B-23): o que o desenhador escolheu, ou,
+ * no automático, o da aresta mais longa — nunca de cabeça para baixo.
+ */
+export function structureLabelAngle(arena: Arena): number {
+  const manual = arena.structure?.labelRotation;
+  if (manual !== undefined) return manual;
+  let giro = ((longestEdgeAngle(arenaPoints(arena)) % 180) + 180) % 180;
+  if (giro > 90) giro -= 180;
+  return giro;
+}

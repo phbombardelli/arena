@@ -54,6 +54,11 @@ interface BaseObject {
   scope: ObjectScope;
   /** Ordem dentro da camada. */
   z: number;
+  /**
+   * Vínculo (decisão 61): objetos com o mesmo `group` se selecionam e se
+   * movem juntos. Ausente = solto. Usado no cenário da pista.
+   */
+  group?: string;
 }
 
 /* ---------------------------------------------------------------- pista */
@@ -71,6 +76,10 @@ export interface StructureInfo {
   type: StructureType;
   /** Texto escrito no desenho: "Arquibancada", "Tribuna". Vazio = sem rótulo. */
   label: string;
+  /** Tamanho da letra do rótulo, em mm de papel. Ausente = padrão (2,8). */
+  labelSizeMm?: number;
+  /** Giro do rótulo, em graus. Ausente = acompanha a aresta mais longa. */
+  labelRotation?: number;
 }
 export type CornerStyle = 'square' | 'rounded' | 'chamfer';
 

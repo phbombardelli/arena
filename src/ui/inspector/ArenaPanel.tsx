@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import {
   convertArenaToPolygon,
   removeArenaVertex,
@@ -7,7 +8,7 @@ import {
   setPerimeterRuler,
   setStructure,
 } from '@core/commands/arenaOps';
-import { STRUCTURES, structureDef } from '@core/library/structures';
+import { STRUCTURES, STRUCTURE_LABEL_MM, structureDef, structureLabelAngle } from '@core/library/structures';
 import { arenaArea, arenaPerimeter } from '@core/model/arena';
 import type { Arena, CornerStyle, StructureType } from '@core/model/types';
 import { formatMeters } from '@core/scale/units';
@@ -68,6 +69,33 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
               }
             />
           </label>
+          {obra.label.trim() !== '' && (
+            <>
+              <div className="field-pair">
+                <NumberField
+                  label="Letra"
+                  unit="mm"
+                  value={obra.labelSizeMm ?? STRUCTURE_LABEL_MM}
+                  decimals={1}
+                  step={0.2}
+                  min={1.5}
+                  max={20}
+                  disabled={arena.locked}
+                  onCommit={(v) => apply('Letra do rótulo', (d) => setStructure(d, arena.id, { labelSizeMm: v }))}
+                />
+                <NumberField
+                  label="Giro"
+                  unit="°"
+                  value={structureLabelAngle(arena)}
+                  decimals={0}
+                  step={15}
+                  disabled={arena.locked}
+                  onCommit={(v) => apply('Giro do rótulo', (d) => setStructure(d, arena.id, { labelRotation: v }))}
+                />
+              </div>
+              <RotuloGiro arena={arena} />
+            </>
+          )}
         </>
       )}
       {arena.shape === 'rectangle' ? (
@@ -287,3 +315,53 @@ const SIDE_LABEL = {
   right: 'Dir.',
   bottom: 'Baixo',
 } as const;
+
+/**
+ * Barra de giro do rótulo da construção e a volta ao automático (que
+ * acompanha a aresta mais longa).
+ */
+function RotuloGiro({ arena }: { arena: Arena }) {
+  const { apply } = useDocumentStore();
+  const arrasto = useRef(0);
+  const manual = arena.structure?.labelRotation !== undefined;
+  const graus = Math.round(structureLabelAngle(arena));
+  return (
+    <div className="check-row">
+      <input
+        type="range"
+        className="rotation-slider"
+        aria-label="Girar o rótulo"
+        min={-90}
+        max={90}
+        step={1}
+        value={graus}
+        disabled={arena.locked}
+        onPointerDown={() => {
+          arrasto.current += 1;
+        }}
+        onChange={(e) =>
+          apply(
+            'Giro do rótulo',
+            (d) => setStructure(d, arena.id, { labelRotation: Number(e.target.value) }),
+            `giro-rotulo-${arena.id}-${arrasto.current}`,
+          )
+        }
+      />
+      {manual && (
+        <button
+          className="mini neutral"
+          title="Volta a acompanhar a aresta mais longa"
+          disabled={arena.locked}
+          onClick={() =>
+            apply('Giro automático do rótulo', (d) => {
+              const a = d.objects.find((o) => o.id === arena.id);
+              if (a?.kind === 'arena' && a.structure) delete a.structure.labelRotation;
+            })
+          }
+        >
+          auto
+        </button>
+      )}
+    </div>
+  );
+}

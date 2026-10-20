@@ -77,12 +77,18 @@ export function duplicateObjects(
 ): ObjectId[] {
   const originals = doc.objects.filter((o) => ids.includes(o.id));
   const idMap = new Map<ObjectId, ObjectId>();
+  // As cópias ficam vinculadas entre si, não aos originais.
+  const grupos = new Map<string, string>();
   const copies: SceneObject[] = originals.map((o) => {
     const copy = deepClone(o) as SceneObject;
     copy.id = newId(o.kind.slice(0, 3));
     copy.z = 0;
     // A cópia é do desenhador: o assistente não a substitui depois.
     if (copy.kind === 'path') delete copy.assistant;
+    if (copy.group) {
+      if (!grupos.has(copy.group)) grupos.set(copy.group, newId('grp'));
+      copy.group = grupos.get(copy.group)!;
+    }
     idMap.set(o.id, copy.id);
     return copy;
   });

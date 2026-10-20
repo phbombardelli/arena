@@ -87,10 +87,15 @@ export function applyTemplate(doc: CourseDocument, template: ArenaTemplate): voi
     doc.assets[novo] = deepClone(asset);
   }
 
+  // O cenário de um modelo entra VINCULADO: pista, construções, árvores e
+  // imagem se movem juntos até alguém desvincular (decisão 61).
+  const grupo = template.objects.length > 1 ? newId('grp') : undefined;
   for (const original of template.objects) {
     const copia = deepClone(original);
     copia.id = newId(copia.kind.slice(0, 3));
     copia.scope = 'pista';
+    if (grupo) copia.group = grupo;
+    else delete copia.group;
     if (copia.kind === 'image') {
       copia.assetId = mapaAssets.get(copia.assetId) ?? copia.assetId;
     }

@@ -3,6 +3,8 @@ import { setLocked, setObjectPosition, setObjectRotation, deleteObjects } from '
 import { ORNAMENTS } from '@core/library/ornaments';
 import { getPosition, getRotation } from '@core/model/transform';
 import { measureFrame } from '@core/model/measureFrame';
+import { hasLinked } from '@core/commands/groupOps';
+import { linkSelection, unlinkSelection } from '@ui/actions/editActions';
 import type { Obstacle, OrnamentType, SceneObject } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
@@ -45,6 +47,7 @@ export function ObjectPanel() {
   const ehCombinacao =
     !single && combinacao.length === objs.length && combinacao.length >= 2 && combinacao.length <= 3;
   const todosTravados = objs.every((o) => o.locked);
+  const vinculoUnico = objs.length > 1 && objs[0]!.group !== undefined && objs.every((o) => o.group === objs[0]!.group);
   // X e Y contam do canto superior esquerdo da pista, como as réguas.
   const canto = measureFrame(doc).originM;
 
@@ -58,6 +61,8 @@ export function ObjectPanel() {
             ? single.kind === 'arena' && single.structure
               ? 'Construção'
               : KIND_LABEL[single.kind]
+            : vinculoUnico
+            ? `Cenário vinculado · ${objs.length}`
             : `${objs.length} objetos selecionados`}
         </h3>
         {/* Frente e Trás ficam no menu Editar; aqui só o que se usa sempre. */}
@@ -85,6 +90,8 @@ export function ObjectPanel() {
           🗑
         </button>
       </div>
+
+      <LinkRow ids={selection} />
 
       {single && (
         <>
@@ -238,5 +245,33 @@ function RotationSlider({ id, value, disabled }: { id: string; value: number; di
         )
       }
     />
+  );
+}
+
+/**
+ * Vincular e desvincular (decisão 61). Aparece com dois ou mais objetos
+ * selecionados, ou com algum já vinculado.
+ */
+function LinkRow({ ids }: { ids: string[] }) {
+  const doc = useDocumentStore((st) => st.doc);
+  const vinculado = hasLinked(doc, ids);
+  if (ids.length < 2 && !vinculado) return null;
+  return (
+    <div className="link-row">
+      {vinculado ? (
+        <>
+          <span className="note dim-always" title="Alt + clique pega um elemento só, para editar">
+            🔗 Movem-se juntos
+          </span>
+          <button className="mini neutral" onClick={unlinkSelection} title="Ctrl+Shift+G">
+            Desvincular
+          </button>
+        </>
+      ) : (
+        <button className="mini neutral" onClick={linkSelection} title="Ctrl+G">
+          🔗 Vincular
+        </button>
+      )}
+    </div>
   );
 }

@@ -12,9 +12,11 @@ import {
   copySelection,
   deleteSelection,
   duplicateSelection,
+  linkSelection,
   pasteClipboard,
   selectAll,
   sendSelectionToBack,
+  unlinkSelection,
 } from '@ui/actions/editActions';
 import { actualSize, fitPage, toggleGrid, zoomBy } from '@ui/actions/viewActions';
 import { insertHeightTable, insertInfoBox } from '@ui/actions/annotationActions';
@@ -22,6 +24,7 @@ import { insertTimingLine } from '@ui/actions/timingActions';
 import { importBackgroundImage, pasteImageFromSystemClipboard } from '@ui/actions/imageActions';
 import { insertLogo } from '@ui/actions/logoActions';
 import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
+import { hasLinked } from '@core/commands/groupOps';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { Popover } from '@ui/common/Popover';
@@ -110,6 +113,14 @@ export function Toolbar() {
     { label: 'Selecionar tudo', shortcut: 'Ctrl+A', onSelect: selectAll },
     { label: 'Trazer para frente', disabled: nada, onSelect: bringSelectionToFront },
     { label: 'Enviar para trás', disabled: nada, onSelect: sendSelectionToBack },
+    'separator',
+    { label: 'Vincular', shortcut: 'Ctrl+G', disabled: selection.length < 2, onSelect: linkSelection },
+    {
+      label: 'Desvincular',
+      shortcut: 'Ctrl+Shift+G',
+      disabled: !hasLinked(doc, selection),
+      onSelect: unlinkSelection,
+    },
   ];
 
   const inserir: MenuEntry[] = [

@@ -5,6 +5,7 @@ import {
   duplicateObjects,
   sendToBack,
 } from '@core/commands/ops';
+import { linkObjects, unlinkObjects } from '@core/commands/groupOps';
 import { deepClone } from '@core/model/clone';
 import { newId } from '@core/model/ids';
 import { objectScope, translate } from '@core/model/transform';
@@ -29,9 +30,15 @@ export function copySelection(): void {
 export function pasteClipboard(): void {
   const ed = useEditorStore.getState();
   if (ed.clipboard.length === 0) return;
+  // As cópias ficam vinculadas entre si, não aos originais.
+  const grupos = new Map<string, string>();
   const copies = ed.clipboard.map((o) => {
     const c = { ...deepClone(o), id: newId(o.kind.slice(0, 3)) } as SceneObject;
     if (c.kind === 'path') delete c.assistant;
+    if (c.group) {
+      if (!grupos.has(c.group)) grupos.set(c.group, newId('grp'));
+      c.group = grupos.get(c.group)!;
+    }
     return c;
   });
   useDocumentStore.getState().apply('Colar', (d) => {
@@ -81,4 +88,18 @@ export function bringSelectionToFront(): void {
 export function sendSelectionToBack(): void {
   const sel = useEditorStore.getState().selection;
   if (sel.length > 0) useDocumentStore.getState().apply('Enviar para trás', (d) => sendToBack(d, sel));
+}
+
+/** Vincula a seleção (decisão 61): passam a se mover juntos. */
+export function linkSelection(): void {
+  const ed = useEditorStore.getState();
+  if (ed.selection.length < 2) return;
+  useDocumentStore.getState().apply('Vincular', (d) => linkObjects(d, ed.selection));
+}
+
+/** Desfaz o vínculo da seleção. */
+export function unlinkSelection(): void {
+  const ed = useEditorStore.getState();
+  if (ed.selection.length === 0) return;
+  useDocumentStore.getState().apply('Desvincular', (d) => unlinkObjects(d, ed.selection));
 }

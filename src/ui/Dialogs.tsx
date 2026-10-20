@@ -22,6 +22,8 @@ const ATALHOS: [string, string][] = [
   ['Ctrl+C  /  V  /  D', 'Copiar  /  colar  /  duplicar'],
   ['Ctrl+V com um print copiado', 'Colar como imagem de fundo'],
   ['Ctrl+A', 'Selecionar tudo do modo atual'],
+  ['Ctrl+G  /  Ctrl+Shift+G', 'Vincular  /  desvincular'],
+  ['Alt + clique', 'Pegar só um elemento vinculado'],
   ['setas  /  Shift+setas', 'Mover 10 cm  /  1 m'],
   ['Delete', 'Excluir a seleção'],
   ['Arquivo', ''],

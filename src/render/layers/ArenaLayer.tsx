@@ -2,7 +2,7 @@ import type { Vec2 } from '@core/geometry/vec';
 import { arenaExtent, arenaPoints } from '@core/model/arena';
 import { outlinePolygon, polygonPathD } from '@core/geometry/outline';
 import { hatchSegments, longestEdgeAngle, polygonCentroid } from '@core/geometry/hatch';
-import { structureDef } from '@core/library/structures';
+import { STRUCTURE_LABEL_MM, structureDef, structureLabelAngle } from '@core/library/structures';
 import { mmPerMeter } from '@core/scale/units';
 import type { Arena } from '@core/model/types';
 import { color, font, stroke, text } from '@render/style/tokens';
@@ -84,9 +84,10 @@ function StructureDetails({ arena, toPaper }: { arena: Arena; toPaper: (p: Vec2)
     ? hatchSegments(pts, def.hatch.angle === 'aresta' ? aresta : def.hatch.angle, def.hatch.spacingM)
     : [];
   const centro = toPaper(polygonCentroid(pts));
-  // O rótulo acompanha a aresta longa, mas nunca de cabeça para baixo.
-  let giro = ((aresta % 180) + 180) % 180;
-  if (giro > 90) giro -= 180;
+  // Giro e letra escolhidos no painel; no automático, o rótulo acompanha a
+  // aresta longa, nunca de cabeça para baixo (B-23).
+  const giro = structureLabelAngle(arena);
+  const letra = info.labelSizeMm ?? STRUCTURE_LABEL_MM;
 
   return (
     <g data-part="structure" pointerEvents="none">
@@ -103,7 +104,7 @@ function StructureDetails({ arena, toPaper }: { arena: Arena; toPaper: (p: Vec2)
           y={centro.y}
           transform={giro !== 0 ? `rotate(${giro} ${centro.x} ${centro.y})` : undefined}
           fontFamily={font.family}
-          fontSize={text.regular}
+          fontSize={letra}
           fontWeight="bold"
           fill={color.ink}
           textAnchor="middle"

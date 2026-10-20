@@ -135,6 +135,16 @@ describe('aplicar a pista', () => {
     expect(arena?.kind === 'arena' ? arena.widthM : 0).toBe(80);
   });
 
+  it('o cenário do modelo entra todo vinculado (decisão 61)', () => {
+    const t = buildTemplate(docCompleto(), 'Haras', SCHEMA_VERSION);
+    const depois = edit(createDocument(), (d) => applyTemplate(d, t));
+    const cenario = arenaScopeObjects(depois);
+    expect(cenario.length).toBeGreaterThan(1);
+    const grupo = cenario[0]!.group;
+    expect(grupo).toBeDefined();
+    expect(cenario.every((o) => o.group === grupo)).toBe(true);
+  });
+
   it('remove o cenário antigo em vez de acumular', () => {
     const t = buildTemplate(docCompleto(), 'Haras', SCHEMA_VERSION);
     const destino = edit(createDocument(), (d) => {

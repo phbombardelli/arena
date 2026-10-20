@@ -1272,3 +1272,21 @@ grade (grossa) está nele, os quadrados seguem dali, as réguas marcam 0
 ali, e a coordenada do cursor e os campos X/Y do painel também. Na tela o
 passo acompanha o zoom; no papel o menor quadrado nunca fica abaixo de
 4 mm na escala de impressão.
+
+## 61. Rótulo das construções e elementos vinculados
+
+**Rótulo das construções** (B-23). O desenhador escolhe o tamanho da letra
+(padrão 2,8 mm) e o giro do rótulo, com campo e barra. Sem giro escolhido,
+o rótulo acompanha a aresta mais longa, nunca de cabeça para baixo; o
+botão "auto" volta a esse comportamento.
+
+**Vincular** (Ctrl+G, menu Editar ou o botão do painel). Objetos
+vinculados levam o mesmo `group`: clicar em um seleciona todos, e por
+isso se movem, giram, copiam e se apagam juntos. Alt + clique pega um só,
+para editar um elemento — o contorno da pista, por exemplo — sem desfazer
+o vínculo. Desvincular (Ctrl+Shift+G) solta o grupo inteiro. Cópia de
+vinculados fica vinculada entre si, não aos originais. O campo é opcional:
+arquivos antigos abrem sem vínculo, sem migração.
+
+**Modelo de pista entra vinculado.** Aplicar um modelo traz pista,
+construções, árvores e imagem num grupo só, que se arrasta inteiro.
