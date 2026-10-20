@@ -1166,3 +1166,18 @@ vai: tenta o meio e depois pontos cada vez mais afastados, até achar um
 lugar que não cubra obstáculo, seta, bandeirola, outra linha ou outro
 rótulo. A seta de salto corre sobre a própria linha, então conta com a
 largura da ponta, não só com o eixo.
+
+## 57. Colar imagem da área de transferência
+
+Ctrl+V com uma imagem na área de transferência (um print do Google Maps,
+por exemplo) cola essa imagem como IMAGEM DE FUNDO: o editor passa ao modo
+Pista e a imagem nasce cobrindo a pista, selecionada, pronta para calibrar
+a escala e desenhar o contorno por cima. É o caminho mais curto para
+começar uma pista nova a partir do local real.
+
+Sem imagem na área de transferência, Ctrl+V continua colando os objetos
+copiados dentro do editor. Quem decide é o evento `paste` do navegador,
+o único que enxerga o que veio de fora; o menu Editar › Colar lê a área de
+transferência pela API e cai no colar interno se não houver imagem ou se o
+navegador negar a permissão. A imagem colada segue as regras da importada
+por arquivo (PNG, JPG ou WEBP, até 12 MB, embutida no .pcs).

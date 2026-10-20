@@ -26,6 +26,7 @@ import {
 import { RenderDocument } from '@render/renderDocument';
 import { color } from '@render/style/tokens';
 import { useDocumentStore } from '@store/documentStore';
+import { imageFromClipboard, pasteBackgroundImage } from '@ui/actions/imageActions';
 import { useEditorStore } from '@store/editorStore';
 import {
   newDocument,
@@ -414,7 +415,8 @@ export function Canvas() {
       } else if (ctrl && key === 'c') {
         copySelection();
       } else if (ctrl && key === 'v') {
-        pasteClipboard();
+        // Quem cola é o evento 'paste', logo abaixo: só ele enxerga uma
+        // imagem vinda de fora (um print do mapa, por exemplo).
       } else if (ctrl && key === 'd') {
         e.preventDefault();
         duplicateSelection();
@@ -479,11 +481,23 @@ export function Canvas() {
       if (e.code === 'Space') spaceDown.current = false;
       if (!e.altKey) useEditorStore.getState().setSnapSuspended(false);
     };
+    // Colar: uma imagem na área de transferência vira imagem de fundo;
+    // senão, cola os objetos copiados dentro do próprio editor.
+    const onPaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+      e.preventDefault();
+      const imagem = imageFromClipboard(e.clipboardData);
+      if (imagem) void pasteBackgroundImage(imagem);
+      else pasteClipboard();
+    };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('paste', onPaste);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('paste', onPaste);
     };
   }, [fitPage, finishPath]);
 

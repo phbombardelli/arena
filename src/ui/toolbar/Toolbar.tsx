@@ -19,7 +19,7 @@ import {
 import { actualSize, fitPage, toggleGrid, toggleMagnet, zoomBy } from '@ui/actions/viewActions';
 import { insertHeightTable, insertInfoBox } from '@ui/actions/annotationActions';
 import { insertTimingLine } from '@ui/actions/timingActions';
-import { importBackgroundImage } from '@ui/actions/imageActions';
+import { importBackgroundImage, pasteImageFromSystemClipboard } from '@ui/actions/imageActions';
 import { insertLogo } from '@ui/actions/logoActions';
 import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
 import { useDocumentStore } from '@store/documentStore';
@@ -47,7 +47,6 @@ export function Toolbar() {
     setMode,
     setTool,
     selection,
-    clipboard,
     setDialog,
   } = useEditorStore();
   const [busy, setBusy] = useState(false);
@@ -97,7 +96,14 @@ export function Toolbar() {
     { label: 'Refazer', shortcut: 'Ctrl+Y', disabled: !canRedo(), onSelect: redo },
     'separator',
     { label: 'Copiar', shortcut: 'Ctrl+C', disabled: nada, onSelect: copySelection },
-    { label: 'Colar', shortcut: 'Ctrl+V', disabled: clipboard.length === 0, onSelect: pasteClipboard },
+    {
+      label: 'Colar',
+      shortcut: 'Ctrl+V',
+      onSelect: () =>
+        void pasteImageFromSystemClipboard().then((colou) => {
+          if (!colou) pasteClipboard();
+        }),
+    },
     { label: 'Duplicar', shortcut: 'Ctrl+D', disabled: nada, onSelect: duplicateSelection },
     { label: 'Excluir', shortcut: 'Delete', disabled: nada, onSelect: deleteSelection },
     'separator',

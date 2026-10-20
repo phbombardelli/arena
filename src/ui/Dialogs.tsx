@@ -21,6 +21,7 @@ const ATALHOS: [string, string][] = [
   ['Edição', ''],
   ['Ctrl+Z  /  Ctrl+Y', 'Desfazer  /  refazer'],
   ['Ctrl+C  /  V  /  D', 'Copiar  /  colar  /  duplicar'],
+  ['Ctrl+V com um print copiado', 'Colar como imagem de fundo'],
   ['Ctrl+A', 'Selecionar tudo do modo atual'],
   ['setas  /  Shift+setas', 'Mover pelo passo do ímã  /  10 vezes'],
   ['Delete', 'Excluir a seleção'],
