@@ -1,6 +1,6 @@
 import { toMillimeterPrecision } from '@core/geometry/snap';
 import { scale, sub, type Vec2 } from '@core/geometry/vec';
-import { createPathNode, legsFor, smoothedNodes } from '@core/model/path';
+import { createPathNode, legsFor, segmentAt, smoothedNodes } from '@core/model/path';
 import { addObject } from './ops';
 import type {
   CoursePath,
@@ -269,4 +269,73 @@ export function placeAssistantPath(doc: CourseDocument, path: CoursePath): void 
   }
   doc.objects = doc.objects.filter((o) => !(o.kind === 'path' && o.assistant === true));
   addObject(doc, novo);
+}
+
+/** Ponto do meio (t = 0,5) da cúbica de um trecho — é por ele que se curva. */
+export function legHalfPoint(path: CoursePath, leg: number): Vec2 | null {
+  const c = segmentAt(path, leg);
+  if (!c) return null;
+  return {
+    x: (c.p0.x + 3 * c.p1.x + 3 * c.p2.x + c.p3.x) / 8,
+    y: (c.p0.y + 3 * c.p1.y + 3 * c.p2.y + c.p3.y) / 8,
+  };
+}
+
+/** Alça mais curta que isso some na prática e deixaria o nó com bico. */
+const ALCA_MIN_M = 0.5;
+
+/**
+ * Curva um trecho arrastando o meio dele (B-28): o ponto do meio da curva
+ * vai para `alvo`. É a alça única do editor de referência, sem ferramenta
+ * nova — vale para traçado à mão, por trechos ou automático.
+ *
+ * Na cúbica, o meio é (P0 + P3)/2 + 3/8·(h0 + h3), com h0 a alça de saída
+ * do primeiro nó e h3 a de entrada do segundo. Então basta repartir
+ * D = 8/3·(alvo − meio da corda) entre as duas alças:
+ *
+ * - nó preso a obstáculo mantém a DIREÇÃO da alça — o traçado continua
+ *   cruzando o obstáculo a 90° — e só muda o comprimento;
+ * - nó livre aceita qualquer direção.
+ *
+ * Com os dois nós presos e as duas direções paralelas (dois saltos em
+ * linha), não há como curvar sem tirar o 90°: o trecho fica reto, como
+ * deve.
+ */
+export function bendLeg(doc: CourseDocument, id: ObjectId, leg: number, alvo: Vec2): void {
+  const path = pathOf(doc, id);
+  const a = path?.nodes[leg];
+  const b = path?.nodes[leg + 1];
+  if (!path || path.locked || !a || !b) return;
+
+  const meio = { x: (a.pos.x + b.pos.x) / 2, y: (a.pos.y + b.pos.y) / 2 };
+  const D = scale(sub(alvo, meio), 8 / 3);
+  const dir = (h: Vec2 | null) => {
+    const n = h ? Math.hypot(h.x, h.y) : 0;
+    return h && n > 1e-9 ? { x: h.x / n, y: h.y / n } : null;
+  };
+  const u0 = a.anchor ? dir(a.handleOut) : null;
+  const u3 = b.anchor ? dir(b.handleIn) : null;
+
+  let h0: Vec2;
+  let h3: Vec2;
+  if (u0 && u3) {
+    const det = u0.x * u3.y - u0.y * u3.x;
+    if (Math.abs(det) < 0.05) return;
+    const ca = (D.x * u3.y - D.y * u3.x) / det;
+    const cb = (u0.x * D.y - u0.y * D.x) / det;
+    h0 = scale(u0, Math.max(ALCA_MIN_M, ca));
+    h3 = scale(u3, Math.max(ALCA_MIN_M, cb));
+  } else if (u0) {
+    h0 = scale(u0, Math.max(ALCA_MIN_M, (D.x * u0.x + D.y * u0.y) / 2));
+    h3 = sub(D, h0);
+  } else if (u3) {
+    h3 = scale(u3, Math.max(ALCA_MIN_M, (D.x * u3.x + D.y * u3.y) / 2));
+    h0 = sub(D, h3);
+  } else {
+    h0 = scale(D, 0.5);
+    h3 = scale(D, 0.5);
+  }
+
+  moveHandle(doc, id, leg, 'out', h0);
+  moveHandle(doc, id, leg + 1, 'in', h3);
 }

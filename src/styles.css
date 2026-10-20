@@ -638,3 +638,21 @@ kbd { background: var(--chrome); border-color: var(--border); }
 .pair-list .check { width: 100%; }
 .pair-name { flex: 1; }
 .pair-value { font-variant-numeric: tabular-nums; color: var(--text-dim); }
+
+/* Painel enxuto (B-33): cabeçalho com ícones, campos aos pares. */
+.panel-head { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; padding-right: 26px; }
+.panel-head h3 { flex: 1; margin: 0; }
+.panel .object-panel .panel-head h3:first-child { padding-right: 0; }
+.panel-head .icon-button { padding: 1px 5px; min-width: 24px; font-size: 13px; }
+.field-pair { display: flex; gap: 8px; }
+.field-pair > .field { flex: 1; min-width: 0; }
+.field-pair .field { gap: 4px; }
+.field-pair .field input, .field-pair .field select { width: 52px; }
+.field-pair .input-unit input { width: 40px; }
+.check-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+.check-row .check { margin: 0; }
+button.mini.neutral { color: var(--text); }
+.heights-editor { display: flex; flex-direction: column; gap: 10px; min-width: 280px; max-height: 60vh; overflow: auto; }
+.heights-row h4 { margin: 0 0 4px; font-size: 13px; }
+.heights-row .dim { color: var(--text-dim); font-weight: normal; }
+.heights-row button.add { color: var(--text-dim); }

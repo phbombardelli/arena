@@ -1,14 +1,14 @@
 import { useRef } from 'react';
-import { bringToFront, sendToBack, setLocked, setObjectPosition, setObjectRotation, deleteObjects } from '@core/commands/ops';
+import { setLocked, setObjectPosition, setObjectRotation, deleteObjects } from '@core/commands/ops';
 import { ORNAMENTS } from '@core/library/ornaments';
-import { boundsIn, getPosition, getRotation, unionBounds } from '@core/model/transform';
+import { getPosition, getRotation } from '@core/model/transform';
+import { measureFrame } from '@core/model/measureFrame';
 import type { Obstacle, OrnamentType, SceneObject } from '@core/model/types';
-import { formatMeters } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { ArenaPanel } from './ArenaPanel';
 import { ImagePanel } from './ImagePanel';
-import { ObstaclePanel } from './ObstaclePanel';
+import { ObstacleMore, ObstaclePanel } from './ObstaclePanel';
 import { PathPanel } from './PathPanel';
 import { CombinationPanel } from './CombinationPanel';
 import { HeightTablePanel } from './HeightTablePanel';
@@ -44,72 +44,50 @@ export function ObjectPanel() {
   const combinacao = objs.filter((o): o is Obstacle => o.kind === 'obstacle');
   const ehCombinacao =
     !single && combinacao.length === objs.length && combinacao.length >= 2 && combinacao.length <= 3;
-  const bounds = unionBounds(objs.map((o) => boundsIn(doc, o)));
+  const todosTravados = objs.every((o) => o.locked);
+  // X e Y contam do canto superior esquerdo da pista, como as réguas.
+  const canto = measureFrame(doc).originM;
 
   if (ehCombinacao) return <CombinationPanel obstacles={combinacao} />;
 
   return (
     <section className="object-panel">
-      <h3>
-        {single
-          ? single.kind === 'arena' && single.structure
-            ? 'Construção'
-            : KIND_LABEL[single.kind]
-          : `${objs.length} objetos selecionados`}
-      </h3>
+      <div className="panel-head">
+        <h3>
+          {single
+            ? single.kind === 'arena' && single.structure
+              ? 'Construção'
+              : KIND_LABEL[single.kind]
+            : `${objs.length} objetos selecionados`}
+        </h3>
+        {/* Frente e Trás ficam no menu Editar; aqui só o que se usa sempre. */}
+        <button
+          className="icon-button"
+          title={todosTravados ? 'Desbloquear' : 'Bloquear'}
+          aria-label={todosTravados ? 'Desbloquear' : 'Bloquear'}
+          onClick={() =>
+            apply(todosTravados ? 'Desbloquear' : 'Bloquear', (d) =>
+              setLocked(d, selection, !todosTravados),
+            )
+          }
+        >
+          {todosTravados ? '🔒' : '🔓'}
+        </button>
+        <button
+          className="icon-button danger"
+          title="Excluir (Delete)"
+          aria-label="Excluir"
+          onClick={() => {
+            apply('Excluir', (d) => deleteObjects(d, selection));
+            clearSelection();
+          }}
+        >
+          🗑
+        </button>
+      </div>
 
       {single && (
         <>
-          <NumberField
-            label="X"
-            unit="m"
-            value={getPosition(single, doc.page.printScale).x}
-            decimals={3}
-            step={0.1}
-            disabled={single.locked}
-            onCommit={(v) =>
-              apply('Posição X', (d) =>
-                setObjectPosition(d, single.id, {
-                  x: v,
-                  y: getPosition(single, d.page.printScale).y,
-                }),
-              )
-            }
-          />
-          <NumberField
-            label="Y"
-            unit="m"
-            value={getPosition(single, doc.page.printScale).y}
-            decimals={3}
-            step={0.1}
-            disabled={single.locked}
-            onCommit={(v) =>
-              apply('Posição Y', (d) =>
-                setObjectPosition(d, single.id, {
-                  x: getPosition(single, d.page.printScale).x,
-                  y: v,
-                }),
-              )
-            }
-          />
-          {getRotation(single) !== null && (
-            <>
-              <NumberField
-                label="Rotação"
-                unit="°"
-                value={getRotation(single)!}
-                decimals={1}
-                step={1}
-                disabled={single.locked}
-                onCommit={(v) => apply('Rotação', (d) => setObjectRotation(d, single.id, v))}
-              />
-              <RotationSlider
-                id={single.id}
-                value={getRotation(single)!}
-                disabled={single.locked}
-              />
-            </>
-          )}
           {single.kind === 'arena' && <ArenaPanel arena={single} />}
           {single.kind === 'image' && <ImagePanel image={single} />}
           {single.kind === 'obstacle' && <ObstaclePanel obstacle={single} />}
@@ -169,43 +147,63 @@ export function ObjectPanel() {
               </label>
             </>
           )}
+          {getRotation(single) !== null && (
+            <>
+              <NumberField
+                label="Rotação"
+                unit="°"
+                value={getRotation(single)!}
+                decimals={1}
+                step={1}
+                disabled={single.locked}
+                onCommit={(v) => apply('Rotação', (d) => setObjectRotation(d, single.id, v))}
+              />
+              <RotationSlider
+                id={single.id}
+                value={getRotation(single)!}
+                disabled={single.locked}
+              />
+            </>
+          )}
+          <details className="fold">
+            <summary>Mais opções</summary>
+            <h3>Posição</h3>
+            <NumberField
+              label="X"
+              unit="m"
+              value={getPosition(single, doc.page.printScale).x - canto.x}
+              decimals={3}
+              step={0.1}
+              disabled={single.locked}
+              onCommit={(v) =>
+                apply('Posição X', (d) =>
+                  setObjectPosition(d, single.id, {
+                    x: v + canto.x,
+                    y: getPosition(single, d.page.printScale).y,
+                  }),
+                )
+              }
+            />
+            <NumberField
+              label="Y"
+              unit="m"
+              value={getPosition(single, doc.page.printScale).y - canto.y}
+              decimals={3}
+              step={0.1}
+              disabled={single.locked}
+              onCommit={(v) =>
+                apply('Posição Y', (d) =>
+                  setObjectPosition(d, single.id, {
+                    x: getPosition(single, d.page.printScale).x,
+                    y: v + canto.y,
+                  }),
+                )
+              }
+            />
+            {single.kind === 'obstacle' && <ObstacleMore obstacle={single} />}
+          </details>
         </>
       )}
-
-      {bounds && (
-        <p className="note">
-          {formatMeters(bounds.max.x - bounds.min.x)} × {formatMeters(bounds.max.y - bounds.min.y)} m
-        </p>
-      )}
-
-      <div className="row-buttons">
-        <button onClick={() => apply('Trazer para frente', (d) => bringToFront(d, selection))}>
-          Frente
-        </button>
-        <button onClick={() => apply('Enviar para trás', (d) => sendToBack(d, selection))}>
-          Trás
-        </button>
-      </div>
-      <div className="row-buttons">
-        <button
-          onClick={() =>
-            apply(objs.every((o) => o.locked) ? 'Desbloquear' : 'Bloquear', (d) =>
-              setLocked(d, selection, !objs.every((o) => o.locked)),
-            )
-          }
-        >
-          {objs.every((o) => o.locked) ? 'Desbloquear' : 'Bloquear'}
-        </button>
-        <button
-          className="danger"
-          onClick={() => {
-            apply('Excluir', (d) => deleteObjects(d, selection));
-            clearSelection();
-          }}
-        >
-          Excluir
-        </button>
-      </div>
     </section>
   );
 }

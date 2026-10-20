@@ -86,3 +86,26 @@ export function polygonCentroid(polygon: Vec2[]): Vec2 {
   }
   return { x: cx / (3 * area), y: cy / (3 * area) };
 }
+
+/**
+ * Trechos de uma linha vertical (`eixo` 'x', em x = `valor`) ou horizontal
+ * (`eixo` 'y', em y = `valor`) que ficam DENTRO do polígono. É a grade da
+ * pista: cada linha do quadriculado recortada no contorno, sem <clipPath>.
+ */
+export function insideIntervals(polygon: Vec2[], eixo: 'x' | 'y', valor: number): [number, number][] {
+  const outro = eixo === 'x' ? 'y' : 'x';
+  const cortes: number[] = [];
+  for (let i = 0; i < polygon.length; i += 1) {
+    const p = polygon[i]!;
+    const q = polygon[(i + 1) % polygon.length]!;
+    // Meio-aberto: um vértice exatamente na linha conta uma vez só.
+    if ((p[eixo] <= valor && q[eixo] > valor) || (q[eixo] <= valor && p[eixo] > valor)) {
+      const t = (valor - p[eixo]) / (q[eixo] - p[eixo]);
+      cortes.push(p[outro] + t * (q[outro] - p[outro]));
+    }
+  }
+  cortes.sort((a, b) => a - b);
+  const out: [number, number][] = [];
+  for (let i = 0; i + 1 < cortes.length; i += 2) out.push([cortes[i]!, cortes[i + 1]!]);
+  return out;
+}

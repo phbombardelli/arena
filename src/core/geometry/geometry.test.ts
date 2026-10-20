@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { angleOf, distance, fromAngle, normalizeAngle, rotate } from './vec';
 import { snapAngle, snapValue, visibleGridStep, toMillimeterPrecision } from './snap';
-import { polygonPathD, rectanglePoints } from './outline';
+import { outlinePolygon, polygonPathD, rectanglePoints } from './outline';
+import { hatchSegments } from './hatch';
 
 describe('vetores', () => {
   it('rotação de 90° é horária (Y cresce para baixo)', () => {
@@ -91,5 +92,26 @@ describe('contorno da pista', () => {
   it('a projeção é aplicada a todos os pontos', () => {
     const d = polygonPathD(rect, 'square', 0, (p) => ({ x: p.x * 4 + 10, y: p.y * 4 + 10 }));
     expect(d).toBe('M 10 10 L 330 10 L 330 170 L 10 170 Z');
+  });
+});
+
+describe('contorno com canto arredondado como polígono (B-24)', () => {
+  const quadrado = rectanglePoints({ x: 0, y: 0 }, 10, 10);
+
+  it('canto vivo devolve os próprios vértices', () => {
+    expect(outlinePolygon(quadrado, 'square', 3)).toEqual(quadrado);
+  });
+
+  it('a hachura não passa pelo canto arredondado', () => {
+    const contorno = outlinePolygon(quadrado, 'rounded', 3);
+    // Bem no canto (0,2;0,2) o canto vivo teria hachura; o redondo, não.
+    const linhas = hatchSegments(contorno, 0, 0.2);
+    const noCanto = linhas.some(([a, b]) => {
+      const y = a.y;
+      const xMin = Math.min(a.x, b.x);
+      return y < 0.3 && xMin < 0.3;
+    });
+    expect(noCanto).toBe(false);
+    expect(linhas.length).toBeGreaterThan(10);
   });
 });

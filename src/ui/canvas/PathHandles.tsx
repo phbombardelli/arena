@@ -11,6 +11,7 @@ interface Props {
   onNodeDown: (e: React.PointerEvent, index: number) => void;
   onHandleDown: (e: React.PointerEvent, index: number, which: 'in' | 'out') => void;
   onLegDoubleClick: (legIndex: number, at: Vec2) => void;
+  onLegDown: (e: React.PointerEvent, legIndex: number) => void;
 }
 
 const NODE_PX = 9;
@@ -27,13 +28,14 @@ export function PathHandles({
   onNodeDown,
   onHandleDown,
   onLegDoubleClick,
+  onLegDown,
 }: Props) {
   const mm = (px: number) => px / zoom;
   const meio = mm(NODE_PX) / 2;
 
   return (
     <g data-part="path-handles">
-      {/* Meio de cada trecho: duplo clique insere um nó. */}
+      {/* Meio de cada trecho: arrastar curva o trecho; duplo clique insere um nó. */}
       {path.legs.map((_, i) => {
         const p = toPaper(legMidpoint(path, i));
         return (
@@ -47,7 +49,11 @@ export function PathHandles({
             strokeWidth={mm(0.8)}
             opacity={0.55}
             pointerEvents="all"
-            style={{ cursor: 'copy' }}
+            style={{ cursor: 'grab' }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              onLegDown(e, i);
+            }}
             onDoubleClick={(e) => {
               e.stopPropagation();
               onLegDoubleClick(i, legMidpoint(path, i));

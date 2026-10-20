@@ -6,6 +6,7 @@ import { LAYER_ORDER } from '@core/model/types';
 import { pageSize } from '@core/scale/units';
 import { ArenaLayer } from './layers/ArenaLayer';
 import { GridLayer } from './layers/GridLayer';
+import { measureFrame } from '@core/model/measureFrame';
 import { ImageLayer } from './layers/ImageLayer';
 import { ObstacleLayer } from './layers/ObstacleLayer';
 import { OrnamentLayer } from './layers/OrnamentLayer';
@@ -58,47 +59,9 @@ export function RenderDocument(opts: RenderOptions) {
   // Um leiaute só para todos os rótulos automáticos: cada um foge dos
   // outros, então precisam ser decididos juntos (decisão 55).
   const rotulos = useMemo(() => layoutLabels(doc), [doc]);
+  const quadro = useMemo(() => measureFrame(doc), [doc]);
 
-  return (
-    <>
-      {mode === 'screen' && showPageFrame && (
-        <g data-layer="page" pointerEvents="none">
-          <rect
-            x={0}
-            y={0}
-            width={widthMm}
-            height={heightMm}
-            fill={color.paper}
-            stroke="#9aa0a6"
-            strokeWidth={stroke.thin}
-          />
-          <rect
-            x={doc.page.marginsMm.left}
-            y={doc.page.marginsMm.top}
-            width={widthMm - doc.page.marginsMm.left - doc.page.marginsMm.right}
-            height={heightMm - doc.page.marginsMm.top - doc.page.marginsMm.bottom}
-            fill="none"
-            stroke="#c8ccd0"
-            strokeWidth={stroke.hairline}
-            strokeDasharray="2 2"
-          />
-        </g>
-      )}
-      {mode === 'paper' && (
-        <rect x={0} y={0} width={widthMm} height={heightMm} fill={color.paper} />
-      )}
-
-      {mode === 'screen' && (
-        <GridLayer
-          grid={doc.grid}
-          printScale={doc.page.printScale}
-          originMm={doc.originMm}
-          viewBoxMm={viewBoxMm}
-          metersPerPixel={metersPerPixel}
-        />
-      )}
-
-      {sortForRender(doc).map((obj) => {
+  const desenha = (obj: SceneObject) => {
         if (!isLayerVisible(doc, obj.layer) || !obj.visible) return null;
 
         // Fora do modo ativo o objeto é cenário: some do alcance do mouse.
@@ -221,7 +184,56 @@ export function RenderDocument(opts: RenderOptions) {
             {conteudo}
           </g>
         );
-      })}
+  };
+  // Imagem de fundo e pista primeiro; a grade entra entre elas e o resto.
+  const ordem = sortForRender(doc);
+  const fundo = ordem.filter((o) => o.layer === 'background' || o.layer === 'arena');
+  const frente = ordem.filter((o) => o.layer !== 'background' && o.layer !== 'arena');
+
+  return (
+    <>
+      {mode === 'screen' && showPageFrame && (
+        <g data-layer="page" pointerEvents="none">
+          <rect
+            x={0}
+            y={0}
+            width={widthMm}
+            height={heightMm}
+            fill={color.paper}
+            stroke="#9aa0a6"
+            strokeWidth={stroke.thin}
+          />
+          <rect
+            x={doc.page.marginsMm.left}
+            y={doc.page.marginsMm.top}
+            width={widthMm - doc.page.marginsMm.left - doc.page.marginsMm.right}
+            height={heightMm - doc.page.marginsMm.top - doc.page.marginsMm.bottom}
+            fill="none"
+            stroke="#c8ccd0"
+            strokeWidth={stroke.hairline}
+            strokeDasharray="2 2"
+          />
+        </g>
+      )}
+      {mode === 'paper' && (
+        <rect x={0} y={0} width={widthMm} height={heightMm} fill={color.paper} />
+      )}
+
+
+      {fundo.map(desenha)}
+
+      {/* A grade sai na folha como aparece na tela (decisão 60). Fica
+          por cima do piso da pista e por baixo de todo o resto. */}
+      <GridLayer
+        grid={doc.grid}
+        printScale={doc.page.printScale}
+        originMm={doc.originMm}
+        frame={quadro}
+        viewBoxMm={viewBoxMm}
+        metersPerPixel={mode === 'paper' ? 0 : metersPerPixel}
+      />
+
+      {frente.map(desenha)}
 
       {/* Por último, para a legenda nunca ficar debaixo de um objeto. */}
       <ScaleLegend page={doc.page} />

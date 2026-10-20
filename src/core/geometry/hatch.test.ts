@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hatchSegments, longestEdgeAngle, polygonCentroid } from './hatch';
+import { hatchSegments, insideIntervals, longestEdgeAngle, polygonCentroid } from './hatch';
 
 const retangulo = [
   { x: 0, y: 0 },
@@ -44,5 +44,27 @@ describe('hachura das construções (decisão 54)', () => {
     const c = polygonCentroid(retangulo);
     expect(c.x).toBeCloseTo(10, 6);
     expect(c.y).toBeCloseTo(3, 6);
+  });
+});
+
+describe('trechos de uma linha dentro do polígono (grade da pista)', () => {
+  const quadrado = [
+    { x: 0, y: 0 },
+    { x: 10, y: 0 },
+    { x: 10, y: 6 },
+    { x: 0, y: 6 },
+  ];
+  it('vertical atravessa de cima a baixo', () => {
+    expect(insideIntervals(quadrado, 'x', 4)).toEqual([[0, 6]]);
+  });
+  it('fora do polígono não há trecho', () => {
+    expect(insideIntervals(quadrado, 'y', 8)).toEqual([]);
+  });
+  it('contorno côncavo dá dois trechos', () => {
+    const u = [
+      { x: 0, y: 0 }, { x: 3, y: 0 }, { x: 3, y: 5 }, { x: 7, y: 5 },
+      { x: 7, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 8 }, { x: 0, y: 8 },
+    ];
+    expect(insideIntervals(u, 'y', 2)).toEqual([[0, 3], [7, 10]]);
   });
 });

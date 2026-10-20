@@ -47,6 +47,7 @@ import { printDocument } from '@platform/print';
 import { useElementSize } from '@ui/hooks/useElementSize';
 import { ArenaDraft, ArenaHandles } from './ArenaHandles';
 import { PathDraft, PathHandles } from './PathHandles';
+import { measureFrame } from '@core/model/measureFrame';
 import { CalibrationOverlay } from './CalibrationOverlay';
 import { RULER_SIZE, Rulers } from './Rulers';
 import { GuidedOverlay } from './GuidedOverlay';
@@ -493,6 +494,7 @@ export function Canvas() {
     };
   }, [fitPage, finishPath]);
 
+  const medida = useMemo(() => measureFrame(doc), [doc]);
   const mpp = mppOf(viewport, doc.page.printScale);
   const box = viewBox(viewport, size);
   const cursor = tool === 'pan' ? 'grab' : tool === 'select' ? 'default' : 'crosshair';
@@ -585,6 +587,7 @@ export function Canvas() {
                 onHandleDown={(e, i, which) =>
                   gestures.beginPathHandleDrag(e, selectedPath.id, i, which, selectedPath.nodes[i]!.pos)
                 }
+                onLegDown={(e, leg) => gestures.beginLegBend(e, selectedPath.id, leg)}
                 onLegDoubleClick={(legIndex, at) =>
                   useDocumentStore.getState().apply('Inserir nó', (d) => {
                     insertNode(d, selectedPath.id, legIndex, at);
@@ -621,13 +624,17 @@ export function Canvas() {
         </svg>
       </div>
 
+      {/* As réguas marcam 0 no canto superior esquerdo da pista (decisão 60). */}
       <Rulers
         viewport={viewport}
         size={size}
         printScale={doc.page.printScale}
-        originMm={doc.originMm}
+        originMm={{
+          x: doc.originMm.x + medida.originM.x * mmPerMeter(doc.page.printScale),
+          y: doc.originMm.y + medida.originM.y * mmPerMeter(doc.page.printScale),
+        }}
         metersPerPixel={mpp}
-        cursorM={cursorM}
+        cursorM={cursorM && { x: cursorM.x - medida.originM.x, y: cursorM.y - medida.originM.y }}
       />
     </div>
   );

@@ -25,6 +25,8 @@ import {
   insertNode,
   moveHandle,
   moveNode,
+  bendLeg,
+  legHalfPoint,
   placeAssistantPath,
   removeNode,
   setAllLegLabels,
@@ -522,5 +524,32 @@ describe('assistente substitui o próprio traçado (B-04)', () => {
     doc = edit(doc, (d) => placeAssistantPath(d, traco(5)));
     doc = edit(doc, (d) => placeAssistantPath(d, traco(9)));
     expect(doc.objects.filter((o) => o.kind === 'path')).toHaveLength(2);
+  });
+});
+
+describe('curvar um trecho arrastando o meio (B-28)', () => {
+  const reto = () =>
+    createPath([createPathNode({ x: 0, y: 0 }, 'corner'), createPathNode({ x: 10, y: 0 }, 'corner')]);
+
+  it('o meio da curva vai para onde se soltou, e o trecho fica mais longo', () => {
+    const p = reto();
+    let doc = edit(createDocument({ arena: true }), (d) => addObject(d, p));
+    doc = edit(doc, (d) => bendLeg(d, p.id, 0, { x: 5, y: 3 }));
+    const curvo = doc.objects.find((o) => o.id === p.id) as CoursePath;
+    const meio = legHalfPoint(curvo, 0)!;
+    expect(meio.x).toBeCloseTo(5, 6);
+    expect(meio.y).toBeCloseTo(3, 6);
+    expect(legLength(curvo, 0)).toBeGreaterThan(10.5);
+  });
+
+  it('nó preso a obstáculo mantém a direção da alça: cruza a 90°', () => {
+    const p = reto();
+    p.nodes[0]!.anchor = { objectId: 'obs', ref: 'center' };
+    p.nodes[0]!.handleOut = { x: 0, y: 2 }; // sai para baixo, perpendicular ao obstáculo
+    let doc = edit(createDocument({ arena: true }), (d) => addObject(d, p));
+    doc = edit(doc, (d) => bendLeg(d, p.id, 0, { x: 6, y: 4 }));
+    const h = (doc.objects.find((o) => o.id === p.id) as CoursePath).nodes[0]!.handleOut!;
+    expect(h.x).toBeCloseTo(0, 9);
+    expect(h.y).toBeGreaterThan(0);
   });
 });

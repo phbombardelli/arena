@@ -123,6 +123,13 @@ export function Toolbar() {
     { label: 'Tabela de alturas', onSelect: noPercurso(insertHeightTable) },
     { label: 'Logo ou imagem…', onSelect: () => void insertLogo() },
     {
+      label: check(doc.page.scaleLabel.visible, 'Escala'),
+      onSelect: () =>
+        apply(doc.page.scaleLabel.visible ? 'Ocultar escala' : 'Mostrar escala', (d) => {
+          d.page.scaleLabel.visible = !d.page.scaleLabel.visible;
+        }),
+    },
+    {
       label: check(doc.flags, 'Bandeirolas'),
       onSelect: () =>
         apply(doc.flags ? 'Ocultar bandeirolas' : 'Mostrar bandeirolas', (d) => {

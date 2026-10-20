@@ -1,6 +1,6 @@
 import type { Vec2 } from '@core/geometry/vec';
 import { arenaExtent, arenaPoints } from '@core/model/arena';
-import { polygonPathD } from '@core/geometry/outline';
+import { outlinePolygon, polygonPathD } from '@core/geometry/outline';
 import { hatchSegments, longestEdgeAngle, polygonCentroid } from '@core/geometry/hatch';
 import { structureDef } from '@core/library/structures';
 import { mmPerMeter } from '@core/scale/units';
@@ -76,8 +76,10 @@ export function ArenaLayer({ arena, printScale, originMm, selected, onPointerDow
 function StructureDetails({ arena, toPaper }: { arena: Arena; toPaper: (p: Vec2) => Vec2 }) {
   const info = arena.structure!;
   const def = structureDef(info.type);
-  const pts = arenaPoints(arena);
-  const aresta = longestEdgeAngle(pts);
+  const vertices = arenaPoints(arena);
+  const aresta = longestEdgeAngle(vertices);
+  // Hachura e rótulo recortam no contorno de verdade, com o canto redondo.
+  const pts = outlinePolygon(vertices, arena.corner.style, arena.corner.radiusM);
   const linhas = def.hatch
     ? hatchSegments(pts, def.hatch.angle === 'aresta' ? aresta : def.hatch.angle, def.hatch.spacingM)
     : [];

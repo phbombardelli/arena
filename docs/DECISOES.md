@@ -1214,3 +1214,61 @@ num passo só de desfazer, e o novo herda estilo, modo de distância e
 distâncias escolhidas do anterior. Traçado à mão, cópia ou colado nunca é
 substituído. Traçados de assistente salvos antes desta versão não têm a
 marca: na primeira vez, o novo ainda entra ao lado deles.
+
+## 59. Bloco 2 do backlog: painel enxuto, alturas à parte, curvar trecho
+
+**Legenda de escala** só entra quando pedida: documento novo nasce sem
+ela, e o menu Inserir › Escala liga e desliga. Croqui antigo mantém o que
+tinha.
+
+**Painel do obstáculo enxuto** (B-33). À vista: tipo, número e letra,
+frente e largura, seta (com o botão de inverter ao lado), giro com a
+barra. O resto — posição X/Y, suporte, varas, liverpool, rótulos e
+observação — fica em "Mais opções", fechado. Sai o campo de tamanho da
+seta (6 mm fixos), o checkbox "Tem largura de salto" (o tipo decide; o
+campo Largura só aparece quando há largura), os textos explicativos
+(viraram dica do mouse), os títulos de seção, a linha de tamanho e os
+botões Frente/Trás (estão no menu Editar). Bloquear e Excluir viram
+ícones no topo — e isso vale para todo objeto, porque o ObjectPanel é
+comum. Pelo mesmo motivo, X/Y foi para "Mais opções" em todo objeto.
+Colocar partida e chegada saiu do painel do obstáculo: aparece só com
+nada selecionado.
+
+**Alturas à parte.** As alturas saíram do painel do obstáculo e moram no
+diálogo "Alturas dos obstáculos", aberto pela tabela de alturas: todos os
+obstáculos na ordem do percurso (os sem número no fim), com os elementos
+e o botão de acrescentar.
+
+**Curvar um trecho** (B-28). A bolinha do meio de cada trecho do traçado
+selecionado agora se arrasta: o meio da curva segue o cursor. Duplo
+clique nela continua inserindo nó. Nó preso a obstáculo mantém a direção
+da alça, então o traçado segue cruzando a 90°; entre dois saltos em linha
+o trecho não curva. A distância continua medida sobre a curva desenhada,
+e os números se atualizam durante o arrasto. Um arrasto = um desfazer.
+
+**Hachura no canto arredondado** (B-24). A hachura das construções e o
+centro do rótulo passaram a usar o contorno com os cantos redondos, e não
+o polígono de cantos vivos — as linhas não saem mais pela curva.
+
+**Giro de texto.** O texto livre já girava; o campo Giro do painel de
+texto saiu porque o campo Rotação e a barra comuns fazem o mesmo.
+
+## 60. A folha imprime o que se vê; a grade mora na pista
+
+**Escala padrão 1:600** para documento novo (substitui o 1:300 da
+decisão 58).
+
+**O que se vê é o que sai** (B-03). Não há opção de exportação: o PDF e a
+impressão levam a grade quando ela está visível, e não levam quando está
+desligada em Exibir › Grade. As setas de salto continuam saindo sempre.
+
+**Grade só dentro da pista**, recortada no contorno real (cantos
+arredondados e chanfrados incluídos), sem <clipPath> — cada linha é
+cortada na geometria, como a hachura. Fica por cima do piso da pista e
+por baixo de todo o resto. Sem pista, cobre a área toda.
+
+**Tudo conta do canto superior esquerdo da pista**: a primeira linha da
+grade (grossa) está nele, os quadrados seguem dali, as réguas marcam 0
+ali, e a coordenada do cursor e os campos X/Y do painel também. Na tela o
+passo acompanha o zoom; no papel o menor quadrado nunca fica abaixo de
+4 mm na escala de impressão.

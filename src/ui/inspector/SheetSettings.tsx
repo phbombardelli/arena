@@ -189,7 +189,7 @@ export function SheetSettings() {
   );
 }
 
-/** Grade: só desenho de tela, não sai na folha. */
+/** Grade: dentro da pista, contada do canto; sai na folha quando visível. */
 export function GridSettings() {
   const { doc, apply } = useDocumentStore();
   return (

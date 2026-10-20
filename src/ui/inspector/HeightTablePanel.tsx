@@ -1,10 +1,12 @@
 import { heightRows } from '@core/model/annotationLayout';
 import type { HeightTable, Obstacle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
+import { useEditorStore } from '@store/editorStore';
 import { NumberField } from './NumberField';
 
 export function HeightTablePanel({ table }: { table: HeightTable }) {
   const { doc, apply } = useDocumentStore();
+  const setDialog = useEditorStore((s) => s.setDialog);
   const travado = table.locked;
   const linhas = heightRows(doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'));
 
@@ -26,6 +28,12 @@ export function HeightTablePanel({ table }: { table: HeightTable }) {
           </>
         )}
       </p>
+
+      <div className="row-buttons">
+        <button className="primary" onClick={() => setDialog('alturas')}>
+          Alturas dos obstáculos…
+        </button>
+      </div>
 
       <label className="check">
         <input
@@ -69,10 +77,6 @@ export function HeightTablePanel({ table }: { table: HeightTable }) {
         onCommit={(v) => edita('Altura da linha', (t) => { t.style.rowHeightMm = v; })}
       />
 
-      <p className="note dim">
-        A tabela não guarda alturas próprias: ela lê os obstáculos. Mudou a
-        altura de uma vara, a tabela muda junto.
-      </p>
     </>
   );
 }

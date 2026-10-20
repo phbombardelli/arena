@@ -259,8 +259,8 @@ export function PathPanel({ path }: { path: CoursePath }) {
         </>
       )}
       <p className="note dim">
-        Arraste um nó para movê-lo; a alça do nó ativo curva o traçado. Duplo
-        clique no meio de um trecho insere um nó.
+        Arraste um nó para movê-lo. Arraste a bolinha do meio de um trecho para
+        curvá-lo; duplo clique nela insere um nó.
       </p>
 
       </details>

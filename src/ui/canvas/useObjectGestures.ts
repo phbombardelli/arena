@@ -3,7 +3,7 @@ import { angleOf, normalizeAngle, type Vec2 } from '@core/geometry/vec';
 import { snapAngle, toMillimeterPrecision } from '@core/geometry/snap';
 import { moveObjects, rotateObjects } from '@core/commands/ops';
 import { moveArenaVertex, resizeArenaByCorner } from '@core/commands/arenaOps';
-import { moveHandle, moveNode } from '@core/commands/pathOps';
+import { bendLeg, legHalfPoint, moveHandle, moveNode } from '@core/commands/pathOps';
 import {
   boundsIn,
   boundsCenter,
@@ -27,7 +27,8 @@ type Gesture =
   | { kind: 'vertex'; arenaId: ObjectId; index: number }
   | { kind: 'resize'; arenaId: ObjectId; corner: 0 | 1 | 2 | 3 }
   | { kind: 'path-node'; pathId: ObjectId; index: number }
-  | { kind: 'path-handle'; pathId: ObjectId; index: number; which: 'in' | 'out'; origin: Vec2 };
+  | { kind: 'path-handle'; pathId: ObjectId; index: number; which: 'in' | 'out'; origin: Vec2 }
+  | { kind: 'path-bend'; pathId: ObjectId; leg: number; startM: Vec2; half: Vec2 };
 
 /**
  * Gestos sobre objetos: arrastar, girar e seleção por retângulo.
@@ -93,6 +94,15 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
       if (current.kind === 'path-node') {
         const { pathId, index } = current;
         store.apply('Mover nó', (doc) => moveNode(doc, pathId, index, p), 'gesto-no');
+        return;
+      }
+
+      if (current.kind === 'path-bend') {
+        // Sem arrastar, nada muda: o duplo clique no mesmo marcador insere nó.
+        if (Math.hypot(p.x - current.startM.x, p.y - current.startM.y) < 1e-6) return;
+        const { pathId, leg, half, startM } = current;
+        const alvo = { x: half.x + p.x - startM.x, y: half.y + p.y - startM.y };
+        store.apply('Curvar trecho', (doc) => bendLeg(doc, pathId, leg, alvo), 'gesto-curvar');
         return;
       }
 
@@ -234,6 +244,21 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
     [toModel],
   );
 
+  /** Arrastar o meio de um trecho curva o trecho (B-28). */
+  const beginLegBend = useCallback(
+    (e: React.PointerEvent, pathId: ObjectId, leg: number) => {
+      const path = useDocumentStore.getState().doc.objects.find((o) => o.id === pathId);
+      if (path?.kind !== 'path') return;
+      const half = legHalfPoint(path, leg);
+      if (!half) return;
+      const start = toModel(e);
+      gesture.current = { kind: 'path-bend', pathId, leg, startM: start, half };
+      pending.current = start;
+      capture(e.target as Element, e.pointerId);
+    },
+    [toModel],
+  );
+
   const beginMarquee = useCallback(
     (e: React.PointerEvent) => {
       const start = toModel(e);
@@ -306,6 +331,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
     beginResize,
     beginPathNodeDrag,
     beginPathHandleDrag,
+    beginLegBend,
     onPointerMove,
     onPointerUp,
     marquee,

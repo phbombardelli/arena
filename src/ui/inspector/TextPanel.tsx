@@ -49,16 +49,6 @@ export function TextPanel({ label }: { label: TextLabel }) {
         onCommit={(v) => edita('Tamanho do texto', (t) => { t.sizeMm = v; })}
       />
 
-      <NumberField
-        label="Giro"
-        unit="°"
-        value={label.rotation}
-        decimals={0}
-        step={15}
-        disabled={travado}
-        onCommit={(v) => edita('Giro do texto', (t) => { t.rotation = v; })}
-      />
-
       <label className="field">
         <span>Alinhamento</span>
         <select

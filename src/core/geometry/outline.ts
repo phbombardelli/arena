@@ -54,5 +54,44 @@ export function polygonPathD(
   return parts.join(' ');
 }
 
+/**
+ * O mesmo contorno de `polygonPathD`, mas como polígono: cada canto
+ * arredondado vira `passos` segmentos da mesma curva (a quadrática que
+ * entra e sai pelo vértice). É o que a hachura e o rótulo precisam para
+ * respeitar o canto arredondado — recortar no polígono de cantos vivos
+ * deixava as linhas saindo pela curva (B-24).
+ */
+export function outlinePolygon(
+  points: Vec2[],
+  treatment: CornerTreatment,
+  radius: number,
+  passos = 8,
+): Vec2[] {
+  const n = points.length;
+  if (n < 3 || treatment === 'square' || radius <= 0) return points;
+  const out: Vec2[] = [];
+  for (let i = 0; i < n; i += 1) {
+    const prev = points[(i - 1 + n) % n]!;
+    const curr = points[i]!;
+    const next = points[(i + 1) % n]!;
+    const r = Math.min(radius, distance(prev, curr) / 2, distance(curr, next) / 2);
+    const entry = add(curr, scale(normalize(sub(prev, curr)), r));
+    const exit = add(curr, scale(normalize(sub(next, curr)), r));
+    if (treatment === 'chamfer') {
+      out.push(entry, exit);
+      continue;
+    }
+    for (let k = 0; k <= passos; k += 1) {
+      const t = k / passos;
+      const u = 1 - t;
+      out.push({
+        x: u * u * entry.x + 2 * u * t * curr.x + t * t * exit.x,
+        y: u * u * entry.y + 2 * u * t * curr.y + t * t * exit.y,
+      });
+    }
+  }
+  return out;
+}
+
 const fmt = (p: Vec2): string => `${round(p.x)} ${round(p.y)}`;
 const round = (v: number): number => Math.round(v * 1000) / 1000;

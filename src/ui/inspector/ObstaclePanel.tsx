@@ -1,13 +1,10 @@
 import {
-  addElement,
   resetLabel,
   setBarAppearance,
   setLiverpool,
   setWings,
   flipArrow,
-  removeElement,
   setArrow,
-  setElementHeight,
   setFaceWidth,
   setLabelVisible,
   setObstacleLetter,
@@ -19,36 +16,31 @@ import {
 import {
   OBSTACLES,
   acceptsLiverpool,
-  formatHeights,
   hasBars,
   obstacleDef,
 } from '@core/library/obstacles';
 import type { BarStyle, Obstacle, ObstacleType } from '@core/model/types';
-import { courseOrder } from '@core/assist/courseRide';
 import { useDocumentStore } from '@store/documentStore';
-import { insertTimingLine } from '@ui/actions/timingActions';
 import { NumberField } from './NumberField';
 import { WingStyleField } from './WingStyleField';
 
 const LETRAS: Obstacle['letter'][] = ['', 'A', 'B', 'C'];
 
+/**
+ * Painel do obstáculo, enxuto (B-33): só o que se mexe a toda hora —
+ * tipo, número e letra, frente e largura, seta. Giro e o que é raro
+ * (posição exata, aparência, rótulos, observação) o ObjectPanel põe
+ * depois, este último dentro de "Mais opções". As alturas moram na
+ * configuração da tabela de alturas; as explicações viraram dica do mouse.
+ */
 export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
-  const { doc, apply } = useDocumentStore();
+  const { apply } = useDocumentStore();
   const def = obstacleDef(obstacle.type);
   const travado = obstacle.locked;
 
-  // Partida e chegada só quando pedidas: o primeiro e o último obstáculo
-  // oferecem o botão, e nada é colocado sozinho.
-  const degraus = courseOrder(doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'));
-  const ehPrimeiro = degraus[0]?.elements[0]?.id === obstacle.id;
-  const ultimo = degraus[degraus.length - 1];
-  const ehUltimo = ultimo?.elements[ultimo.elements.length - 1]?.id === obstacle.id;
-  const tem = (role: 'start' | 'finish') =>
-    doc.objects.some((o) => o.kind === 'timing' && o.role === role);
-
   return (
     <>
-      <label className="field">
+      <label className="field" title={def.hint}>
         <span>Tipo</span>
         <select
           value={obstacle.type}
@@ -60,193 +52,115 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
           }
         >
           {OBSTACLES.map((o) => (
-            <option key={o.type} value={o.type}>{o.label}</option>
+            <option key={o.type} value={o.type} title={o.hint}>{o.label}</option>
           ))}
         </select>
       </label>
-      <p className="note dim">{def.hint}</p>
 
-      <h3>Identificação</h3>
-      <label className="field">
-        <span>Número</span>
-        <input
-          type="text"
-          value={obstacle.number}
-          disabled={travado}
-          placeholder="livre"
-          onChange={(e) =>
-            apply(
-              'Número do obstáculo',
-              (d) => setObstacleNumber(d, obstacle.id, e.target.value),
-              `numero-${obstacle.id}`,
-            )
-          }
-        />
-      </label>
-      <label className="field">
-        <span>Letra</span>
-        <select
-          value={obstacle.letter}
-          disabled={travado}
-          onChange={(e) =>
-            apply('Letra do obstáculo', (d) =>
-              setObstacleLetter(d, obstacle.id, e.target.value as Obstacle['letter']),
-            )
-          }
-        >
-          {LETRAS.map((l) => (
-            <option key={l || 'sem'} value={l}>{l === '' ? 'nenhuma' : l}</option>
-          ))}
-        </select>
-      </label>
-      <p className="note dim">
-        A letra marca a combinação: 4A, 4B. O programa não interpreta a
-        sequência — ela é sua.
-      </p>
-
-      <h3>Medidas</h3>
-      <NumberField
-        label="Largura da frente"
-        unit="m"
-        value={obstacle.faceWidthM}
-        decimals={2}
-        step={0.1}
-        min={0.5}
-        disabled={travado}
-        onCommit={(v) => apply('Largura do obstáculo', (d) => setFaceWidth(d, obstacle.id, v))}
-      />
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={obstacle.spreadM !== null}
-          disabled={travado}
-          onChange={(e) =>
-            apply('Largura de salto', (d) =>
-              setSpread(d, obstacle.id, e.target.checked ? (def.spreadM ?? 1.5) : null),
-            )
-          }
-        />
-        Tem largura de salto
-      </label>
-      {obstacle.spreadM !== null && (
-        <NumberField
-          label="Largura"
-          unit="m"
-          value={obstacle.spreadM}
-          decimals={2}
-          step={0.1}
-          min={0.1}
-          disabled={travado}
-          onCommit={(v) => apply('Largura de salto', (d) => setSpread(d, obstacle.id, v))}
-        />
-      )}
-
-      <h3>Alturas</h3>
-      {obstacle.elements.length === 0 && (
-        <p className="note dim">Este obstáculo não tem altura.</p>
-      )}
-      {obstacle.elements.map((el, i) => (
-        <div className="element-row" key={i}>
-          <NumberField
-            label={`Elemento ${i + 1}`}
-            unit="m"
-            value={el.height ?? 0}
-            decimals={2}
-            step={0.05}
-            min={0}
+      <div className="field-pair">
+        <label className="field">
+          <span>Número</span>
+          <input
+            type="text"
+            value={obstacle.number}
             disabled={travado}
-            onCommit={(v) =>
-              apply('Altura do elemento', (d) =>
-                setElementHeight(d, obstacle.id, i, v > 0 ? v : null),
+            placeholder="—"
+            onChange={(e) =>
+              apply(
+                'Número do obstáculo',
+                (d) => setObstacleNumber(d, obstacle.id, e.target.value),
+                `numero-${obstacle.id}`,
               )
             }
           />
-          <button
-            className="mini"
-            title="Remover este elemento"
+        </label>
+        <label className="field" title="A letra marca a combinação: 4A, 4B.">
+          <span>Letra</span>
+          <select
+            value={obstacle.letter}
             disabled={travado}
-            onClick={() => apply('Remover elemento', (d) => removeElement(d, obstacle.id, i))}
+            onChange={(e) =>
+              apply('Letra do obstáculo', (d) =>
+                setObstacleLetter(d, obstacle.id, e.target.value as Obstacle['letter']),
+              )
+            }
           >
-            ×
-          </button>
-        </div>
-      ))}
-      <div className="row-buttons">
-        <button
-          disabled={travado || obstacle.elements.length >= 6}
-          onClick={() => apply('Acrescentar elemento', (d) => addElement(d, obstacle.id))}
-        >
-          Acrescentar elemento
-        </button>
+            {LETRAS.map((l) => (
+              <option key={l || 'sem'} value={l}>{l === '' ? '—' : l}</option>
+            ))}
+          </select>
+        </label>
       </div>
-      {formatHeights(obstacle) !== '' && (
-        <p className="note">No croqui: {formatHeights(obstacle)}</p>
-      )}
 
-      <h3>Direção do salto</h3>
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={obstacle.arrow.visible}
+      <div className="field-pair">
+        <NumberField
+          label="Frente"
+          unit="m"
+          value={obstacle.faceWidthM}
+          decimals={2}
+          step={0.1}
+          min={0.5}
           disabled={travado}
-          onChange={(e) =>
-            apply('Seta', (d) => setArrow(d, obstacle.id, { visible: e.target.checked }))
-          }
+          onCommit={(v) => apply('Largura do obstáculo', (d) => setFaceWidth(d, obstacle.id, v))}
         />
-        Mostrar a seta
-      </label>
-      {obstacle.arrow.visible && (
-        <>
-          <div className="row-buttons">
-            <button disabled={travado} onClick={() => apply('Inverter a seta', (d) => flipArrow(d, obstacle.id))}>
-              Inverter direção
-            </button>
-          </div>
+        {/* A largura de salto vem do tipo: oxer, tríplice, muro e rio têm;
+            vertical e plano, não. */}
+        {obstacle.spreadM !== null && (
           <NumberField
-            label="Comprimento"
-            unit="mm"
-            value={obstacle.arrow.lengthMm}
-            decimals={1}
-            step={0.5}
-            min={1}
+            label="Largura"
+            unit="m"
+            value={obstacle.spreadM}
+            decimals={2}
+            step={0.1}
+            min={0.1}
             disabled={travado}
-            onCommit={(v) => apply('Tamanho da seta', (d) => setArrow(d, obstacle.id, { lengthMm: v }))}
+            onCommit={(v) => apply('Largura de salto', (d) => setSpread(d, obstacle.id, v))}
           />
-          <p className="note dim">
-            A seta é perpendicular à frente e gira junto com o obstáculo.
-          </p>
-        </>
-      )}
+        )}
+      </div>
 
-      {(ehPrimeiro || ehUltimo) && (
-        <div className="row-buttons">
-          {ehPrimeiro && (
-            <button onClick={() => insertTimingLine('start')}>
-              {tem('start') ? 'Recolocar partida' : 'Colocar partida'}
-            </button>
-          )}
-          {ehUltimo && (
-            <button onClick={() => insertTimingLine('finish')}>
-              {tem('finish') ? 'Recolocar chegada' : 'Colocar chegada'}
-            </button>
-          )}
-        </div>
-      )}
+      <div className="check-row">
+        <label className="check" title="A seta é perpendicular à frente e gira junto com o obstáculo.">
+          <input
+            type="checkbox"
+            checked={obstacle.arrow.visible}
+            disabled={travado}
+            onChange={(e) =>
+              apply('Seta', (d) => setArrow(d, obstacle.id, { visible: e.target.checked }))
+            }
+          />
+          Seta
+        </label>
+        {obstacle.arrow.visible && (
+          <button
+            className="mini neutral"
+            title="Inverter a direção do salto"
+            disabled={travado}
+            onClick={() => apply('Inverter a seta', (d) => flipArrow(d, obstacle.id))}
+          >
+            ⇄ inverter
+          </button>
+        )}
+      </div>
+    </>
+  );
+}
 
-      <details className="fold">
-        <summary>Aparência · suporte, varas, liverpool, rótulos</summary>
+/** O que é raro no obstáculo: vai para "Mais opções", fechado. */
+export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
+  const { apply } = useDocumentStore();
+  const travado = obstacle.locked;
+
+  return (
+    <>
       {hasBars(obstacle.type) && (
         <>
-          <h3>Suporte</h3>
+          <h3 title="O paraflanco é o painel lateral que sustenta as varas.">Suporte</h3>
           <WingStyleField
             wings={obstacle.wings}
             disabled={travado}
             onChange={(patch, rotulo) => apply(rotulo, (d) => setWings(d, obstacle.id, patch))}
           />
-          <p className="note dim">
-            O paraflanco é o painel lateral que sustenta as varas. Sem ele o
-            obstáculo parece uma vara solta no chão.
-          </p>
 
           <h3>Varas</h3>
           <label className="field">
@@ -320,7 +234,7 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
 
       {acceptsLiverpool(obstacle.type) && (
         <>
-          <h3>Liverpool</h3>
+          <h3 title="Deslocamento negativo põe a água antes do obstáculo; positivo, depois.">Liverpool</h3>
           <label className="check">
             <input
               type="checkbox"
@@ -392,11 +306,6 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
                   }
                 />
               </label>
-              <p className="note dim">
-                Padrão 3,00 × 0,50 m: mais estreita que a vara de 3,50 m, com as
-                pontas dela para fora. Deslocamento negativo põe a água antes do
-                obstáculo; positivo, depois. Fica sempre paralela à frente.
-              </p>
             </>
           )}
         </>
@@ -446,10 +355,8 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
         </div>
       )}
 
-      </details>
 
-      <details className="fold" open={obstacle.note !== ''}>
-        <summary>Observação</summary>
+      <h3>Observação</h3>
       <input
         type="text"
         className="full"
@@ -464,7 +371,6 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
           )
         }
       />
-      </details>
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { HeightsEditor } from '@ui/inspector/HeightsEditor';
 import { useEditorStore } from '@store/editorStore';
 import { Dialog } from '@ui/common/Popover';
 import { ArenaLibraryPanel } from '@ui/inspector/ArenaLibraryPanel';
@@ -68,6 +69,13 @@ export function Dialogs() {
     return (
       <Dialog title="Configurar folha" onClose={fecha}>
         <SheetSettings />
+      </Dialog>
+    );
+  }
+  if (dialog === 'alturas') {
+    return (
+      <Dialog title="Alturas dos obstáculos" onClose={fecha}>
+        <HeightsEditor />
       </Dialog>
     );
   }

@@ -7,6 +7,7 @@ import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { Popover } from '@ui/common/Popover';
 import { GridSettings } from '@ui/inspector/SheetSettings';
+import { measureFrame } from '@core/model/measureFrame';
 import { InterferencePanel } from '@ui/inspector/InterferencePanel';
 
 /**
@@ -22,13 +23,14 @@ export function StatusBar() {
 
   const mpp = metersPerPixel(viewport, doc.page.printScale);
   const step = doc.grid.stepM > 0 ? doc.grid.stepM : visibleGridStep(mpp, 8);
+  const medida = useMemo(() => measureFrame(doc), [doc]);
   const achados = useMemo(() => (mode === 'percurso' ? findInterferences(doc) : []), [doc, mode]);
 
   return (
     <footer className="statusbar">
       <span className="mono coords">
         {cursorM
-          ? `X ${formatMeters(cursorM.x)} m · Y ${formatMeters(cursorM.y)} m`
+          ? `X ${formatMeters(cursorM.x - medida.originM.x)} m · Y ${formatMeters(cursorM.y - medida.originM.y)} m`
           : 'X — · Y —'}
       </span>
       <span className="spacer" />
@@ -37,7 +39,7 @@ export function StatusBar() {
         className="chip"
         placement="up"
         align="right"
-        title="Grade: só na tela, não sai na folha"
+        title="Grade: dentro da pista, a partir do canto superior esquerdo. Sai na folha como aparece; desligue em Exibir para imprimir sem ela."
         trigger={
           <span className={doc.grid.visible ? '' : 'off'}>
             Grade {doc.grid.visible ? `${formatMeters(step, step < 1 ? 2 : 0)} m` : 'oculta'}
