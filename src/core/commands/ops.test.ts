@@ -16,7 +16,6 @@ import {
   deleteObjects,
   duplicateObjects,
   moveObjects,
-  moveObjectsSnapped,
   rotateObjects,
   sendToBack,
   setLocked,
@@ -30,7 +29,7 @@ const edit = (doc: CourseDocument, recipe: (d: CourseDocument) => void): CourseD
   produce(doc, recipe);
 
 function docWith(...objs: Ornament[]): CourseDocument {
-  return edit(createDocument(), (d) => {
+  return edit(createDocument({ arena: true }), (d) => {
     for (const o of objs) addObject(d, o);
   });
 }
@@ -53,22 +52,6 @@ describe('mover', () => {
     doc = edit(doc, (d) => setLocked(d, [a.id], true));
     const next = edit(doc, (d) => moveObjects(d, [a.id], { x: 5, y: 5 }));
     expect(getPosition(next.objects[1]!, 200)).toEqual({ x: 10, y: 10 });
-  });
-
-  it('snap alinha o objeto arrastado e preserva as posições relativas', () => {
-    const a = orn(10, 10);
-    const b = orn(13.3, 17.7);
-    const doc = docWith(a, b);
-    // Arrasta 2,3 m: o âncora vai para 12,50 (múltiplo de 0,5), o outro
-    // acompanha o MESMO deslocamento de 2,50.
-    const next = edit(doc, (d) =>
-      moveObjectsSnapped(d, [a.id, b.id], { x: 2.3, y: 0 }, a.id, 0.5),
-    );
-    const na = next.objects.find((o) => o.id === a.id)!;
-    const nb = next.objects.find((o) => o.id === b.id)!;
-    expect(getPosition(na, 200).x).toBeCloseTo(12.5, 9);
-    expect(getPosition(nb, 200).x).toBeCloseTo(15.8, 9);
-    expect(getPosition(nb, 200).y).toBeCloseTo(17.7, 9);
   });
 
   it('posição absoluta pelo painel', () => {

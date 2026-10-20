@@ -1,4 +1,4 @@
-import { addObject } from '@core/commands/ops';
+import { placeAssistantPath } from '@core/commands/pathOps';
 import { buildFromChoices } from '@core/assist/guidedRide';
 import { formatDistance, pathLength } from '@core/model/path';
 import { useDocumentStore } from '@store/documentStore';
@@ -25,7 +25,7 @@ export function GuidedPanel() {
   const aplicar = () => {
     const path = buildFromChoices(guided);
     if (path) {
-      apply('Traçado por trechos', (d) => addObject(d, path));
+      apply('Traçado por trechos', (d) => placeAssistantPath(d, path));
       setSelection([path.id]);
     }
     endGuided();

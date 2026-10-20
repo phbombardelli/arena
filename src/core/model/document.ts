@@ -31,22 +31,32 @@ export function defaultLayers(): Layer[] {
   }));
 }
 
+/** Escala de todo documento novo. */
+export const DEFAULT_PRINT_SCALE = 300;
+
 export const createArena = (widthM = 80, heightM = 40): Arena =>
   createRectangleArena({ x: 0, y: 0 }, widthM, heightM);
 
-/** Documento novo: A3 paisagem, pista 80×40 centralizada na área útil. */
-export function createDocument(): CourseDocument {
+/**
+ * Documento novo: folha A4 paisagem na escala 1:300, SEM pista — o
+ * desenhador começa do zero, colando o print do local ou escolhendo um
+ * modelo. A origem fica onde cairia uma pista 80×40 centralizada, para que
+ * um contorno desenhado a partir de (0,0) já nasça no meio da folha.
+ *
+ * `arena: true` traz a pista retangular 80×40 — é o ponto de partida dos
+ * testes e de quem quer um retângulo pronto.
+ */
+export function createDocument(opts: { arena?: boolean } = {}): CourseDocument {
   const page = {
-    format: 'A3' as const,
-    widthMm: 297,
-    heightMm: 420,
+    format: 'A4' as const,
+    widthMm: 210,
+    heightMm: 297,
     orientation: 'landscape' as const,
     marginsMm: { top: 10, right: 10, bottom: 10, left: 10 },
-    printScale: 250,
+    printScale: DEFAULT_PRINT_SCALE,
     scaleLabel: { visible: true, corner: 'inferior-direito' as const, bar: true },
   };
   const arena = createArena();
-  page.printScale = fitScaleForArena(arena, areaCheia(page));
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -64,12 +74,10 @@ export function createDocument(): CourseDocument {
       visible: true,
       stepM: 0,
       subdivisions: 5,
-      snap: true,
-      snapStepM: 0.5,
       angleSnapDeg: 15,
     },
     layers: defaultLayers(),
-    objects: [arena],
+    objects: opts.arena ? [arena] : [],
     assets: {},
     flags: false,
   };

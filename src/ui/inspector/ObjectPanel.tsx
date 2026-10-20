@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { bringToFront, sendToBack, setLocked, setObjectPosition, setObjectRotation, deleteObjects } from '@core/commands/ops';
 import { ORNAMENTS } from '@core/library/ornaments';
 import { boundsIn, getPosition, getRotation, unionBounds } from '@core/model/transform';
@@ -92,15 +93,22 @@ export function ObjectPanel() {
             }
           />
           {getRotation(single) !== null && (
-            <NumberField
-              label="Rotação"
-              unit="°"
-              value={getRotation(single)!}
-              decimals={1}
-              step={1}
-              disabled={single.locked}
-              onCommit={(v) => apply('Rotação', (d) => setObjectRotation(d, single.id, v))}
-            />
+            <>
+              <NumberField
+                label="Rotação"
+                unit="°"
+                value={getRotation(single)!}
+                decimals={1}
+                step={1}
+                disabled={single.locked}
+                onCommit={(v) => apply('Rotação', (d) => setObjectRotation(d, single.id, v))}
+              />
+              <RotationSlider
+                id={single.id}
+                value={getRotation(single)!}
+                disabled={single.locked}
+              />
+            </>
           )}
           {single.kind === 'arena' && <ArenaPanel arena={single} />}
           {single.kind === 'image' && <ImagePanel image={single} />}
@@ -199,5 +207,38 @@ export function ObjectPanel() {
         </button>
       </div>
     </section>
+  );
+}
+
+/**
+ * Barra de giro: arrastar gira o objeto ao vivo, de 0 a 360°. Cada arrasto
+ * vira UM passo de desfazer — a chave de mescla muda a cada vez que a barra
+ * é pega, então dois arrastos seguidos continuam separados.
+ */
+function RotationSlider({ id, value, disabled }: { id: string; value: number; disabled: boolean }) {
+  const { apply } = useDocumentStore();
+  const arrasto = useRef(0);
+  const graus = Math.round(((value % 360) + 360) % 360);
+  return (
+    <input
+      type="range"
+      className="rotation-slider"
+      aria-label="Girar"
+      min={0}
+      max={360}
+      step={1}
+      value={graus}
+      disabled={disabled}
+      onPointerDown={() => {
+        arrasto.current += 1;
+      }}
+      onChange={(e) =>
+        apply(
+          'Rotação',
+          (d) => setObjectRotation(d, id, Number(e.target.value)),
+          `giro-barra-${id}-${arrasto.current}`,
+        )
+      }
+    />
   );
 }

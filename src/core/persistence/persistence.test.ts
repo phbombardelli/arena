@@ -16,7 +16,7 @@ function richDocument(): CourseDocument {
     d.meta.title = 'Longines FEI Jumping World Cup Final';
     d.meta.designer = 'Anderson Lima';
     d.page.printScale = 250;
-    d.grid.snapStepM = 0.25;
+    d.grid.angleSnapDeg = 5;
 
     addObject(d, createOrnament('arvore', { x: 12.5, y: 7.25 }));
     addObject(d, createOrnament('cronometro', { x: 30, y: 22 }));
@@ -384,5 +384,19 @@ describe('7 -> 8: bandeirolas e distâncias escolhidas (decisão 54)', () => {
     const migrado = applyMigrations(antigo, 7, 8) as Record<string, unknown>;
     expect(migrado.flags).toBe(false);
     expect((migrado.objects as Record<string, unknown>[])[0]!.obstacleDistances).toEqual({});
+  });
+});
+
+describe('8 -> 9: o ímã saiu (B-38)', () => {
+  it('apaga os campos do ímã e mantém o passo do giro', () => {
+    const antigo = {
+      grid: { visible: true, stepM: 0, subdivisions: 5, snap: true, snapStepM: 0.5, angleSnapDeg: 15 },
+      objects: [],
+    } as Record<string, unknown>;
+    const migrado = applyMigrations(antigo, 8, 9) as Record<string, unknown>;
+    const grid = migrado.grid as Record<string, unknown>;
+    expect(grid.snap).toBeUndefined();
+    expect(grid.snapStepM).toBeUndefined();
+    expect(grid.angleSnapDeg).toBe(15);
   });
 });

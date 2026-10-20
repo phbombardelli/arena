@@ -14,7 +14,7 @@ interface PopoverProps {
 /**
  * Painel suspenso preso a um botão.
  *
- * É o lugar do que se ajusta uma vez por croqui — folha, grade, ímã —:
+ * É o lugar do que se ajusta uma vez por croqui — folha, grade —:
  * precisa estar a um clique, mas não merece espaço fixo na tela. Fecha ao
  * clicar fora ou no Esc, como o menu.
  */

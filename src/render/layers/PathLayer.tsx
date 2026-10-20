@@ -16,6 +16,7 @@ import {
   type OnLineLabel,
 } from '@core/assist/labelLayout';
 import { mmPerMeter } from '@core/scale/units';
+import { HIT_BAND_PX } from './ArenaLayer';
 import { dashPattern, font, text } from '@render/style/tokens';
 
 interface Props {
@@ -61,12 +62,14 @@ export function PathLayer({ path, printScale, originMm, obstacles = [], distance
 
   return (
     <g data-object={path.id} data-kind="path">
-      {/* Faixa larga e invisível: dá o que clicar num traço de 0,4 mm. */}
+      {/* Faixa larga e invisível, de largura fixa na tela: dá o que clicar
+          num traço de 0,4 mm em qualquer escala e zoom. */}
       <path
         d={pathD(path, toPaper)}
         fill="none"
         stroke="transparent"
-        strokeWidth={Math.max(2, path.style.strokeMm * 6)}
+        strokeWidth={HIT_BAND_PX}
+        vectorEffect="non-scaling-stroke"
         onPointerDown={onPointerDown}
         style={{ cursor: path.locked ? 'default' : 'move' }}
       />

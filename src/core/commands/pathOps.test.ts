@@ -25,6 +25,7 @@ import {
   insertNode,
   moveHandle,
   moveNode,
+  placeAssistantPath,
   removeNode,
   setAllLegLabels,
   setLegLabel,
@@ -493,5 +494,33 @@ describe('rótulos e estilo', () => {
     });
     expect(get(next, p.id).nodes).toHaveLength(2);
     expect(get(next, p.id).nodes[0]!.pos).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe('assistente substitui o próprio traçado (B-04)', () => {
+  const traco = (x: number) =>
+    createPath([createPathNode({ x, y: 0 }, 'corner'), createPathNode({ x: x + 10, y: 0 }, 'corner')]);
+
+  it('rodar duas vezes deixa um traçado só, com a apresentação do anterior', () => {
+    let doc = edit(createDocument({ arena: true }), (d) => placeAssistantPath(d, traco(0)));
+    const primeiro = doc.objects.find((o) => o.kind === 'path') as CoursePath;
+    doc = edit(doc, (d) => {
+      const p = d.objects.find((o) => o.id === primeiro.id) as CoursePath;
+      p.distanceMode = 'trecho';
+      p.obstacleDistances = { 'a>b': true };
+    });
+    doc = edit(doc, (d) => placeAssistantPath(d, traco(5)));
+    const tracados = doc.objects.filter((o): o is CoursePath => o.kind === 'path');
+    expect(tracados).toHaveLength(1);
+    expect(tracados[0]!.nodes[0]!.pos.x).toBe(5);
+    expect(tracados[0]!.distanceMode).toBe('trecho');
+    expect(tracados[0]!.obstacleDistances).toEqual({ 'a>b': true });
+  });
+
+  it('não mexe no traçado desenhado à mão', () => {
+    let doc = edit(createDocument({ arena: true }), (d) => addObject(d, traco(0)));
+    doc = edit(doc, (d) => placeAssistantPath(d, traco(5)));
+    doc = edit(doc, (d) => placeAssistantPath(d, traco(9)));
+    expect(doc.objects.filter((o) => o.kind === 'path')).toHaveLength(2);
   });
 });

@@ -1181,3 +1181,36 @@ o único que enxerga o que veio de fora; o menu Editar › Colar lê a área de
 transferência pela API e cai no colar interno se não houver imagem ou se o
 navegador negar a permissão. A imagem colada segue as regras da importada
 por arquivo (PNG, JPG ou WEBP, até 12 MB, embutida no .pcs).
+
+## 58. Bloco 1 do backlog: padrões, clique, giro, sem ímã
+
+**Documento novo** (B-29, B-30, B-31). Abre VAZIO, sem pista, em folha A4
+paisagem na escala 1:300, já no modo Pista — o primeiro passo é desenhar
+ou colar o local. A origem fica onde cairia uma pista 80×40 centralizada.
+Obstáculo novo nasce com 4 m de frente, em todos os tipos.
+
+**Área de clique** (B-27, B-39). O obstáculo responde no retângulo
+inteiro — vão do oxer e paraflancos incluídos — mais uma folga de 9 px de
+TELA. A linha da pista e a do traçado ganham uma faixa invisível de 16 px
+de tela. As duas usam `non-scaling-stroke`: valem o mesmo em 1:200 ou
+1:1000, de perto ou de longe. Nada disso vai para o PDF.
+
+**Barra de giro** (B-41). Uma barra de 0 a 360° embaixo do campo
+Rotação. Gira ao vivo; cada arrasto é um passo de desfazer.
+
+**Sem ímã** (B-38). Saiu tudo: menu, atalho S, Alt, indicador da barra
+de baixo e o popover de passos. O objeto vai onde se solta, arredondado
+ao milímetro. As setas do teclado movem 10 cm (1 m com Shift). O giro com
+Shift segurado continua em passos de 15° — é um modificador do gesto, não
+o ímã. Esquema 9: a migração apaga `grid.snap` e `grid.snapStepM`.
+
+**Escala digitável** (B-32). O campo aceita qualquer denominador entre 10
+e 5000 (1:350, por exemplo); a setinha ao lado oferece as escalas
+redondas.
+
+**Assistente não empilha** (B-04). O traçado feito pelo automático ou por
+trechos leva a marca `assistant`. Rodar de novo SUBSTITUI esse traçado,
+num passo só de desfazer, e o novo herda estilo, modo de distância e
+distâncias escolhidas do anterior. Traçado à mão, cópia ou colado nunca é
+substituído. Traçados de assistente salvos antes desta versão não têm a
+marca: na primeira vez, o novo ainda entra ao lado deles.

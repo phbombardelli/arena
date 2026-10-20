@@ -1,9 +1,10 @@
+import { useEffect, useRef, useState } from 'react';
 import { centerOnPage, fitScaleToPage } from '@core/model/document';
 import { GRID_STEPS } from '@core/geometry/snap';
 import { PAGE_FORMATS, STANDARD_SCALES, formatMeters } from '@core/scale/units';
 import type { Orientation, PageFormat, SheetCorner } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
-import { toggleGrid, toggleMagnet } from '@ui/actions/viewActions';
+import { toggleGrid } from '@ui/actions/viewActions';
 
 const ROTULO_MARGEM = {
   top: 'Topo',
@@ -59,25 +60,14 @@ export function SheetSettings() {
       <section>
         <h3>Escala de impressão</h3>
         <Field label="Escala">
-          <div className="inline">
-            <span>1:</span>
-            <select
-              value={STANDARD_SCALES.includes(doc.page.printScale) ? doc.page.printScale : 'custom'}
-              onChange={(e) => {
-                if (e.target.value === 'custom') return;
-                apply('Escala de impressão', (d) => {
-                  d.page.printScale = Number(e.target.value);
-                });
-              }}
-            >
-              {STANDARD_SCALES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-              {!STANDARD_SCALES.includes(doc.page.printScale) && (
-                <option value="custom">{doc.page.printScale}</option>
-              )}
-            </select>
-          </div>
+          <ScaleInput
+            value={doc.page.printScale}
+            onCommit={(v) =>
+              apply('Escala de impressão', (d) => {
+                d.page.printScale = v;
+              })
+            }
+          />
         </Field>
         <p className="note">1 m no terreno = {formatMeters(1000 / doc.page.printScale, 2)} mm no papel.</p>
         <div className="row-buttons">
@@ -240,49 +230,67 @@ export function GridSettings() {
   );
 }
 
+/** Limites da escala digitada: de planta de detalhe a hipódromo inteiro. */
+const ESCALA_MIN = 10;
+const ESCALA_MAX = 5000;
+
 /**
- * Ímã (o antigo "snap"): ao mover, inserir ou girar, a posição gruda em
- * passos redondos e o giro em ângulos redondos. Alt suspende na hora.
+ * Escala digitável (B-32): o campo aceita qualquer denominador — 1:300,
+ * 1:350 —, e a setinha ao lado oferece as escalas redondas para quem só
+ * quer escolher. Confirma no Enter ou ao sair, como os campos numéricos.
  */
-export function MagnetSettings() {
-  const { doc, apply } = useDocumentStore();
+function ScaleInput({ value, onCommit }: { value: number; onCommit: (v: number) => void }) {
+  const [texto, setTexto] = useState(String(value));
+  const editando = useRef(false);
+  useEffect(() => {
+    if (!editando.current) setTexto(String(value));
+  }, [value]);
+
+  const confirma = () => {
+    editando.current = false;
+    const n = Math.round(Number(texto.replace(/^1\s*:\s*/, '').replace(',', '.')));
+    if (!Number.isFinite(n) || n < ESCALA_MIN || n > ESCALA_MAX) {
+      setTexto(String(value));
+      return;
+    }
+    setTexto(String(n));
+    if (n !== value) onCommit(n);
+  };
+
   return (
-    <div className="settings">
-      <label className="check">
-        <input type="checkbox" checked={doc.grid.snap} onChange={toggleMagnet} />
-        Ímã ligado <kbd>S</kbd>
-      </label>
-      <p className="note">
-        Posição e giro grudam em passos redondos. Segure <kbd>Alt</kbd> para soltar na hora.
-      </p>
-      <Field label="Passo da posição">
-        <select
-          value={doc.grid.snapStepM}
-          onChange={(e) =>
-            apply('Passo do ímã', (d) => {
-              d.grid.snapStepM = Number(e.target.value);
-            })
+    <div className="inline scale-input">
+      <span>1:</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        aria-label="Denominador da escala"
+        value={texto}
+        onFocus={() => {
+          editando.current = true;
+        }}
+        onChange={(e) => setTexto(e.target.value)}
+        onBlur={confirma}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          if (e.key === 'Escape') {
+            editando.current = false;
+            setTexto(String(value));
           }
-        >
-          {GRID_STEPS.map((s) => (
-            <option key={s} value={s}>{formatMeters(s, s < 1 ? 2 : 0)} m</option>
-          ))}
-        </select>
-      </Field>
-      <Field label="Passo do giro">
-        <select
-          value={doc.grid.angleSnapDeg}
-          onChange={(e) =>
-            apply('Passo do giro', (d) => {
-              d.grid.angleSnapDeg = Number(e.target.value);
-            })
-          }
-        >
-          {[1, 5, 10, 15, 22.5, 30, 45, 90].map((a) => (
-            <option key={a} value={a}>{String(a).replace('.', ',')}°</option>
-          ))}
-        </select>
-      </Field>
+        }}
+      />
+      <select
+        aria-label="Escalas comuns"
+        title="Escalas comuns"
+        value=""
+        onChange={(e) => {
+          if (e.target.value) onCommit(Number(e.target.value));
+        }}
+      >
+        <option value="" disabled hidden>▾</option>
+        {STANDARD_SCALES.map((s) => (
+          <option key={s} value={s}>1:{s}</option>
+        ))}
+      </select>
     </div>
   );
 }

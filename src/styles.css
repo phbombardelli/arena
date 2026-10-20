@@ -186,8 +186,11 @@ button.active { background: var(--gold-soft); border-color: var(--accent); }
   background: var(--chrome);
 }
 .field input[type="number"] { font-variant-numeric: tabular-nums; text-align: right; }
+.rotation-slider { display: block; width: 100%; margin: 0 0 8px; accent-color: var(--accent); }
 .inline { display: flex; align-items: center; gap: 3px; }
 .inline select { width: 84px; }
+.scale-input input { width: 62px; text-align: right; font-variant-numeric: tabular-nums; }
+.scale-input select { width: 36px; padding: 2px 0; }
 
 .row-buttons { display: flex; gap: 4px; margin-top: 6px; }
 .row-buttons button { flex: 1; }

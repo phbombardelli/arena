@@ -15,7 +15,7 @@ const comQuadroNoTopo = (doc: CourseDocument): CourseDocument =>
 
 describe('área livre da folha', () => {
   it('sem anotação nenhuma, é a área útil inteira', () => {
-    const doc = createDocument();
+    const doc = createDocument({ arena: true });
     const util = usableArea(doc.page);
     const livre = freeAreaMm(doc);
     expect(livre.widthMm).toBeCloseTo(util.widthMm, 9);
@@ -23,7 +23,7 @@ describe('área livre da folha', () => {
   });
 
   it('encolhe pelo lado onde a anotação entra', () => {
-    const doc = createDocument();
+    const doc = createDocument({ arena: true });
     const util = usableArea(doc.page);
     // Quadro estreito e alto, colado na margem esquerda: come largura.
     const comQuadro = produce(doc, (d) => {
@@ -37,7 +37,7 @@ describe('área livre da folha', () => {
   });
 
   it('anotação no meio da folha não encolhe nada', () => {
-    const doc = createDocument();
+    const doc = createDocument({ arena: true });
     const util = usableArea(doc.page);
     const central = produce(doc, (d) => {
       addObject(
@@ -51,7 +51,7 @@ describe('área livre da folha', () => {
   });
 
   it('a tabela cresce com os obstáculos e come mais folha', () => {
-    const base = produce(createDocument(), (d) => {
+    const base = produce(createDocument({ arena: true }), (d) => {
       const area = usableArea(d.page);
       addObject(d, createHeightTable({ x: area.xMm, y: area.yMm }));
     });
@@ -71,7 +71,7 @@ describe('área livre da folha', () => {
 
 describe('ajustar ao papel', () => {
   it('com quadro na folha, a escala fica igual ou mais afastada', () => {
-    const doc = createDocument();
+    const doc = createDocument({ arena: true });
     const escalaLimpa = fitScaleToPage(doc);
     const escalaComQuadro = fitScaleToPage(comQuadroNoTopo(doc));
     // Escala maior é desenho menor: 1:300 desenha menor que 1:250.
@@ -79,7 +79,7 @@ describe('ajustar ao papel', () => {
   });
 
   it('a pista continua dentro da área livre depois de centralizar', () => {
-    const doc = produce(comQuadroNoTopo(createDocument()), (d) => {
+    const doc = produce(comQuadroNoTopo(createDocument({ arena: true })), (d) => {
       d.page.printScale = fitScaleToPage(d);
       centerOnPage(d);
     });
@@ -97,10 +97,10 @@ describe('ajustar ao papel', () => {
   });
 
   it('margem maior deixa menos folha para o desenho', () => {
-    const apertado = produce(createDocument(), (d) => {
+    const apertado = produce(createDocument({ arena: true }), (d) => {
       d.page.marginsMm = { top: 40, right: 40, bottom: 40, left: 40 };
     });
-    expect(freeAreaMm(apertado).widthMm).toBeLessThan(freeAreaMm(createDocument()).widthMm);
-    expect(fitScaleToPage(apertado)).toBeGreaterThanOrEqual(fitScaleToPage(createDocument()));
+    expect(freeAreaMm(apertado).widthMm).toBeLessThan(freeAreaMm(createDocument({ arena: true })).widthMm);
+    expect(fitScaleToPage(apertado)).toBeGreaterThanOrEqual(fitScaleToPage(createDocument({ arena: true })));
   });
 });

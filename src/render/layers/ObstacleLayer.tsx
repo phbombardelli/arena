@@ -54,6 +54,7 @@ export function ObstacleLayer({
         onPointerDown={onPointerDown}
         style={{ cursor: obstacle.locked ? 'default' : 'move' }}
       >
+        {onPointerDown && <ObstacleHitArea obstacle={obstacle} k={k} />}
         <ObstacleShape obstacle={obstacle} k={k} />
         {obstacle.arrow.visible && <JumpArrow obstacle={obstacle} k={k} />}
         {flags && (
@@ -104,3 +105,33 @@ export function ObstacleLayer({
 }
 
 const round = (v: number): number => Math.round(v * 1000) / 1000;
+
+/** Folga da área de clique além do desenho, em pixels de TELA. */
+export const HIT_MARGIN_PX = 9;
+
+/**
+ * Área de clique do obstáculo: o retângulo inteiro, com o vão do oxer e os
+ * paraflancos, mais uma folga fixa na tela. Só o desenho respondia ao
+ * clique — num oxer largo o miolo vazio não pegava, e em escala grande a
+ * vara fina sumia debaixo do cursor. A folga é um traço invisível que não
+ * escala com o zoom (`non-scaling-stroke`), então vale o mesmo de perto e
+ * de longe. Só existe no editor: o PDF não recebe `onPointerDown`.
+ */
+function ObstacleHitArea({ obstacle, k }: { obstacle: Obstacle; k: number }) {
+  const ext = obstacleExtent(obstacle);
+  const flanco = obstacle.wings.style === 'paraflanco' ? obstacle.wings.widthM : 0;
+  const meia = (ext.halfWidthM + flanco) * k;
+  return (
+    <rect
+      data-part="hit-area"
+      x={-meia}
+      y={ext.frontM * k}
+      width={meia * 2}
+      height={Math.max(0.01, (ext.backM - ext.frontM) * k)}
+      fill="transparent"
+      stroke="transparent"
+      strokeWidth={HIT_MARGIN_PX * 2}
+      vectorEffect="non-scaling-stroke"
+    />
+  );
+}

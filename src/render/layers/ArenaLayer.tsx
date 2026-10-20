@@ -19,6 +19,9 @@ const TICK_MM = 1.3;
 const TICK_MAJOR_MM = 2.2;
 const LABEL_GAP_MM = 1.2;
 
+/** Largura da faixa de clique de uma linha, em pixels de tela. */
+export const HIT_BAND_PX = 16;
+
 export function ArenaLayer({ arena, printScale, originMm, selected, onPointerDown }: Props) {
   if (!arena.visible) return null;
   const k = mmPerMeter(printScale);
@@ -42,6 +45,20 @@ export function ArenaLayer({ arena, printScale, originMm, selected, onPointerDow
         onPointerDown={onPointerDown}
         style={{ cursor: 'pointer' }}
       />
+      {/* Faixa invisível ao longo do contorno, de largura fixa na TELA: a
+          linha de 0,5 mm vira um fio em escala grande e ninguém acerta. */}
+      {onPointerDown && (
+        <path
+          d={d}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={HIT_BAND_PX}
+          vectorEffect="non-scaling-stroke"
+          strokeLinejoin="round"
+          onPointerDown={onPointerDown}
+          style={{ cursor: 'pointer' }}
+        />
+      )}
       {arena.structure ? (
         <StructureDetails arena={arena} toPaper={toPaper} />
       ) : (

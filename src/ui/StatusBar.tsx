@@ -6,23 +6,22 @@ import { metersPerPixel } from '@core/scale/viewport';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { Popover } from '@ui/common/Popover';
-import { GridSettings, MagnetSettings } from '@ui/inspector/SheetSettings';
+import { GridSettings } from '@ui/inspector/SheetSettings';
 import { InterferencePanel } from '@ui/inspector/InterferencePanel';
 
 /**
  * Barra de baixo: onde o cursor está e o estado das ajudas de desenho.
  *
- * Grade, ímã e avisos são botões: mostram o estado de relance e abrem os
+ * Grade e avisos são botões: mostram o estado de relance e abrem os
  * ajustes num clique. A escala e a folha saíram daqui — estão no botão
  * Folha, em cima —, e a lista de atalhos virou janela própria.
  */
 export function StatusBar() {
   const doc = useDocumentStore((s) => s.doc);
-  const { cursorM, viewport, snapSuspended, mode, setDialog } = useEditorStore();
+  const { cursorM, viewport, mode, setDialog } = useEditorStore();
 
   const mpp = metersPerPixel(viewport, doc.page.printScale);
   const step = doc.grid.stepM > 0 ? doc.grid.stepM : visibleGridStep(mpp, 8);
-  const imaLigado = doc.grid.snap && !snapSuspended;
   const achados = useMemo(() => (mode === 'percurso' ? findInterferences(doc) : []), [doc, mode]);
 
   return (
@@ -48,24 +47,6 @@ export function StatusBar() {
         <GridSettings />
       </Popover>
 
-      <Popover
-        className="chip"
-        placement="up"
-        align="right"
-        title="Ímã: posição e giro grudam em passos redondos (Alt solta)"
-        trigger={
-          <span className={imaLigado ? '' : 'off'}>
-            Ímã{' '}
-            {imaLigado
-              ? `${formatMeters(doc.grid.snapStepM, 2)} m · ${String(doc.grid.angleSnapDeg).replace('.', ',')}°`
-              : snapSuspended
-                ? 'solto (Alt)'
-                : 'desligado'}
-          </span>
-        }
-      >
-        <MagnetSettings />
-      </Popover>
 
       {mode === 'percurso' && (
         <Popover

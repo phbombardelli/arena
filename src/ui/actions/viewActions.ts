@@ -30,10 +30,3 @@ export function toggleGrid(): void {
     d.grid.visible = !d.grid.visible;
   });
 }
-
-/** O "snap": posição e giro grudam em passos redondos. */
-export function toggleMagnet(): void {
-  useDocumentStore.getState().apply('Alternar ímã', (d) => {
-    d.grid.snap = !d.grid.snap;
-  });
-}

@@ -3,7 +3,7 @@ import { insertArenaVertex } from '@core/commands/arenaOps';
 import { insertNode } from '@core/commands/pathOps';
 import { allObstacles } from '@core/commands/obstacleOps';
 import { addObject } from '@core/commands/ops';
-import { snapPoint, toMillimeterPrecision } from '@core/geometry/snap';
+import { toMillimeterPrecision } from '@core/geometry/snap';
 import { distance, type Vec2 } from '@core/geometry/vec';
 import { createObstacle, nextObstacleNumber } from '@core/library/obstacles';
 import { createOrnament } from '@core/library/ornaments';
@@ -42,7 +42,7 @@ import {
   selectAll,
 } from '@ui/actions/editActions';
 import { exportCurrentPdf } from '@ui/actions/exportActions';
-import { toggleGrid, toggleMagnet } from '@ui/actions/viewActions';
+import { toggleGrid } from '@ui/actions/viewActions';
 import { printDocument } from '@platform/print';
 import { useElementSize } from '@ui/hooks/useElementSize';
 import { ArenaDraft, ArenaHandles } from './ArenaHandles';
@@ -108,14 +108,10 @@ export function Canvas() {
 
   const gestures = useObjectGestures(toModel);
 
-  /** Ponto do modelo já alinhado ao grid, quando o snap está ativo. */
+  /** Ponto do modelo arredondado ao milímetro — sem ímã: vai onde se clicou. */
   const snapped = useCallback(
-    (p: Vec2): Vec2 => {
-      const use = doc.grid.snap && !useEditorStore.getState().snapSuspended;
-      const out = use ? snapPoint(p, doc.grid.snapStepM) : p;
-      return { x: toMillimeterPrecision(out.x), y: toMillimeterPrecision(out.y) };
-    },
-    [doc.grid.snap, doc.grid.snapStepM],
+    (p: Vec2): Vec2 => ({ x: toMillimeterPrecision(p.x), y: toMillimeterPrecision(p.y) }),
+    [],
   );
 
   /** Tolerância de fechamento do contorno: 10 px, convertidos para metros. */
@@ -362,7 +358,6 @@ export function Canvas() {
         spaceDown.current = true;
         return;
       }
-      if (e.altKey) ed.setSnapSuspended(true);
 
       const key = e.key.toLowerCase();
 
@@ -433,8 +428,8 @@ export function Canvas() {
       } else if (e.key.startsWith('Arrow')) {
         if (sel.length === 0) return;
         e.preventDefault();
-        const base = st.doc.grid.snap ? st.doc.grid.snapStepM : 0.1;
-        const step = e.shiftKey ? base * 10 : base;
+        // Setas: 10 cm por toque; com Shift, 1 m.
+        const step = e.shiftKey ? 1 : 0.1;
         const d: Vec2 = {
           x: e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0,
           y: e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0,
@@ -455,8 +450,6 @@ export function Canvas() {
         // Letra com modificador não é atalho de ferramenta.
       } else if (key === 'g') {
         toggleGrid();
-      } else if (key === 's') {
-        toggleMagnet();
       } else if (key === 'v') {
         ed.setTool('select');
       } else if (key === 'h') {
@@ -479,7 +472,6 @@ export function Canvas() {
     };
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.code === 'Space') spaceDown.current = false;
-      if (!e.altKey) useEditorStore.getState().setSnapSuspended(false);
     };
     // Colar: uma imagem na área de transferência vira imagem de fundo;
     // senão, cola os objetos copiados dentro do próprio editor.

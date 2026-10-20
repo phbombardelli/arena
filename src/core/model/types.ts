@@ -235,6 +235,12 @@ export interface CoursePath extends BaseObject {
    * ausente = oculta (decisão 54).
    */
   obstacleDistances: Record<string, boolean>;
+  /**
+   * Traçado gerado pelos assistentes (automático ou por trechos). Rodar o
+   * assistente de novo SUBSTITUI esse traçado em vez de empilhar outro por
+   * cima (B-04). Ausente = desenhado à mão, que nunca é substituído.
+   */
+  assistant?: true;
 }
 
 /* ------------------------------------------------------------ anotações */
@@ -391,8 +397,7 @@ export interface GridSettings {
   /** 0 = automático conforme o zoom. */
   stepM: Meters;
   subdivisions: number;
-  snap: boolean;
-  snapStepM: Meters;
+  /** Passo do giro com Shift segurado, em graus. */
   angleSnapDeg: number;
 }
 
@@ -431,4 +436,4 @@ export interface CourseDocument {
   flags: boolean;
 }
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;

@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { angleOf, normalizeAngle, type Vec2 } from '@core/geometry/vec';
-import { snapAngle, snapPoint } from '@core/geometry/snap';
-import { moveObjectsSnapped, rotateObjects } from '@core/commands/ops';
+import { snapAngle, toMillimeterPrecision } from '@core/geometry/snap';
+import { moveObjects, rotateObjects } from '@core/commands/ops';
 import { moveArenaVertex, resizeArenaByCorner } from '@core/commands/arenaOps';
 import { moveHandle, moveNode } from '@core/commands/pathOps';
 import {
@@ -50,12 +50,6 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
     setMarquee(box);
   }, []);
 
-  const snapStep = useCallback(() => {
-    const { doc } = useDocumentStore.getState();
-    const { snapSuspended } = useEditorStore.getState();
-    return doc.grid.snap && !snapSuspended ? doc.grid.snapStepM : 0;
-  }, []);
-
   /**
    * A captura de ponteiro pode falhar (ponteiro já liberado, ou evento
    * sintético). Nunca pode derrubar o gesto: o estado é registrado antes,
@@ -95,18 +89,14 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
       const { selection } = useEditorStore.getState();
 
       // Vértice e alça de canto arrastam para uma posição absoluta, e não
-      // por deslocamento: o snap precisa valer para o ponto de destino.
+      // por deslocamento.
       if (current.kind === 'path-node') {
-        const step = snapStep();
-        const alvo = step > 0 ? snapPoint(p, step) : p;
         const { pathId, index } = current;
-        store.apply('Mover nó', (doc) => moveNode(doc, pathId, index, alvo), 'gesto-no');
+        store.apply('Mover nó', (doc) => moveNode(doc, pathId, index, p), 'gesto-no');
         return;
       }
 
       if (current.kind === 'path-handle') {
-        // A alça NÃO usa snap: ela molda a curva, e alinhar ao grid daria
-        // saltos justamente onde se quer ajuste fino.
         const { pathId, index, which, origin } = current;
         const rel = { x: p.x - origin.x, y: p.y - origin.y };
         store.apply(
@@ -118,8 +108,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
       }
 
       if (current.kind === 'vertex' || current.kind === 'resize') {
-        const step = snapStep();
-        const target = step > 0 ? snapPoint(p, step) : p;
+        const target = p;
         const { arenaId } = current;
         store.apply(
           current.kind === 'vertex' ? 'Mover vértice' : 'Redimensionar pista',
@@ -136,17 +125,13 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
         const total = { x: p.x - current.startM.x, y: p.y - current.startM.y };
         const before = current.applied;
         if (Math.abs(total.x - before.x) < 1e-9 && Math.abs(total.y - before.y) < 1e-9) return;
-        const step = snapStep();
         store.apply(
           'Mover',
           (doc) =>
-            moveObjectsSnapped(
-              doc,
-              selection,
-              { x: total.x - before.x, y: total.y - before.y },
-              current.anchorId,
-              step,
-            ),
+            moveObjects(doc, selection, {
+              x: toMillimeterPrecision(total.x - before.x),
+              y: toMillimeterPrecision(total.y - before.y),
+            }),
           'gesto-mover',
         );
         current.applied = total;
@@ -162,7 +147,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
       store.apply('Girar', (doc) => rotateObjects(doc, selection, step), 'gesto-girar');
       current.applied = delta;
     },
-    [snapStep, updateMarquee],
+    [updateMarquee],
   );
 
   /* ------------------------------------------------------------ início */

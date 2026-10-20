@@ -257,9 +257,9 @@ describe('paraflanco', () => {
     expect(createObstacle('vertical', { x: 0, y: 0 }).wings.style).toBe('paraflanco');
   });
 
-  it('a vara padrão mede 3,50 m nos tipos de vara', () => {
-    for (const tipo of ['vertical', 'oxer', 'triplice', 'plano'] as const) {
-      expect(createObstacle(tipo, { x: 0, y: 0 }).faceWidthM).toBe(3.5);
+  it('o obstáculo padrão mede 4 m de frente', () => {
+    for (const tipo of ['vertical', 'oxer', 'triplice', 'plano', 'muro', 'rio'] as const) {
+      expect(createObstacle(tipo, { x: 0, y: 0 }).faceWidthM).toBe(4);
     }
   });
 
@@ -320,7 +320,7 @@ describe('estilo das varas', () => {
 });
 
 describe('liverpool como opção', () => {
-  it('nasce 3,00 x 0,50 m, mais estreito que a vara de 3,50 m', () => {
+  it('nasce 3,00 x 0,50 m, mais estreito que a vara de 4 m', () => {
     const o = createObstacle('vertical', { x: 0, y: 0 });
     expect(o.liverpool.widthM).toBe(3);
     expect(o.liverpool.spreadM).toBe(0.5);
@@ -339,7 +339,7 @@ describe('liverpool como opção', () => {
     const o = createObstacle('vertical', { x: 0, y: 0 });
     let doc = docCom(o);
     doc = edit(doc, (d) => setLiverpool(d, o.id, { enabled: true, widthM: 3 }));
-    expect(obstacleExtent(obs(doc, o.id)).halfWidthM).toBeCloseTo(1.75, 9);
+    expect(obstacleExtent(obs(doc, o.id)).halfWidthM).toBeCloseTo(2, 9);
   });
 
   it('deixou de ser um tipo de obstáculo', () => {
@@ -445,12 +445,12 @@ describe('posição dos rótulos', () => {
 
 describe('envoltória', () => {
   it('cobre a frente e a profundidade do paraflanco', () => {
-    const o = createObstacle('oxer', { x: 20, y: 10 }); // frente 3,5, salto 1,5
+    const o = createObstacle('oxer', { x: 20, y: 10 }); // frente 4, salto 1,5
     const doc = docCom(o);
     const b = getBounds(obs(doc, o.id), 250);
     const prof = wingDepth(obs(doc, o.id));
-    expect(b.min.x).toBeCloseTo(20 - 1.75, 9);
-    expect(b.max.x).toBeCloseTo(20 + 1.75, 9);
+    expect(b.min.x).toBeCloseTo(20 - 2, 9);
+    expect(b.max.x).toBeCloseTo(20 + 2, 9);
     // O paraflanco ultrapassa as varas: é ele quem manda na profundidade.
     expect(b.max.y - b.min.y).toBeCloseTo(prof, 9);
     expect(prof).toBeGreaterThan(1.5);
@@ -472,7 +472,7 @@ describe('envoltória', () => {
     const b = getBounds(obs(doc, o.id), 250);
     // Girado 90°, largura e profundidade trocam de eixo.
     expect(b.max.x - b.min.x).toBeCloseTo(1.5, 6);
-    expect(b.max.y - b.min.y).toBeCloseTo(3.5, 6);
+    expect(b.max.y - b.min.y).toBeCloseTo(4, 6);
   });
 });
 
@@ -487,7 +487,7 @@ describe('obstáculo bloqueado', () => {
       setObstacleType(d, o.id, 'rio');
     });
     expect(obs(next, o.id).number).toBe('1');
-    expect(obs(next, o.id).faceWidthM).toBe(3.5);
+    expect(obs(next, o.id).faceWidthM).toBe(4);
     expect(obs(next, o.id).type).toBe('vertical');
   });
 });

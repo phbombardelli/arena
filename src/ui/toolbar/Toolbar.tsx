@@ -16,7 +16,7 @@ import {
   selectAll,
   sendSelectionToBack,
 } from '@ui/actions/editActions';
-import { actualSize, fitPage, toggleGrid, toggleMagnet, zoomBy } from '@ui/actions/viewActions';
+import { actualSize, fitPage, toggleGrid, zoomBy } from '@ui/actions/viewActions';
 import { insertHeightTable, insertInfoBox } from '@ui/actions/annotationActions';
 import { insertTimingLine } from '@ui/actions/timingActions';
 import { importBackgroundImage, pasteImageFromSystemClipboard } from '@ui/actions/imageActions';
@@ -141,7 +141,6 @@ export function Toolbar() {
 
   const exibir: MenuEntry[] = [
     { label: check(doc.grid.visible, 'Grade'), shortcut: 'G', onSelect: toggleGrid },
-    { label: check(doc.grid.snap, 'Ímã'), shortcut: 'S', onSelect: toggleMagnet },
     { label: check(showPageFrame, 'Limites da folha'), onSelect: togglePageFrame },
     { label: check(showInterference, 'Avisos de interferência'), onSelect: toggleInterference },
     'separator',

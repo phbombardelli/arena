@@ -17,7 +17,7 @@ import { ObjectPanel } from './ObjectPanel';
  * Antes ele empilhava folha, margens, escala, grade, interferências e a
  * seleção, tudo aberto, e o que importava no momento ficava no fundo de
  * uma coluna longa. A folha foi para o botão "Folha" da barra de cima; a
- * grade, o ímã e os avisos, para a barra de baixo. Sem seleção, o painel
+ * grade e os avisos, para a barra de baixo. Sem seleção, o painel
  * mostra o resumo do que se está fazendo.
  */
 export function DocumentPanel() {
@@ -105,7 +105,7 @@ function ResumoProva() {
 
       <p className="note dim">
         Selecione um objeto para ver as propriedades dele. Folha e escala ficam no botão
-        Folha, em cima; grade e ímã, na barra de baixo.
+        Folha, em cima; a grade, na barra de baixo.
       </p>
     </section>
   );

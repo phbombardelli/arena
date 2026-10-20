@@ -29,10 +29,11 @@ export function copySelection(): void {
 export function pasteClipboard(): void {
   const ed = useEditorStore.getState();
   if (ed.clipboard.length === 0) return;
-  const copies = ed.clipboard.map((o) => ({
-    ...deepClone(o),
-    id: newId(o.kind.slice(0, 3)),
-  })) as SceneObject[];
+  const copies = ed.clipboard.map((o) => {
+    const c = { ...deepClone(o), id: newId(o.kind.slice(0, 3)) } as SceneObject;
+    if (c.kind === 'path') delete c.assistant;
+    return c;
+  });
   useDocumentStore.getState().apply('Colar', (d) => {
     for (const c of copies) {
       addObject(d, c);

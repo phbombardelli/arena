@@ -154,7 +154,21 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   5: v5ToV6,
   6: v6ToV7,
   7: v7ToV8,
+  8: v8ToV9,
 };
+
+/**
+ * 8 -> 9: o ímã saiu do editor (B-38). Os campos do ímã somem do arquivo;
+ * o passo do giro com Shift continua.
+ */
+function v8ToV9(doc: RawDocument): RawDocument {
+  const grid = doc.grid as Record<string, unknown> | undefined;
+  if (grid) {
+    delete grid.snap;
+    delete grid.snapStepM;
+  }
+  return doc;
+}
 
 /**
  * 7 -> 8: bandeirolas e distâncias escolhidas no traçado.

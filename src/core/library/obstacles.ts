@@ -28,7 +28,7 @@ export const OBSTACLES: readonly ObstacleDef[] = [
   {
     type: 'vertical',
     label: 'Vertical',
-    faceWidthM: 3.5,
+    faceWidthM: 4,
     spreadM: null,
     elements: 1,
     hint: 'Uma única linha de varas, sem largura.',
@@ -36,7 +36,7 @@ export const OBSTACLES: readonly ObstacleDef[] = [
   {
     type: 'oxer',
     label: 'Oxer',
-    faceWidthM: 3.5,
+    faceWidthM: 4,
     spreadM: 1.5,
     elements: 2,
     hint: 'Duas linhas de varas, com largura entre elas.',
@@ -44,7 +44,7 @@ export const OBSTACLES: readonly ObstacleDef[] = [
   {
     type: 'triplice',
     label: 'Tríplice',
-    faceWidthM: 3.5,
+    faceWidthM: 4,
     spreadM: 2.2,
     elements: 3,
     hint: 'Três linhas em altura crescente.',
@@ -52,7 +52,7 @@ export const OBSTACLES: readonly ObstacleDef[] = [
   {
     type: 'muro',
     label: 'Muro',
-    faceWidthM: 3,
+    faceWidthM: 4,
     spreadM: 0.6,
     elements: 1,
     hint: 'Bloco maciço.',
@@ -68,7 +68,7 @@ export const OBSTACLES: readonly ObstacleDef[] = [
   {
     type: 'plano',
     label: 'Plano',
-    faceWidthM: 3.5,
+    faceWidthM: 4,
     spreadM: null,
     elements: 1,
     hint: 'Obstáculo raso, de uma linha só.',

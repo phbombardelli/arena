@@ -1,13 +1,11 @@
 import type { Vec2 } from '@core/geometry/vec';
 import { normalizeAngle } from '@core/geometry/vec';
-import { snapValue, toMillimeterPrecision } from '@core/geometry/snap';
 import { deepClone } from '@core/model/clone';
 import { newId } from '@core/model/ids';
 import type { CourseDocument, LayerId, ObjectId, SceneObject } from '@core/model/types';
 import {
   boundsCenter,
   boundsIn,
-  getPosition,
   getRotation,
   rotateAround,
   setPosition,
@@ -28,36 +26,6 @@ const selected = (doc: CourseDocument, ids: ObjectId[]): SceneObject[] =>
 /** Move a seleção. `deltaM` em metros. */
 export function moveObjects(doc: CourseDocument, ids: ObjectId[], deltaM: Vec2): void {
   for (const obj of selected(doc, ids)) translate(obj, deltaM, doc.page.printScale);
-}
-
-/**
- * Move a seleção para uma posição de destino alinhada ao grid, preservando
- * as posições relativas dentro da seleção. O snap é aplicado ao objeto
- * arrastado, não a cada objeto — do contrário a seleção se deformaria.
- */
-export function moveObjectsSnapped(
-  doc: CourseDocument,
-  ids: ObjectId[],
-  deltaM: Vec2,
-  anchorId: ObjectId | null,
-  snapStepM: number,
-): void {
-  let delta = deltaM;
-  if (snapStepM > 0 && anchorId) {
-    const anchor = doc.objects.find((o) => o.id === anchorId);
-    if (anchor) {
-      const from = getPosition(anchor, doc.page.printScale);
-      const to = {
-        x: snapValue(from.x + deltaM.x, snapStepM),
-        y: snapValue(from.y + deltaM.y, snapStepM),
-      };
-      delta = { x: to.x - from.x, y: to.y - from.y };
-    }
-  }
-  moveObjects(doc, ids, {
-    x: toMillimeterPrecision(delta.x),
-    y: toMillimeterPrecision(delta.y),
-  });
 }
 
 export function setObjectPosition(
@@ -113,6 +81,8 @@ export function duplicateObjects(
     const copy = deepClone(o) as SceneObject;
     copy.id = newId(o.kind.slice(0, 3));
     copy.z = 0;
+    // A cópia é do desenhador: o assistente não a substitui depois.
+    if (copy.kind === 'path') delete copy.assistant;
     idMap.set(o.id, copy.id);
     return copy;
   });

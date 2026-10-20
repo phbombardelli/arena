@@ -1,4 +1,4 @@
-import { addObject } from '@core/commands/ops';
+import { placeAssistantPath } from '@core/commands/pathOps';
 import { buildCourseRide } from '@core/assist/courseRide';
 import { DEFAULT_RIDE, type RideParams } from '@core/assist/ridePath';
 import type { CurveWarning } from '@core/assist/legCurve';
@@ -34,7 +34,7 @@ export function traceCourse(params: RideParams = DEFAULT_RIDE): void {
     return;
   }
 
-  apply('Assistente de traçado', (d) => addObject(d, resultado.path));
+  apply('Assistente de traçado', (d) => placeAssistantPath(d, resultado.path));
   useEditorStore.getState().setSelection([resultado.path.id]);
 
   // Curva para trás é decisão visível: o desenhador tem que saber que ali

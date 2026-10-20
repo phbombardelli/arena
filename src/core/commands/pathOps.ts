@@ -1,6 +1,7 @@
 import { toMillimeterPrecision } from '@core/geometry/snap';
 import { scale, sub, type Vec2 } from '@core/geometry/vec';
 import { createPathNode, legsFor, smoothedNodes } from '@core/model/path';
+import { addObject } from './ops';
 import type {
   CoursePath,
   CourseDocument,
@@ -245,4 +246,27 @@ export function setAllLegLabels(doc: CourseDocument, id: ObjectId, visible: bool
 function syncLegs(path: CoursePath): void {
   const novos = legsFor(path.nodes.length);
   path.legs = novos.map((leg, i) => (path.legs[i] ? { ...leg, label: path.legs[i]!.label } : leg));
+}
+
+/**
+ * Põe no croqui o traçado de um assistente, SUBSTITUINDO o que um
+ * assistente gerou antes (B-04): rodar duas vezes não empilha linhas. O
+ * traçado novo herda a apresentação do anterior — estilo, modo de
+ * distância e distâncias escolhidas —, que é trabalho do desenhador e não
+ * do assistente. Traçado à mão fica intocado. Tudo num passo só de
+ * desfazer, porque quem chama já está dentro de um `apply`.
+ */
+export function placeAssistantPath(doc: CourseDocument, path: CoursePath): void {
+  const anterior = doc.objects.find(
+    (o): o is CoursePath => o.kind === 'path' && o.assistant === true,
+  );
+  const novo: CoursePath = { ...path, assistant: true };
+  if (anterior) {
+    novo.style = { ...anterior.style };
+    novo.distanceMode = anterior.distanceMode;
+    novo.totalLabel = { ...anterior.totalLabel };
+    novo.obstacleDistances = { ...anterior.obstacleDistances };
+  }
+  doc.objects = doc.objects.filter((o) => !(o.kind === 'path' && o.assistant === true));
+  addObject(doc, novo);
 }

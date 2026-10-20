@@ -44,8 +44,6 @@ interface EditorState {
   selection: ObjectId[];
   /** Ponto do modelo sob o cursor, em metros. `null` fora do canvas. */
   cursorM: Vec2 | null;
-  /** Snap temporariamente suspenso (tecla Alt). */
-  snapSuspended: boolean;
   /** Distância da cruzada de tempo ao obstáculo que ela serve, em metros. */
   timingDistanceM: number;
   /**
@@ -108,7 +106,6 @@ interface EditorState {
   toggleSelection: (id: ObjectId) => void;
   clearSelection: () => void;
   setCursor: (p: Vec2 | null) => void;
-  setSnapSuspended: (v: boolean) => void;
   setTimingDistance: (metros: number) => void;
   startGuided: (ride: GuidedRide) => void;
   setGuidedLeg: (index: number) => void;
@@ -140,12 +137,12 @@ interface EditorState {
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
-  mode: 'percurso',
+  // O documento novo não tem pista: o primeiro passo é desenhá-la.
+  mode: 'pista',
   tool: 'select',
   viewport: { centerMm: { x: 148, y: 105 }, zoom: ZOOM_ACTUAL_SIZE },
   selection: [],
   cursorM: null,
-  snapSuspended: false,
   timingDistanceM: 12,
   guided: null,
   guidedLeg: 0,
@@ -182,7 +179,6 @@ export const useEditorStore = create<EditorState>((set) => ({
     })),
   clearSelection: () => set({ selection: [] }),
   setCursor: (cursorM) => set({ cursorM }),
-  setSnapSuspended: (snapSuspended) => set({ snapSuspended }),
   setTimingDistance: (timingDistanceM) => set({ timingDistanceM }),
   startGuided: (guided) => set({ guided, guidedLeg: 0, selection: [] }),
   setGuidedLeg: (guidedLeg) => set({ guidedLeg }),
