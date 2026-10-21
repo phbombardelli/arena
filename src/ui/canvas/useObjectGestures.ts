@@ -22,7 +22,7 @@ export interface Marquee {
 }
 
 type Gesture =
-  | { kind: 'drag'; anchorId: ObjectId; startM: Vec2; applied: Vec2 }
+  | { kind: 'drag'; anchorId: ObjectId; startM: Vec2; applied: Vec2; soEste: ObjectId[] | null }
   | { kind: 'rotate'; pivot: Vec2; startAngle: number; applied: number }
   | { kind: 'marquee'; startM: Vec2 }
   | { kind: 'vertex'; arenaId: ObjectId; index: number }
@@ -185,6 +185,10 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
         anchorId: id,
         startM: toModel(e),
         applied: { x: 0, y: 0 },
+        // Clique sem arrastar numa peça de uma seleção maior: ao soltar,
+        // fica só ela (e os vinculados a ela). Sem isso, depois de
+        // desvincular o cenário, nenhuma peça se deixava editar (B-55).
+        soEste: !e.shiftKey && already && selection.length > alvo.length ? alvo : null,
       };
       capture(e.target as Element, e.pointerId);
     },
@@ -301,6 +305,11 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
     applyPending(shiftHeld.current);
     pending.current = null;
     gesture.current = null;
+
+    if (g.kind === 'drag' && g.soEste && Math.abs(g.applied.x) < 1e-9 && Math.abs(g.applied.y) < 1e-9) {
+      useEditorStore.getState().setSelection(g.soEste);
+      return true;
+    }
 
     if (g.kind === 'marquee') {
       const box = marqueeRef.current;

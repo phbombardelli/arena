@@ -193,6 +193,18 @@ function MapWizard({ image }: { image: ImportedImage }) {
   const arrasto = useRef<{ alvo: 'a' | 'b' | number } | null>(null);
   const desenho = useRef<{ de: Vec2; ate: Vec2 } | null>(null);
   const [, redesenha] = useState(0);
+  // Zoom e deslocamento da prévia (decisão 67): z = 1 mostra o print
+  // inteiro; o deslocamento é em pixels do canvas.
+  const [vista, setVista] = useState({ z: 1, ox: 0, oy: 0 });
+  const arrastoVista = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+  useEffect(() => setVista({ z: 1, ox: 0, oy: 0 }), [trabalho]);
+  // Com zoom, desenha o print em resolução cheia (a análise segue na cópia
+  // reduzida): prints de tela retina passam de 1400 px e ficariam borrados.
+  const nitida = vista.z > 1.3 && !!original && original.f < 1;
+  const cheio = useMemo(
+    () => (nitida && original ? girado(original.el, original.el.naturalWidth, original.el.naturalHeight, angulo) : null),
+    [nitida, original, angulo],
+  );
 
   useEffect(() => {
     const c = canvas.current;
@@ -200,10 +212,13 @@ function MapWizard({ image }: { image: ImportedImage }) {
     const g = c.getContext('2d')!;
     c.width = Math.round(trabalho.px.width * escala);
     c.height = Math.round(trabalho.px.height * escala);
+    g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, c.width, c.height);
+    const { z, ox, oy } = vista;
+    g.setTransform(z, 0, 0, z, -ox, -oy);
     const forte = passo === 'inicio' || passo === 'girar' || passo === 'medida';
     g.globalAlpha = forte ? 1 : 0.55;
-    g.drawImage(trabalho.bitmap, 0, 0, c.width, c.height);
+    g.drawImage(cheio ?? trabalho.bitmap, 0, 0, c.width, c.height);
     g.globalAlpha = 1;
     const P = (p: Vec2) => [p.x * escala, p.y * escala] as const;
     const poligono = (pts: Vec2[], traco: string, fundo: string | null, larg = 2, fechar = true) => {
@@ -216,20 +231,21 @@ function MapWizard({ image }: { image: ImportedImage }) {
         g.fill();
       }
       g.strokeStyle = traco;
-      g.lineWidth = larg;
+      g.lineWidth = larg / z;
       g.stroke();
     };
     const bolinha = (p: Vec2, cor: string, r = 6) => {
       g.beginPath();
-      g.arc(...P(p), r, 0, Math.PI * 2);
+      g.arc(...P(p), r / z, 0, Math.PI * 2);
       g.fillStyle = cor;
       g.fill();
       g.strokeStyle = '#ffffff';
-      g.lineWidth = 2;
+      g.lineWidth = 2 / z;
       g.stroke();
     };
     if (passo === 'girar') {
-      // Quadriculado de referência para alinhar a cerca.
+      // Quadriculado de referência para alinhar a cerca, fixo na tela.
+      g.setTransform(1, 0, 0, 1, 0, 0);
       g.strokeStyle = 'rgba(255,255,255,0.55)';
       g.lineWidth = 1;
       for (let x = 0; x < c.width; x += 40) {
@@ -244,6 +260,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
         g.lineTo(c.width, y + 0.5);
         g.stroke();
       }
+      g.setTransform(z, 0, 0, z, -ox, -oy);
     }
     if (!forte) {
       poligono(pista, '#d0193a', 'rgba(208, 25, 58, 0.08)', 3);
@@ -259,8 +276,9 @@ function MapWizard({ image }: { image: ImportedImage }) {
       }
       const d = desenho.current;
       if (d) {
-        g.setLineDash([5, 4]);
+        g.setLineDash([5 / z, 4 / z]);
         g.strokeStyle = '#111';
+        g.lineWidth = 1.5 / z;
         g.strokeRect(d.de.x * escala, d.de.y * escala, (d.ate.x - d.de.x) * escala, (d.ate.y - d.de.y) * escala);
         g.setLineDash([]);
       }
@@ -270,7 +288,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
       g.moveTo(...P(marcas.a));
       g.lineTo(...P(marcas.b));
       g.strokeStyle = '#d0193a';
-      g.lineWidth = 3;
+      g.lineWidth = 3 / z;
       g.stroke();
       bolinha(marcas.a, '#d0193a', 8);
       bolinha(marcas.b, '#d0193a', 8);
@@ -282,12 +300,53 @@ function MapWizard({ image }: { image: ImportedImage }) {
     const c = canvas.current!;
     return c.getBoundingClientRect().width / c.width;
   };
-  const noPrint = (e: React.PointerEvent | React.MouseEvent): Vec2 => {
+  /** Ponto do evento em pixels do canvas (antes do zoom). */
+  const noCanvas = (e: { clientX: number; clientY: number }) => {
     const r = canvas.current!.getBoundingClientRect();
-    const k = escala * naTela();
-    return { x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k };
+    return { x: (e.clientX - r.left) / naTela(), y: (e.clientY - r.top) / naTela() };
   };
-  const perto = (a: Vec2, b: Vec2) => Math.hypot(a.x - b.x, a.y - b.y) * escala * naTela() < PEGA_PX;
+  const noPrint = (e: React.PointerEvent | React.MouseEvent): Vec2 => {
+    const c = noCanvas(e);
+    return { x: (c.x + vista.ox) / (vista.z * escala), y: (c.y + vista.oy) / (vista.z * escala) };
+  };
+  const perto = (a: Vec2, b: Vec2) =>
+    Math.hypot(a.x - b.x, a.y - b.y) * escala * vista.z * naTela() < PEGA_PX;
+
+  /** Limita o deslocamento para o print não sair da prévia. */
+  const limita = (z: number, ox: number, oy: number) => {
+    const c = canvas.current;
+    if (!c) return { z, ox, oy };
+    return {
+      z,
+      ox: Math.min(Math.max(0, ox), c.width * (z - 1)),
+      oy: Math.min(Math.max(0, oy), c.height * (z - 1)),
+    };
+  };
+  /** Zoom em torno de um ponto do canvas (o cursor, ou o centro). */
+  const zoomEm = (fator: number, em?: { x: number; y: number }) => {
+    const c = canvas.current;
+    if (!c) return;
+    setVista((v) => {
+      const z = Math.min(10, Math.max(1, v.z * fator));
+      const p = em ?? { x: c.width / 2, y: c.height / 2 };
+      return limita(z, ((p.x + v.ox) * z) / v.z - p.x, ((p.y + v.oy) * z) / v.z - p.y);
+    });
+  };
+  // Roda do mouse: listener nativo, porque o do React é passivo e não
+  // consegue impedir a rolagem do diálogo.
+  useEffect(() => {
+    const c = canvas.current;
+    if (!c) return;
+    const roda = (e: WheelEvent) => {
+      e.preventDefault();
+      zoomEm(e.deltaY < 0 ? 1.2 : 1 / 1.2, noCanvas(e));
+    };
+    c.addEventListener('wheel', roda, { passive: false });
+    return () => c.removeEventListener('wheel', roda);
+  });
+  const comecaArrastoVista = (e: React.PointerEvent) => {
+    arrastoVista.current = { x: e.clientX, y: e.clientY, ox: vista.ox, oy: vista.oy };
+  };
 
   const aoApertar = (e: React.PointerEvent) => {
     if (e.detail > 1) return; // o duplo clique tem tratamento próprio
@@ -304,7 +363,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
         // Sem marcadores achados: a medida se marca à mão, arrastando.
         setMarcas({ a: p, b: p, radiusPx: 7 });
         arrasto.current = { alvo: 'b' };
-      }
+      } else comecaArrastoVista(e);
       return;
     }
     if (passo === 'pista') {
@@ -316,13 +375,17 @@ function MapWizard({ image }: { image: ImportedImage }) {
       }
       const i = pista.findIndex((q) => perto(p, q));
       if (i >= 0) arrasto.current = { alvo: i };
+      else comecaArrastoVista(e);
       return;
     }
-    if (passo === 'extras') {
+    if (passo === 'extras' && ferramenta) {
       if (ferramenta === 'arvore') setArvores((a) => [...a, p]);
       else if (ferramenta === 'construcao-livre' || ferramenta === 'ilha-livre') setLivre((l) => [...l, p]);
-      else if (ferramenta) desenho.current = { de: p, ate: p };
+      else desenho.current = { de: p, ate: p };
+      return;
     }
+    // Sem nada para pegar: arrastar desloca a vista.
+    comecaArrastoVista(e);
   };
 
   const aoDuploClique = (e: React.MouseEvent) => {
@@ -347,7 +410,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
           melhor = k;
         }
       });
-      if (melhor >= 0 && dmin * escala * naTela() < PEGA_PX * 2) {
+      if (melhor >= 0 && dmin * escala * vista.z * naTela() < PEGA_PX * 2) {
         setPista((pts) => [...pts.slice(0, melhor + 1), p, ...pts.slice(melhor + 1)]);
       }
       return;
@@ -356,6 +419,12 @@ function MapWizard({ image }: { image: ImportedImage }) {
   };
 
   const aoMover = (e: React.PointerEvent) => {
+    const v = arrastoVista.current;
+    if (v) {
+      const k = naTela();
+      setVista((atual) => limita(atual.z, v.ox - (e.clientX - v.x) / k, v.oy - (e.clientY - v.y) / k));
+      return;
+    }
     const p = noPrint(e);
     const a = arrasto.current;
     if (a && passo === 'medida' && marcas) setMarcas({ ...marcas, [a.alvo as 'a' | 'b']: p });
@@ -370,6 +439,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
 
   const aoSoltar = () => {
     arrasto.current = null;
+    arrastoVista.current = null;
     const d = desenho.current;
     desenho.current = null;
     if (d && (ferramenta === 'construcao' || ferramenta === 'ilha') && Math.abs(d.ate.x - d.de.x) > 3 && Math.abs(d.ate.y - d.de.y) > 3) {
@@ -456,6 +526,14 @@ function MapWizard({ image }: { image: ImportedImage }) {
         )}
 
         <div className="wizard-preview">
+          {trabalho && (
+            <div className="wizard-zoom">
+              <button onClick={() => zoomEm(1 / 1.5)} disabled={vista.z <= 1} title="Afastar">−</button>
+              <span className="mono">{Math.round(vista.z * 100)}%</span>
+              <button onClick={() => zoomEm(1.5)} disabled={vista.z >= 10} title="Aproximar (ou roda do mouse)">+</button>
+              <button onClick={() => setVista({ z: 1, ox: 0, oy: 0 })} disabled={vista.z === 1} title="Ver o print inteiro">Ajustar</button>
+            </div>
+          )}
           {trabalho ? (
             <canvas
               ref={canvas}
@@ -463,7 +541,14 @@ function MapWizard({ image }: { image: ImportedImage }) {
               onPointerMove={aoMover}
               onPointerUp={aoSoltar}
               onDoubleClick={aoDuploClique}
-              style={{ cursor: escolhendoPonto || (passo === 'extras' && ferramenta) ? 'crosshair' : 'default' }}
+              style={{
+                cursor:
+                  escolhendoPonto || (passo === 'extras' && ferramenta)
+                    ? 'crosshair'
+                    : vista.z > 1
+                      ? 'grab'
+                      : 'default',
+              }}
             />
           ) : (
             <p className="note">Abrindo o print…</p>

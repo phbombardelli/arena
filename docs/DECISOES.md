@@ -1399,3 +1399,19 @@ giram.
 desenho e, no painel, "Ângulo" com barra: é o ângulo da aresta mais
 longa (−90° a 90°), e mudá-lo gira o contorno em torno do centro.
 Sozinha, uma construção gira em torno do próprio centro.
+
+## 67. Zoom no assistente; clicar uma peça da seleção pega só ela
+
+**Zoom na prévia do assistente.** Roda do mouse (em torno do cursor) e os
+botões −, + e Ajustar, de 100% a 1000%; arrastar um espaço vazio desloca
+a vista. Pontos e traços mantêm o tamanho na tela em qualquer zoom, e
+com zoom o print é desenhado em resolução cheia (a análise continua na
+cópia reduzida) — dá para seguir a cerca de perto.
+
+**Clique numa peça de uma seleção maior** (B-55). Clicar sem arrastar
+num objeto que já fazia parte de uma seleção de vários deixa selecionado
+só ele (e os vinculados a ele, se houver). Antes a seleção inteira
+continuava: depois do assistente, mesmo desvinculando o cenário, clicar
+numa construção mantinha as oito peças selecionadas e o painel nunca
+mostrava os campos dela (rótulo, tipo, ângulo). Arrastar continua
+movendo a seleção toda.

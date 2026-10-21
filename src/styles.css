@@ -676,3 +676,7 @@ button.mini.neutral { color: var(--text); }
 .wizard-rotate .rotation-slider { flex: 1; margin: 0; }
 .wizard-rotate .mono { min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
 .row-buttons.wrap { flex-wrap: wrap; }
+.wizard-preview { position: relative; }
+.wizard-zoom { position: absolute; top: 8px; right: 8px; z-index: 1; display: flex; align-items: center; gap: 4px; padding: 3px 5px; border-radius: 6px; background: rgba(255,255,255,0.92); box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
+.wizard-zoom button { padding: 1px 8px; min-width: 26px; }
+.wizard-zoom .mono { min-width: 40px; text-align: center; font-size: 11.5px; font-variant-numeric: tabular-nums; }
