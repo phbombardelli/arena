@@ -1494,3 +1494,22 @@ texto, e com tudo o que construção tem (vértices, ângulo, vínculo).
 O tipo de obstáculo **rio** saiu. Esquema 11: na abertura, cada obstáculo
 rio vira um rio do cenário no mesmo lugar, tamanho e giro, e os vínculos
 de traçado e de partida/chegada com ele se soltam.
+
+## 73. Identidade "âmbar ensolarado" (1c)
+
+Escolhida entre cinco paletas e quatro variações da atual (B-42). Mantém a
+família da decisão 53 — papel quente, barra de cima clara — e fica mais
+alegre:
+
+- **Âmbar vivo** (#E3A52A) no botão principal, no modo ativo e na barra
+  de giro, com texto escuro por cima (7,8:1).
+- **Coral** (#D9603B; texto #A3401F) no que está ativo ou selecionado:
+  ferramenta, item de menu, título do painel, passo do assistente e a
+  moldura de seleção no desenho. Sobre o coral-claro, 5,3:1.
+- Papel #FBF5EA, superfícies brancas, borda #EEDFC4, texto #241A0E e
+  secundário #62553F (7,3:1). Mesa em areia (#EAD9B8) em volta da folha.
+- O verde de "tudo certo" escureceu (#1F6B49 sobre #DDF1E7, 5,5:1).
+- No traçado por trechos, as alternativas não escolhidas passaram a
+  cinza-azulado, para não se confundirem com a escolhida em coral.
+
+A FOLHA não muda: o croqui impresso tem as mesmas cores de antes.

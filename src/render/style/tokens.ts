@@ -33,13 +33,15 @@ export const color = {
   path: '#6b6b6b',
   // Seleção e mesa seguem a identidade do SAPH (decisão 53): dourado e
   // tons de papel. Só tela — nada disso sai no PDF.
-  selection: '#A8852E',
-  selectionFill: 'rgba(201, 168, 76, 0.14)',
+  // Seleção no desenho em coral (decisão 73): o que está ativo.
+  selection: '#D9603B',
+  selectionFill: 'rgba(217, 96, 59, 0.12)',
   warning: '#e08a00',
   water: '#2b7fd4',
   paper: '#ffffff',
   pageShadow: 'rgba(0,0,0,0.18)',
-  canvasBg: '#C9C2B2',
+  // Mesa em areia quente (decisão 73): a folha branca destaca sem o cinza.
+  canvasBg: '#EAD9B8',
 } as const;
 
 /** Padrões de traço, em milímetros de papel. */
