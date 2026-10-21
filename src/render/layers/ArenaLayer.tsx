@@ -1,7 +1,7 @@
 import type { Vec2 } from '@core/geometry/vec';
 import { arenaExtent, arenaPoints } from '@core/model/arena';
 import { outlinePolygon, polygonPathD } from '@core/geometry/outline';
-import { hatchSegments, insideIntervals, longestEdgeAngle, polygonCentroid } from '@core/geometry/hatch';
+import { hatchSegments, longestEdgeAngle, polygonCentroid } from '@core/geometry/hatch';
 import { STRUCTURE_LABEL_MM, structureDef, structureLabelAngle } from '@core/library/structures';
 import { mmPerMeter } from '@core/scale/units';
 import type { Arena } from '@core/model/types';
@@ -199,15 +199,19 @@ export function PerimeterRulerLayer({
     const major = isLabel(m);
     const len = major ? tickMajorM : tickM;
     const x = x0 + m;
-    const trechos = insideIntervals(contorno, 'x', Math.min(x0 + extent.widthM - fio, Math.max(x0 + fio, x)));
-    if (trechos.length === 0) continue;
-    const topo = Math.min(...trechos.map((t) => t[0]));
-    const base = Math.max(...trechos.map((t) => t[1]));
+    const cortes = cortesNaBorda(contorno, 'x', Math.min(x0 + extent.widthM - fio, Math.max(x0 + fio, x)));
+    if (cortes.length === 0) continue;
+    const cima = cortes.reduce((a, b) => (b.pos < a.pos ? b : a));
+    const baixo = cortes.reduce((a, b) => (b.pos > a.pos ? b : a));
+    const topo = cima.pos;
+    const base = baixo.pos;
     const label = major && m > 0 && m < extent.widthM ? String(Math.round(m)) : null;
-    if (sides.top) {
+    // Só onde aquele trecho de cerca é de cima/de baixo (mais deitado que
+    // em pé): perto de um canto, a linha pode cortar a cerca lateral.
+    if (sides.top && cima.deitado) {
       push(`t${m}`, { x, y: topo }, { x, y: topo - len }, label, { x, y: topo - len - gapM }, 'middle', 'auto');
     }
-    if (sides.bottom) {
+    if (sides.bottom && baixo.deitado) {
       push(`b${m}`, { x, y: base }, { x, y: base + len }, label, { x, y: base + len + gapM }, 'middle', 'hanging');
     }
   }
@@ -216,18 +220,45 @@ export function PerimeterRulerLayer({
     const major = isLabel(m);
     const len = major ? tickMajorM : tickM;
     const y = y0 + m;
-    const trechos = insideIntervals(contorno, 'y', Math.min(y0 + extent.heightM - fio, Math.max(y0 + fio, y)));
-    if (trechos.length === 0) continue;
-    const esq = Math.min(...trechos.map((t) => t[0]));
-    const dir = Math.max(...trechos.map((t) => t[1]));
+    const cortes = cortesNaBorda(contorno, 'y', Math.min(y0 + extent.heightM - fio, Math.max(y0 + fio, y)));
+    if (cortes.length === 0) continue;
+    const aEsq = cortes.reduce((a, b) => (b.pos < a.pos ? b : a));
+    const aDir = cortes.reduce((a, b) => (b.pos > a.pos ? b : a));
+    const esq = aEsq.pos;
+    const dir = aDir.pos;
     const label = major && m > 0 && m < extent.heightM ? String(Math.round(m)) : null;
-    if (sides.left) {
+    // Só onde aquele trecho de cerca é lateral (mais em pé que deitado):
+    // senão o traço da esquerda cai em cima de uma cerca de cima inclinada.
+    if (sides.left && !aEsq.deitado) {
       push(`l${m}`, { x: esq, y }, { x: esq - len, y }, label, { x: esq - len - gapM, y }, 'end', 'middle');
     }
-    if (sides.right) {
+    if (sides.right && !aDir.deitado) {
       push(`r${m}`, { x: dir, y }, { x: dir + len, y }, label, { x: dir + len + gapM, y }, 'start', 'middle');
     }
   }
 
   return <g data-part="perimeter-ruler" pointerEvents="none">{ticks}</g>;
+}
+
+/**
+ * Onde uma linha vertical (eixo 'x') ou horizontal (eixo 'y') corta o
+ * contorno, com a inclinação do trecho cortado: `deitado` quando o trecho
+ * é mais horizontal que vertical — é o que separa cerca de cima/baixo de
+ * cerca lateral perto de um canto.
+ */
+function cortesNaBorda(poly: Vec2[], eixo: 'x' | 'y', valor: number): { pos: number; deitado: boolean }[] {
+  const outro = eixo === 'x' ? 'y' : 'x';
+  const out: { pos: number; deitado: boolean }[] = [];
+  for (let i = 0; i < poly.length; i += 1) {
+    const p = poly[i]!;
+    const q = poly[(i + 1) % poly.length]!;
+    if ((p[eixo] <= valor && q[eixo] > valor) || (q[eixo] <= valor && p[eixo] > valor)) {
+      const t = (valor - p[eixo]) / (q[eixo] - p[eixo]);
+      out.push({
+        pos: p[outro] + t * (q[outro] - p[outro]),
+        deitado: Math.abs(q.x - p.x) >= Math.abs(q.y - p.y),
+      });
+    }
+  }
+  return out;
 }

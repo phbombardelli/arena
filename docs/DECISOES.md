@@ -1458,3 +1458,9 @@ construção — toma espaço do percurso.
 **Posição do texto da construção.** O painel da construção ganhou "Texto
 ↔ / ↕", em metros, para afastar o rótulo de outra escrita (o "Júri" de
 cima da metragem) sem mover a construção.
+
+**Ajuste (decisão 70).** Perto de um canto, a linha de um traço lateral
+pode cortar a cerca de cima (inclinada) em vez da lateral, e o número
+caía em cima da cerca. Agora o traço só sai de um lado quando o trecho de
+cerca cortado ali é daquele lado: mais em pé que deitado para as
+laterais, mais deitado que em pé para cima e para baixo.
