@@ -2,12 +2,14 @@ import { useMemo } from 'react';
 import { courseOrder } from '@core/assist/courseRide';
 import { findInterferences } from '@core/assist/interference';
 import { firstArena } from '@core/model/document';
+import { arenaArea, arenaExtent } from '@core/model/arena';
 import { formatDistance, pathLength } from '@core/model/path';
 import type { Obstacle } from '@core/model/types';
 import { formatMeters } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { insertTimingLine } from '@ui/actions/timingActions';
+import { startMapWizard } from '@ui/actions/imageActions';
 import { GuidedPanel } from './GuidedPanel';
 import { ObjectPanel } from './ObjectPanel';
 
@@ -121,13 +123,17 @@ function ResumoPista() {
       <h2>Pista</h2>
       {arena ? (
         <p className="note">
-          {formatMeters(arena.widthM, 0)} × {formatMeters(arena.heightM, 0)} m ·{' '}
-          {formatMeters(arena.widthM * arena.heightM, 0)} m²
+          {formatMeters(arenaExtent(arena).widthM, 0)} × {formatMeters(arenaExtent(arena).heightM, 0)} m ·{' '}
+          {formatMeters(arenaArea(arena), 0)} m²
         </p>
       ) : (
-        <p className="note">Ainda sem contorno. Use a ferramenta Contorno, à esquerda.</p>
+        <p className="note">
+          Ainda sem contorno. Cole um print do Google Maps com uma medida marcada (Ctrl+V), ou
+          use a ferramenta Contorno, à esquerda.
+        </p>
       )}
       <div className="row-buttons">
+        <button onClick={() => void startMapWizard()}>Pista pelo mapa…</button>
         <button onClick={() => setDialog('modelos')}>Modelos de pista…</button>
       </div>
       <p className="note dim">

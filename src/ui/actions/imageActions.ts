@@ -21,20 +21,34 @@ export async function importBackgroundImage(): Promise<void> {
 }
 
 /**
- * Cola a imagem da área de transferência como imagem de fundo — o caminho
- * rápido para começar uma pista nova a partir de um print do mapa. Entra no
- * modo Pista, onde a imagem se calibra e o contorno se desenha por cima.
+ * Imagem colada (decisão 57): abre o assistente "Montar pista pelo mapa"
+ * (decisão 64), que também oferece usá-la só como imagem de fundo.
  */
 export async function pasteBackgroundImage(file: File): Promise<void> {
   try {
     const nome = file.name && file.name !== 'image.png' ? file.name : 'imagem colada';
     const imported = await readImage(new File([file], nome, { type: file.type }));
-    const ed = useEditorStore.getState();
-    if (ed.mode !== 'pista') ed.setMode('pista');
-    insertBackgroundImage(imported);
+    useEditorStore.getState().setMapWizard(imported);
   } catch (err) {
     avisarFalha(err);
   }
+}
+
+/** Escolhe um print no disco e abre o assistente "Montar pista pelo mapa". */
+export async function startMapWizard(): Promise<void> {
+  try {
+    const imported = await pickImage();
+    if (imported) useEditorStore.getState().setMapWizard(imported);
+  } catch (err) {
+    avisarFalha(err);
+  }
+}
+
+/** Usa o print só como imagem de fundo, no modo Pista (o caminho antigo). */
+export function placeAsBackground(imported: ImportedImage): void {
+  const ed = useEditorStore.getState();
+  if (ed.mode !== 'pista') ed.setMode('pista');
+  insertBackgroundImage(imported);
 }
 
 /** Primeira imagem entre os itens colados, se houver. */

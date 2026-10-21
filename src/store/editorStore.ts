@@ -11,6 +11,7 @@ import type {
 } from '@core/model/types';
 import { withChoice, type GuidedRide } from '@core/assist/guidedRide';
 import type { Viewport } from '@core/scale/viewport';
+import type { ImportedImage } from '@core/commands/imageOps';
 import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
 
 /**
@@ -93,6 +94,8 @@ interface EditorState {
   structureType: StructureType | null;
   /** Janela aberta por menu, ou nenhuma. */
   dialog: DialogId | null;
+  /** Print aberto no assistente "Montar pista pelo mapa" (B-40). */
+  mapWizard: ImportedImage | null;
   /**
    * Dicas dos painéis visíveis. Começam escondidas: o painel mostra os
    * campos, e a explicação fica a um clique no "?".
@@ -133,6 +136,7 @@ interface EditorState {
   setPathSmooth: (v: boolean) => void;
   setStructureType: (t: StructureType | null) => void;
   setDialog: (d: DialogId | null) => void;
+  setMapWizard: (img: ImportedImage | null) => void;
   toggleHints: () => void;
 }
 
@@ -159,12 +163,14 @@ export const useEditorStore = create<EditorState>((set) => ({
   pathSmooth: true,
   structureType: null,
   dialog: null,
+  mapWizard: null,
   showHints: false,
 
   // Trocar de modo limpa a seleção: o que estava escolhido pode não ser
   // mais selecionável, e uma seleção invisível é fonte de confusão.
   setStructureType: (structureType) => set({ structureType }),
   setDialog: (dialog) => set({ dialog }),
+  setMapWizard: (mapWizard) => set({ mapWizard }),
   toggleHints: () => set((s) => ({ showHints: !s.showHints })),
   setMode: (mode) =>
     set({ mode, selection: [], tool: 'select', draft: null, pathDraft: null, calibration: null }),

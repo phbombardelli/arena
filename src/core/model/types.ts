@@ -70,7 +70,7 @@ export type ArenaShape = 'rectangle' | 'polygon';
  * geometria da pista (retângulo ou contorno livre) e pode ficar dentro ou
  * fora dela — é referência de cenário, não limite do traçado (decisão 54).
  */
-export type StructureType = 'arquibancada' | 'concreto' | 'edificacao' | 'outra';
+export type StructureType = 'arquibancada' | 'concreto' | 'edificacao' | 'ilha' | 'outra';
 
 export interface StructureInfo {
   type: StructureType;

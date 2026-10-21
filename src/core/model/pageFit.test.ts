@@ -6,6 +6,7 @@ import { createObstacle } from '@core/library/obstacles';
 import { usableArea } from '@core/scale/units';
 import type { CourseDocument } from './types';
 import { createDocument, centerOnPage, firstArena, fitScaleToPage, freeAreaMm } from './document';
+import { createPolygonArena } from './arena';
 
 const comQuadroNoTopo = (doc: CourseDocument): CourseDocument =>
   produce(doc, (d) => {
@@ -102,5 +103,24 @@ describe('ajustar ao papel', () => {
     });
     expect(freeAreaMm(apertado).widthMm).toBeLessThan(freeAreaMm(createDocument({ arena: true })).widthMm);
     expect(fitScaleToPage(apertado)).toBeGreaterThanOrEqual(fitScaleToPage(createDocument({ arena: true })));
+  });
+});
+
+describe('contorno livre (decisão 64)', () => {
+  it('a escala e o centro saem da envoltória dos vértices', () => {
+    const doc = produce(createDocument(), (d) => {
+      addObject(
+        d,
+        createPolygonArena([
+          { x: 0, y: 0 },
+          { x: 150, y: 0 },
+          { x: 150, y: 100 },
+          { x: 0, y: 100 },
+        ]),
+      );
+    });
+    // 150 × 100 m em A4 paisagem pede 1:600; um contorno lido como 0×0
+    // daria a menor escala da lista.
+    expect(fitScaleToPage(doc)).toBe(600);
   });
 });

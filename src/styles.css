@@ -658,3 +658,17 @@ button.mini.neutral { color: var(--text); }
 .heights-row button.add { color: var(--text-dim); }
 .link-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: -2px 0 8px; }
 .link-row .note { margin: 0; font-size: 11.5px; color: var(--text-dim); }
+
+/* Assistente "Montar pista pelo mapa" (decisão 64). */
+.dialog:has(.map-wizard) { width: min(820px, calc(100vw - 32px)); }
+.map-wizard { display: flex; flex-direction: column; gap: 10px; }
+.wizard-steps { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; counter-reset: passo; }
+.wizard-steps li { flex: 1; font-size: 11.5px; padding: 4px 6px; border-radius: 4px; background: var(--chrome); color: var(--text-dim); counter-increment: passo; }
+.wizard-steps li::before { content: counter(passo) '. '; }
+.wizard-steps li.atual { background: var(--gold-soft); color: var(--text); font-weight: 600; }
+.wizard-steps li.feito { color: var(--text); }
+.wizard-preview { display: flex; justify-content: center; align-items: center; min-height: 200px; max-height: 480px; background: #1d1d1d; border-radius: 4px; overflow: hidden; }
+.wizard-preview canvas { display: block; touch-action: none; max-width: 100%; max-height: 52vh; height: auto; width: auto; }
+.wizard-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.wizard-list li { display: flex; align-items: center; gap: 4px; font-size: 12.5px; }
+.wizard-nav { justify-content: space-between; border-top: 1px solid var(--border); padding-top: 8px; }

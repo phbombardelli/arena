@@ -33,6 +33,8 @@ export const STRUCTURES: readonly StructureDef[] = [
     hatch: { angle: 45, spacingM: 1.2, color: '#a0a0a0' },
   },
   { type: 'edificacao', label: 'Edificação', fill: '#c4c4c4', hatch: null },
+  // Ilha fixa de grama dentro da pista (decisão 64): o cavalo contorna.
+  { type: 'ilha', label: 'Ilha', fill: '#dbe9d0', hatch: null },
   { type: 'outra', label: 'Construção', fill: '#efefef', hatch: null },
 ] as const;
 
@@ -44,7 +46,8 @@ function asStructure(arena: Arena, type: StructureType): Arena {
   const def = structureDef(type);
   return {
     ...arena,
-    structure: { type, label: def.label },
+    // Ilha não se escreve no croqui: o desenho verde já diz o que é.
+    structure: { type, label: type === 'ilha' ? '' : def.label },
     corner: { style: 'square', radiusM: 0 },
     perimeterRuler: { ...arena.perimeterRuler, visible: false },
     style: { strokeMm: 0.25, fill: def.fill, stroke: '#3a3a3a' },

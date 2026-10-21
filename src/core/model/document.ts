@@ -1,7 +1,7 @@
 import type { Vec2 } from '@core/geometry/vec';
 import { fitScale, pageSize, usableArea } from '@core/scale/units';
 import { heightTableLayout, infoBoxLayout } from './annotationLayout';
-import { createRectangleArena } from './arena';
+import { arenaExtent, createRectangleArena } from './arena';
 import type {
   Arena,
   CourseDocument,
@@ -170,18 +170,22 @@ function anotacaoMm(doc: CourseDocument, obj: SceneObject): RectMm | null {
   return null;
 }
 
+// Contorno livre não tem largura/altura próprias: vale a envoltória dos
+// vértices (arenaExtent), senão a escala e o centro saem de uma pista 0×0.
 function fitScaleForArena(arena: Arena, area: RectMm): number {
-  return fitScale(arena.widthM, arena.heightM, area.widthMm, area.heightMm);
+  const e = arenaExtent(arena);
+  return fitScale(e.widthM, e.heightM, area.widthMm, area.heightMm);
 }
 
 /** Posição em mm onde o modelo (0,0) deve cair para centralizar a pista. */
 function centerOriginMm(arena: Arena, page: CourseDocument['page'], area: RectMm): Vec2 {
   const k = 1000 / page.printScale;
-  const drawW = arena.widthM * k;
-  const drawH = arena.heightM * k;
+  const e = arenaExtent(arena);
+  const drawW = e.widthM * k;
+  const drawH = e.heightM * k;
   return {
-    x: area.xMm + (area.widthMm - drawW) / 2 - arena.origin.x * k,
-    y: area.yMm + (area.heightMm - drawH) / 2 - arena.origin.y * k,
+    x: area.xMm + (area.widthMm - drawW) / 2 - e.origin.x * k,
+    y: area.yMm + (area.heightMm - drawH) / 2 - e.origin.y * k,
   };
 }
 

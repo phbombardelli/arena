@@ -1311,3 +1311,40 @@ ornamento.
 
 O editor de cabeçalho (B-07) foi descartado: o nome da prova vai com a
 ferramenta de texto, e logos com a inserção de imagem.
+
+## 64. Montar a pista pelo print do Maps
+
+Colar um print (Ctrl+V), o menu Arquivo › Pista pelo mapa… ou o botão do
+painel da Pista abrem um assistente. Ele também oferece "Só usar como
+imagem de fundo", o caminho da decisão 57.
+
+1. **Medida.** O assistente acha os dois marcadores do "Medir distância"
+   do Google Maps (discos brancos de contorno escuro, com a linha branca
+   entre eles) e lê o número por OCR (Tesseract.js). O valor lido aparece
+   para confirmar ou corrigir; se não achar os marcadores, a medida se
+   arrasta à mão. O Maps escreve sempre duas casas e o OCR costuma perder
+   a vírgula ("27 03 m"): um espaço antes de dois dígitos colados na
+   unidade é a vírgula.
+2. **Pista.** A areia é separada pela cor a partir de um ponto (o meio da
+   medida, ou outro que o desenhador escolher). Areia de fora da cerca tem
+   a mesma cor e vaza pelas frestas das réguas, por isso a máscara é
+   encolhida antes de preencher e devolvida ao tamanho depois. O contorno
+   é o casco simplificado — livre — ou o menor retângulo que o contém
+   ("Ajustar a retângulo"), que devolve o canto escondido por copa de
+   árvore. Os vértices se arrastam.
+3. **Sugestões.** Ilhas (o que não é areia e está cercado por ela) e
+   telhados vizinhos (telha de barro: vermelho bem acima de verde e azul),
+   para marcar quais entram.
+4. **Outros elementos.** Construção e ilha (arrastando um retângulo) e
+   árvore (clique), para o que o assistente não viu.
+
+Ao confirmar: a escala vem da medida, o canto superior esquerdo da pista
+vira a origem, o cenário anterior sai, e imagem (a 50%), pista (sem
+preenchimento), construções, ilhas e árvores entram vinculados. A folha
+ajusta a escala e centraliza.
+
+Novo tipo de construção **Ilha** (verde, sem rótulo escrito). A análise
+roda numa cópia de até 1400 px do print. O OCR é carregado só pelo
+assistente (chunk próprio de 16 kB; motor e dados vêm da CDN no primeiro
+uso, cerca de 4 MB). "Ajustar ao papel" e "Centralizar" passaram a usar a
+envoltória dos vértices — com contorno livre, liam uma pista 0×0.

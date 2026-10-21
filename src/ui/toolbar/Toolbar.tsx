@@ -21,7 +21,7 @@ import {
 import { actualSize, fitPage, toggleGrid, zoomBy } from '@ui/actions/viewActions';
 import { insertHeightTable, insertInfoBox } from '@ui/actions/annotationActions';
 import { insertTimingLine } from '@ui/actions/timingActions';
-import { importBackgroundImage, pasteImageFromSystemClipboard } from '@ui/actions/imageActions';
+import { importBackgroundImage, pasteImageFromSystemClipboard, startMapWizard } from '@ui/actions/imageActions';
 import { insertLogo } from '@ui/actions/logoActions';
 import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
 import { hasLinked } from '@core/commands/groupOps';
@@ -92,6 +92,7 @@ export function Toolbar() {
     'separator',
     { label: 'Configurar folha…', onSelect: () => setDialog('folha') },
     { label: 'Modelos de pista…', onSelect: () => setDialog('modelos') },
+    { label: 'Pista pelo mapa…', onSelect: () => void startMapWizard() },
   ];
 
   const editar: MenuEntry[] = [

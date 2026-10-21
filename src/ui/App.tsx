@@ -1,3 +1,4 @@
+import { MapWizardHost } from '@ui/mapWizard/MapWizard';
 import { useEffect } from 'react';
 import { installUnloadGuard } from './actions/documentActions';
 import { Canvas } from './canvas/Canvas';
@@ -20,6 +21,7 @@ export function App() {
       </div>
       <StatusBar />
       <Dialogs />
+      <MapWizardHost />
     </div>
   );
 }
