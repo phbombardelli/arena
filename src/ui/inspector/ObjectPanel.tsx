@@ -3,6 +3,7 @@ import { setLocked, setObjectPosition, setObjectRotation, deleteObjects } from '
 import { ORNAMENTS } from '@core/library/ornaments';
 import { getPosition, getRotation, isPaperAnchored } from '@core/model/transform';
 import { measureFrame } from '@core/model/measureFrame';
+import { isWater } from '@core/library/structures';
 import { hasLinked } from '@core/commands/groupOps';
 import { linkSelection, unlinkSelection } from '@ui/actions/editActions';
 import type { Obstacle, OrnamentType, SceneObject } from '@core/model/types';
@@ -59,7 +60,9 @@ export function ObjectPanel() {
         <h3>
           {single
             ? single.kind === 'arena' && single.structure
-              ? 'Construção'
+              ? isWater(single.structure.type)
+                ? 'Água'
+                : 'Construção'
               : KIND_LABEL[single.kind]
             : vinculoUnico
             ? `Cenário vinculado · ${objs.length}`

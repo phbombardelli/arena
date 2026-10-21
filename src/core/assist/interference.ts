@@ -3,6 +3,7 @@ import { obstacleFootprint, insidePolygon, jumpHeading } from './ridePath';
 import { arenaPoints } from '@core/model/arena';
 import { flattenPath } from '@core/model/path';
 import { obstacleLabel } from '@core/library/obstacles';
+import { isWater, structureDef } from '@core/library/structures';
 import type { Arena, CourseDocument, CoursePath, ObjectId, Obstacle } from '@core/model/types';
 
 /**
@@ -34,7 +35,8 @@ import type { Arena, CourseDocument, CoursePath, ObjectId, Obstacle } from '@cor
 export type InterferenceKind =
   | 'obstaculos-sobrepostos'
   | 'tracado-cruza-obstaculo'
-  | 'obstaculo-fora-da-pista';
+  | 'obstaculo-fora-da-pista'
+  | 'obstaculo-na-agua';
 
 export interface Interference {
   kind: InterferenceKind;
@@ -200,6 +202,23 @@ export function findInterferences(doc: CourseDocument): Interference[] {
         ids: [o.id],
         at: o.pos,
         message: `O ${nomeDe(o)} está fora da pista, ou pisando no alambrado`,
+      });
+    }
+  }
+
+  // Obstáculo montado sobre massa d'água (decisão 72). Sobre o rio pode.
+  const aguas = doc.objects.filter(
+    (o): o is Arena => o.kind === 'arena' && o.visible && !!o.structure && isWater(o.structure.type) && structureDef(o.structure.type).water!.semObstaculo,
+  );
+  for (const agua of aguas) {
+    const contorno = arenaPoints(agua);
+    for (const o of obstacles) {
+      if (!polygonsOverlap(obstacleFootprint(o), contorno)) continue;
+      out.push({
+        kind: 'obstaculo-na-agua',
+        ids: [o.id, agua.id],
+        at: o.pos,
+        message: `O ${nomeDe(o)} está sobre uma massa d'água`,
       });
     }
   }

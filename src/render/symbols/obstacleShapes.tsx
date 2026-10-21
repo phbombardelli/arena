@@ -66,18 +66,6 @@ export function ObstacleShape({ obstacle, k }: Props) {
           />
         );
 
-      case 'rio':
-        return (
-          <rect
-            x={-halfW}
-            y={-spread / 2}
-            width={halfW * 2}
-            height={spread}
-            fill={obstacle.liverpool.color}
-            stroke={color.ink}
-            strokeWidth={stroke.thin}
-          />
-        );
     }
   };
 

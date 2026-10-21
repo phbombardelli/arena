@@ -16,6 +16,12 @@ export interface StructureDef {
   fill: string;
   /** Linhas internas: degraus ou hachura. `null` = sem linhas. */
   hatch: { angle: 'aresta' | number; spacingM: number; color: string } | null;
+  /**
+   * Água do cenário (decisão 72): fica no botão Água, não em Construção.
+   * `semObstaculo` — massa d'água, onde obstáculo em cima é interferência;
+   * o rio aceita obstáculo montado sobre ele.
+   */
+  water?: { semObstaculo: boolean };
 }
 
 export const STRUCTURES: readonly StructureDef[] = [
@@ -35,6 +41,8 @@ export const STRUCTURES: readonly StructureDef[] = [
   { type: 'edificacao', label: 'Edificação', fill: '#c4c4c4', hatch: null },
   // Ilha fixa de grama dentro da pista (decisão 64): o cavalo contorna.
   { type: 'ilha', label: 'Ilha', fill: '#dbe9d0', hatch: null },
+  { type: 'rio', label: 'Rio', fill: '#cfe6f7', hatch: null, water: { semObstaculo: false } },
+  { type: 'lago', label: "Massa d'água", fill: '#cfe6f7', hatch: null, water: { semObstaculo: true } },
   { type: 'outra', label: 'Construção', fill: '#efefef', hatch: null },
 ] as const;
 
@@ -46,11 +54,11 @@ function asStructure(arena: Arena, type: StructureType): Arena {
   const def = structureDef(type);
   return {
     ...arena,
-    // Ilha não se escreve no croqui: o desenho verde já diz o que é.
-    structure: { type, label: type === 'ilha' ? '' : def.label },
+    // Ilha e água não se escrevem no croqui: a cor já diz o que é.
+    structure: { type, label: type === 'ilha' || def.water ? '' : def.label },
     corner: { style: 'square', radiusM: 0 },
     perimeterRuler: { ...arena.perimeterRuler, visible: false },
-    style: { strokeMm: 0.25, fill: def.fill, stroke: '#3a3a3a' },
+    style: { strokeMm: 0.25, fill: def.fill, stroke: def.water ? '#3b7fb8' : '#3a3a3a' },
   };
 }
 
@@ -89,3 +97,6 @@ export function structureAngle(arena: Arena): number {
   if (a > 90) a -= 180;
   return Math.round(a * 10) / 10;
 }
+
+/** Tipos de construção que são água (rio e massa d'água). */
+export const isWater = (type: StructureType): boolean => !!structureDef(type).water;

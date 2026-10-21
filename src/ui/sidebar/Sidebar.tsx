@@ -188,7 +188,7 @@ export function Sidebar() {
                 },
               },
               'separator' as const,
-              ...STRUCTURES.map((s) => ({
+              ...STRUCTURES.filter((s) => !s.water).map((s) => ({
                 label: s.label,
                 hint: construcaoLivre ? 'em contorno livre' : 'em retângulo',
                 active: (tool === 'arena-rect' || tool === 'arena-polygon') && structureType === s.type,
@@ -196,6 +196,27 @@ export function Sidebar() {
               })),
             ]}
             footer="Referência do local: arquibancada, área de concreto, prédios. Não limita o traçado."
+          />
+          <RailFlyout
+            icon="≋"
+            label="Água"
+            active={(tool === 'arena-rect' || tool === 'arena-polygon') && (structureType === 'rio' || structureType === 'lago')}
+            onActivate={() => construcao('rio', 'arena-rect')}
+            items={[
+              {
+                label: 'Rio',
+                hint: 'arraste um retângulo; aceita obstáculo em cima',
+                active: tool === 'arena-rect' && structureType === 'rio',
+                onSelect: () => construcao('rio', 'arena-rect'),
+              },
+              {
+                label: "Massa d'água",
+                hint: 'lago ou córrego: clique cada vértice; Enter fecha',
+                active: tool === 'arena-polygon' && structureType === 'lago',
+                onSelect: () => construcao('lago', 'arena-polygon'),
+              },
+            ]}
+            footer="Obstáculo sobre massa d'água aparece nos avisos de interferência; sobre o rio, pode."
           />
           <RailFlyout
             icon="🌳"

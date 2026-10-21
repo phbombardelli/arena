@@ -5,7 +5,7 @@ import { createDocument } from '@core/model/document';
 import { distance } from '@core/geometry/vec';
 import type { CourseDocument, Obstacle, ObstacleType } from '@core/model/types';
 import { addObject } from './ops';
-import { alignCombination, COMBINATION_GAP, currentGaps, orderAlongLine } from './alignOps';
+import { alignCombination, COMBINATION_GAP, confirmCombination, currentGaps, freeGaps, orderAlongLine, setFreeGap } from './alignOps';
 
 const salto = (
   tipo: ObstacleType,
@@ -213,5 +213,41 @@ describe('vão do composto: de 7 a 12 m (decisão 49)', () => {
       alignCombination(d, obstaculos(d).map((o) => o.id), [25.2]);
     });
     expect(currentGaps(orderAlongLine(obstaculos(alinhado)))[0]).toBeCloseTo(25.2, 9);
+  });
+});
+
+describe('confirmar composto (decisão 71)', () => {
+  it('dois obstáculos numerados 4 e 5 viram 4A e 4B, na ordem do percurso', () => {
+    const doc = cena(salto('vertical', 10, 20, '5'), salto('vertical', 10, 10, '4'), salto('oxer', 40, 40, '6'));
+    const ids = obstaculos(doc).filter((o) => o.number !== '6').map((o) => o.id);
+    const d = produce(doc, (x) => confirmCombination(x, ids));
+    const letras = obstaculos(d).filter((o) => o.number === '4').map((o) => `${o.pos.y}${o.letter}`);
+    expect(new Set(letras)).toEqual(new Set(['10A', '20B']));
+    expect(acha(d, '6').letter).toBe('');
+  });
+
+  it('sem número, ganham o seguinte ao maior do croqui', () => {
+    const doc = cena(salto('vertical', 0, 0, '7'), salto('vertical', 30, 10, ''), salto('vertical', 30, 20, ''));
+    const ids = obstaculos(doc).filter((o) => o.number === '').map((o) => o.id);
+    const d = produce(doc, (x) => confirmCombination(x, ids));
+    expect(obstaculos(d).filter((o) => o.number === '8')).toHaveLength(2);
+  });
+});
+
+describe('linha curva ou quebrada (decisão 71)', () => {
+  it('acerta o vão sem endireitar: o seguinte anda na reta entre os dois, e o resto junto', () => {
+    const a = salto('vertical', 0, 0, '1', 0);
+    const b = salto('vertical', 6, 8, '2', 30); // a 10 m do primeiro, girado
+    const c = salto('vertical', 20, 8, '3', 60);
+    const doc = cena(a, b, c);
+    const ids = [a.id, b.id, c.id];
+    const antes = freeGaps(orderAlongLine(obstaculos(doc)));
+    const d = produce(doc, (x) => setFreeGap(x, ids, 0, 15));
+    const depois = freeGaps(orderAlongLine(obstaculos(d)));
+    expect(depois[0]).toBeCloseTo(15, 6);
+    expect(depois[1]).toBeCloseTo(antes[1]!, 6);
+    // Ninguém foi girado.
+    expect(acha(d, '2').rotation).toBe(30);
+    expect(acha(d, '3').rotation).toBe(60);
   });
 });

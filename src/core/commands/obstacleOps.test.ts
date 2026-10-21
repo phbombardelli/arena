@@ -54,7 +54,6 @@ describe('biblioteca', () => {
     expect(createObstacle('vertical', { x: 0, y: 0 }).elements).toHaveLength(1);
     expect(createObstacle('oxer', { x: 0, y: 0 }).elements).toHaveLength(2);
     expect(createObstacle('triplice', { x: 0, y: 0 }).elements).toHaveLength(3);
-    expect(createObstacle('rio', { x: 0, y: 0 }).elements).toHaveLength(0);
   });
 
   it('vertical não tem largura de salto; oxer tem', () => {
@@ -213,7 +212,7 @@ describe('seta de direção', () => {
 
 describe('geometria da seta', () => {
   it('é perpendicular à frente: a haste não sai do eixo', () => {
-    for (const tipo of ['vertical', 'oxer', 'triplice', 'rio'] as const) {
+    for (const tipo of ['vertical', 'oxer', 'triplice', 'muro'] as const) {
       const o = createObstacle(tipo, { x: 0, y: 0 });
       const { shaft, head } = arrowGeometry(o, 5);
       expect(shaft.x1).toBe(0);
@@ -258,7 +257,7 @@ describe('paraflanco', () => {
   });
 
   it('o obstáculo padrão mede 4 m de frente', () => {
-    for (const tipo of ['vertical', 'oxer', 'triplice', 'plano', 'muro', 'rio'] as const) {
+    for (const tipo of ['vertical', 'oxer', 'triplice', 'plano', 'muro'] as const) {
       expect(createObstacle(tipo, { x: 0, y: 0 }).faceWidthM).toBe(4);
     }
   });
@@ -295,7 +294,6 @@ describe('estilo das varas', () => {
     expect(hasBars('oxer')).toBe(true);
     expect(hasBars('triplice')).toBe(true);
     expect(hasBars('muro')).toBe(false);
-    expect(hasBars('rio')).toBe(false);
   });
 
   it('guarda estilo e as duas cores', () => {
@@ -484,7 +482,7 @@ describe('obstáculo bloqueado', () => {
     const next = edit(doc, (d) => {
       setObstacleNumber(d, o.id, '99');
       setFaceWidth(d, o.id, 10);
-      setObstacleType(d, o.id, 'rio');
+      setObstacleType(d, o.id, 'muro');
     });
     expect(obs(next, o.id).number).toBe('1');
     expect(obs(next, o.id).faceWidthM).toBe(4);

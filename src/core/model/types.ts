@@ -70,7 +70,7 @@ export type ArenaShape = 'rectangle' | 'polygon';
  * geometria da pista (retângulo ou contorno livre) e pode ficar dentro ou
  * fora dela — é referência de cenário, não limite do traçado (decisão 54).
  */
-export type StructureType = 'arquibancada' | 'concreto' | 'edificacao' | 'ilha' | 'outra';
+export type StructureType = 'arquibancada' | 'concreto' | 'edificacao' | 'ilha' | 'rio' | 'lago' | 'outra';
 
 export interface StructureInfo {
   type: StructureType;
@@ -112,7 +112,7 @@ export interface Arena extends BaseObject {
 
 /* ----------------------------------------------------------- obstáculos */
 
-export type ObstacleType = 'vertical' | 'oxer' | 'triplice' | 'muro' | 'rio' | 'plano';
+export type ObstacleType = 'vertical' | 'oxer' | 'triplice' | 'muro' | 'plano';
 
 export interface ObstacleElement {
   /** Altura em metros. `null` = não informada. */
@@ -452,4 +452,4 @@ export interface CourseDocument {
   assets: Record<string, Asset>;
 }
 
-export const SCHEMA_VERSION = 10;
+export const SCHEMA_VERSION = 11;

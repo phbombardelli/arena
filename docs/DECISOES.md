@@ -1464,3 +1464,33 @@ pode cortar a cerca de cima (inclinada) em vez da lateral, e o número
 caía em cima da cerca. Agora o traço só sai de um lado quando o trecho de
 cerca cortado ali é daquele lado: mais em pé que deitado para as
 laterais, mais deitado que em pé para cima e para baixo.
+
+## 71. Confirmar composto; linha reta ou curva/quebrada
+
+Com 2 ou 3 obstáculos selecionados, o painel "Composto ou linha reta"
+ganha **Confirmar composto (4A, 4B…)**: todos recebem o mesmo número — o
+menor que já tinham, ou, sem número, o seguinte ao maior do croqui — e as
+letras A, B, C na ordem do salto (a da numeração, se houver; senão o
+sentido do salto do primeiro). Os demais obstáculos não são renumerados.
+
+O painel também escolhe a forma da linha:
+- **Linha reta** — como antes: o vão se mede no eixo do primeiro e
+  "Endireitar" põe todos em linha.
+- **Curva ou quebrada** — cada elemento mantém a própria direção; o vão
+  (de vara a vara) se mede na reta entre os centros de cada par, e mudar
+  um vão empurra o elemento seguinte nessa reta, levando os de depois
+  junto. Ninguém é girado nem endireitado.
+
+## 72. Água no cenário; sai o obstáculo rio
+
+No modo Pista, botão **Água** (fora de Construção), com:
+- **Rio** — retângulo de água sobre o qual se monta obstáculo;
+- **Massa d'água** — lago ou córrego, em contorno livre; obstáculo sobre
+  ela aparece nos avisos de interferência.
+
+São construções de tipos próprios: azul-claro com contorno azul, sem
+texto, e com tudo o que construção tem (vértices, ângulo, vínculo).
+
+O tipo de obstáculo **rio** saiu. Esquema 11: na abertura, cada obstáculo
+rio vira um rio do cenário no mesmo lugar, tamanho e giro, e os vínculos
+de traçado e de partida/chegada com ele se soltam.

@@ -58,14 +58,6 @@ export const OBSTACLES: readonly ObstacleDef[] = [
     hint: 'Bloco maciço.',
   },
   {
-    type: 'rio',
-    label: 'Rio',
-    faceWidthM: 4,
-    spreadM: 3.5,
-    elements: 0,
-    hint: 'Lâmina de água, sem altura.',
-  },
-  {
     type: 'plano',
     label: 'Plano',
     faceWidthM: 4,

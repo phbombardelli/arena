@@ -408,3 +408,24 @@ describe('9 -> 10: as bandeirolas saíram (decisão 62)', () => {
     expect('flags' in migrado).toBe(false);
   });
 });
+
+describe('10 -> 11: o obstáculo rio vira água do cenário (decisão 72)', () => {
+  it('troca o obstáculo por um rio do mesmo tamanho e solta os vínculos', () => {
+    const antigo = {
+      objects: [
+        { kind: 'obstacle', id: 'r1', type: 'rio', pos: { x: 10, y: 20 }, rotation: 0, faceWidthM: 4, spreadM: 3 },
+        { kind: 'path', id: 'p', nodes: [{ pos: { x: 10, y: 20 }, anchor: { objectId: 'r1', ref: 'center' } }] },
+      ],
+    } as Record<string, unknown>;
+    const m = applyMigrations(antigo, 10, 11) as Record<string, unknown>;
+    const objs = m.objects as Record<string, any>[];
+    expect(objs.some((o) => o.kind === 'obstacle')).toBe(false);
+    const rio = objs.find((o) => o.kind === 'arena')!;
+    expect(rio.structure.type).toBe('rio');
+    const xs = rio.points.map((p: { x: number }) => p.x);
+    const ys = rio.points.map((p: { y: number }) => p.y);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(4, 6);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(3, 6);
+    expect(objs.find((o) => o.kind === 'path')!.nodes[0].anchor).toBeNull();
+  });
+});

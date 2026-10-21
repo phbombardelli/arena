@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import {
   alignCombination,
   COMBINATION_GAP,
+  confirmCombination,
   currentGaps,
+  freeGaps,
   orderAlongLine,
   sameCombination,
+  setFreeGap,
 } from '@core/commands/alignOps';
 import { obstacleLabel } from '@core/library/obstacles';
 import type { Obstacle } from '@core/model/types';
@@ -26,9 +30,23 @@ import { NumberField } from './NumberField';
  * 4, 5a, 5b, 5c. É o percurso que diz quem vem antes.
  */
 export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
-  const { apply } = useDocumentStore();
+  const { doc, apply } = useDocumentStore();
   const ordenados = orderAlongLine(obstacles);
-  const vaos = currentGaps(ordenados);
+  // Reta: todos no eixo do primeiro (Endireitar). Curva ou quebrada: cada
+  // um na sua direção, e o vão se mede entre os centros (decisão 71).
+  const [quebrada, setQuebrada] = useState(false);
+  const vaos = quebrada ? freeGaps(ordenados) : currentGaps(ordenados);
+  const jaComposto =
+    ordenados.length >= 2 && ordenados.every((o, i) => i === 0 || sameCombination(ordenados[i - 1]!, o));
+  const numeroProposto = (() => {
+    const ns = ordenados.map((o) => parseInt(o.number, 10)).filter((n) => Number.isFinite(n));
+    if (ns.length) return String(Math.min(...ns));
+    const todos = doc.objects
+      .filter((o): o is Obstacle => o.kind === 'obstacle')
+      .map((o) => parseInt(o.number, 10))
+      .filter((n) => Number.isFinite(n));
+    return String((todos.length ? Math.max(...todos) : 0) + 1);
+  })();
   const travado = ordenados.some((o) => o.locked);
   const ids = ordenados.map((o) => o.id);
 
@@ -41,11 +59,13 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
    */
   const ajusta = (indice: number, metros: number) =>
     apply('Distância da combinação', (d) =>
-      alignCombination(
-        d,
-        ids,
-        vaos.map((v, i) => (i === indice ? metros : v)),
-      ),
+      quebrada
+        ? setFreeGap(d, ids, indice, metros)
+        : alignCombination(
+            d,
+            ids,
+            vaos.map((v, i) => (i === indice ? metros : v)),
+          ),
     );
 
   const nome = (o: Obstacle, i: number) => obstacleLabel(o) || `elemento ${i + 1}`;
@@ -55,6 +75,28 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
       <h3>Composto ou linha reta</h3>
 
       <p className="note">Na ordem do percurso: {ordenados.map(nome).join(' - ')}</p>
+
+      {!jaComposto && ordenados.length <= 3 && (
+        <div className="row-buttons">
+          <button
+            className="primary"
+            disabled={travado}
+            title="Mesmo número e letras na ordem do salto"
+            onClick={() => apply('Confirmar composto', (d) => confirmCombination(d, ids))}
+          >
+            Confirmar composto ({ordenados.map((_, i) => `${numeroProposto}${'ABC'[i]}`).join(', ')})
+          </button>
+        </div>
+      )}
+
+      <div className="row-buttons">
+        <button className={!quebrada ? 'active' : ''} onClick={() => setQuebrada(false)}>
+          Linha reta
+        </button>
+        <button className={quebrada ? 'active' : ''} onClick={() => setQuebrada(true)}>
+          Curva ou quebrada
+        </button>
+      </div>
 
       {ordenados.slice(1).map((o, i) => {
         const composto = sameCombination(ordenados[i]!, o);
@@ -74,6 +116,7 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
         );
       })}
 
+      {!quebrada && (
       <div className="row-buttons">
         <button
           disabled={travado}
@@ -83,6 +126,7 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
           Endireitar
         </button>
       </div>
+      )}
 
       <p className="note dim">
         Da vara de saída de um até a vara de entrada do seguinte. O primeiro

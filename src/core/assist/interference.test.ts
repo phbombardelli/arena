@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { produce } from 'immer';
 import { addObject } from '@core/commands/ops';
 import { createObstacle } from '@core/library/obstacles';
+import { createPolygonStructure } from '@core/library/structures';
 import { createDocument } from '@core/model/document';
 import { createRectangleArena } from '@core/model/arena';
 import { createPath, createPathNode, flattenPath } from '@core/model/path';
@@ -160,5 +161,20 @@ describe('interferências entre objetos', () => {
     for (const id of achado.ids) {
       expect(doc.objects.some((o) => o.id === id)).toBe(true);
     }
+  });
+});
+
+describe('água do cenário (decisão 72)', () => {
+  it("obstáculo sobre massa d'água é interferência; sobre o rio, não", () => {
+    const lago = createPolygonStructure([{ x: 20, y: 10 }, { x: 30, y: 10 }, { x: 30, y: 20 }, { x: 20, y: 20 }], 'lago');
+    const rio = createPolygonStructure([{ x: 40, y: 10 }, { x: 50, y: 10 }, { x: 50, y: 20 }, { x: 40, y: 20 }], 'rio');
+    const noLago = createObstacle('vertical', { x: 25, y: 15 }, '1');
+    const noRio = createObstacle('vertical', { x: 45, y: 15 }, '2');
+    const doc = produce(createDocument({ arena: true }), (d) => {
+      [lago, rio, noLago, noRio].forEach((o) => addObject(d, o));
+    });
+    const agua = findInterferences(doc).filter((i) => i.kind === 'obstaculo-na-agua');
+    expect(agua).toHaveLength(1);
+    expect(agua[0]!.ids).toContain(noLago.id);
   });
 });

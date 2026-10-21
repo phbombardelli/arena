@@ -1,3 +1,4 @@
+import { createPolygonStructure } from '@core/library/structures';
 import { CourseFileError } from './format';
 
 /**
@@ -156,7 +157,48 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
   7: v7ToV8,
   8: v8ToV9,
   9: v9ToV10,
+  10: v10ToV11,
 };
+
+/**
+ * 10 -> 11: o obstáculo "rio" saiu (decisão 72). O rio passa a ser água do
+ * cenário: cada obstáculo rio vira um rio (construção) no mesmo lugar, do
+ * mesmo tamanho e no mesmo giro; vínculos de traçado e de partida/chegada
+ * com ele se soltam.
+ */
+function v10ToV11(doc: RawDocument): RawDocument {
+  const objs = (doc.objects as Record<string, unknown>[]) ?? [];
+  const rios = objs.filter((o) => o.kind === 'obstacle' && o.type === 'rio');
+  if (rios.length === 0) return doc;
+  const ids = new Set(rios.map((o) => o.id));
+  const novos = rios.map((o) => {
+    const pos = (o.pos as { x: number; y: number }) ?? { x: 0, y: 0 };
+    const meiaL = Number(o.faceWidthM ?? 4) / 2;
+    const meiaP = Number(o.spreadM ?? 3.5) / 2;
+    const a = (Number(o.rotation ?? 0) * Math.PI) / 180;
+    const c = Math.cos(a);
+    const sn = Math.sin(a);
+    const canto = (x: number, y: number) => ({ x: pos.x + x * c - y * sn, y: pos.y + x * sn + y * c });
+    return createPolygonStructure(
+      [canto(-meiaL, -meiaP), canto(meiaL, -meiaP), canto(meiaL, meiaP), canto(-meiaL, meiaP)],
+      'rio',
+    ) as unknown as Record<string, unknown>;
+  });
+  for (const o of objs) {
+    if (o.kind === 'path') {
+      for (const n of (o.nodes as Record<string, unknown>[]) ?? []) {
+        const anc = n.anchor as { objectId?: string } | null;
+        if (anc && ids.has(anc.objectId)) n.anchor = null;
+      }
+    }
+    if (o.kind === 'timing') {
+      const anc = o.anchor as { obstacleId?: string } | null;
+      if (anc && ids.has(anc.obstacleId)) o.anchor = null;
+    }
+  }
+  doc.objects = [...objs.filter((o) => !ids.has(o.id)), ...novos];
+  return doc;
+}
 
 /**
  * 9 -> 10: as bandeirolas saíram (decisão 62) — a seta de salto já diz a

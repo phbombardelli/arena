@@ -137,3 +137,68 @@ export function alignCombination(
     atual.arrow.reversed = base.arrow.reversed;
   }
 }
+
+/* ------------------------------------------------------- composto (B-16) */
+
+/**
+ * Confirma que 2 ou 3 obstáculos são um composto (decisão 71): todos
+ * ganham o mesmo número e as letras A, B, C na ordem em que o cavalo os
+ * salta. O número é o menor que já tinham; sem número, o seguinte ao maior
+ * do croqui. A ordem é a da numeração, se houver; senão, a do sentido do
+ * salto do primeiro.
+ */
+export function confirmCombination(doc: CourseDocument, ids: ObjectId[]): void {
+  const sel = ids
+    .map((id) => doc.objects.find((o) => o.id === id))
+    .filter((o): o is Obstacle => o?.kind === 'obstacle' && !o.locked);
+  if (sel.length < 2 || sel.length > 3) return;
+  const numeros = sel.map((o) => parseInt(o.number, 10)).filter((n) => Number.isFinite(n));
+  const todos = doc.objects
+    .filter((o): o is Obstacle => o.kind === 'obstacle')
+    .map((o) => parseInt(o.number, 10))
+    .filter((n) => Number.isFinite(n));
+  const numero = numeros.length ? Math.min(...numeros) : (todos.length ? Math.max(...todos) : 0) + 1;
+  const letras: Obstacle['letter'][] = ['A', 'B', 'C'];
+  orderAlongLine(sel).forEach((o, i) => {
+    o.number = String(numero);
+    o.letter = letras[i]!;
+  });
+}
+
+/**
+ * Vãos de uma linha curva ou quebrada: de vara a vara, mas medidos na reta
+ * entre os CENTROS de cada par — cada elemento mantém a própria direção.
+ */
+export function freeGaps(ordered: Obstacle[]): number[] {
+  const vaos: number[] = [];
+  for (let i = 1; i < ordered.length; i += 1) {
+    const a = ordered[i - 1]!;
+    const b = ordered[i]!;
+    vaos.push(Math.hypot(b.pos.x - a.pos.x, b.pos.y - a.pos.y) - meiaVara(a) - meiaVara(b));
+  }
+  return vaos;
+}
+
+/**
+ * Acerta um vão de uma linha curva/quebrada sem endireitá-la: o elemento
+ * seguinte anda na reta que o liga ao anterior, e os de depois andam junto
+ * (os vãos deles não mudam). Giros e setas ficam como estão.
+ */
+export function setFreeGap(doc: CourseDocument, ids: ObjectId[], indice: number, gapM: number): void {
+  const sel = ids
+    .map((id) => doc.objects.find((o) => o.id === id))
+    .filter((o): o is Obstacle => o?.kind === 'obstacle');
+  const ord = orderAlongLine(sel);
+  const a = ord[indice];
+  const b = ord[indice + 1];
+  if (!a || !b || b.locked) return;
+  const vao = sameCombination(a, b) ? clampCombinationGap(gapM) : gapM;
+  const dx = b.pos.x - a.pos.x;
+  const dy = b.pos.y - a.pos.y;
+  const d = Math.hypot(dx, dy) || 1;
+  const novo = meiaVara(a) + vao + meiaVara(b);
+  const delta = { x: (dx / d) * (novo - d), y: (dy / d) * (novo - d) };
+  for (const o of ord.slice(indice + 1)) {
+    if (!o.locked) o.pos = { x: o.pos.x + delta.x, y: o.pos.y + delta.y };
+  }
+}
