@@ -7,6 +7,7 @@ import { traceCourse } from '@ui/actions/rideActions';
 import { insertHeightTable, insertInfoBox } from '@ui/actions/annotationActions';
 import { startGuidedRide } from '@ui/actions/guidedActions';
 import { insertLogo } from '@ui/actions/logoActions';
+import { insertTimingLine } from '@ui/actions/timingActions';
 import { useEditorStore, type Tool } from '@store/editorStore';
 
 /**
@@ -15,8 +16,8 @@ import { useEditorStore, type Tool } from '@store/editorStore';
  * Só ferramentas de desenhar, cada uma com um atalho de uma tecla. O que
  * tem variantes — tipo de obstáculo, modo do traçado, o que vai na folha —
  * abre ao lado, em vez de empurrar a barra para baixo. Partida e chegada
- * saíram daqui: colocam-se quando pedidas, pelo menu Inserir ou pelo
- * painel do primeiro e do último obstáculo.
+ * têm botão próprio (B-51), mas continuam só quando pedidas: nada é
+ * colocado sozinho.
  */
 export function Sidebar() {
   const {
@@ -115,10 +116,19 @@ export function Sidebar() {
             footer="Por trechos e Automático seguem a numeração dos obstáculos."
           />
           <RailButton icon="T" label="Texto" shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
+          <RailFlyout
+            icon="⚑"
+            label="Partida e chegada"
+            items={[
+              { label: 'Partida', hint: 'no eixo do primeiro obstáculo', onSelect: () => insertTimingLine('start') },
+              { label: 'Chegada', hint: 'no eixo do último obstáculo', onSelect: () => insertTimingLine('finish') },
+            ]}
+            footer="Seguem a numeração; a distância se ajusta no painel da linha."
+          />
           <hr />
           <RailFlyout
             icon="▤"
-            label="Folha"
+            label="Informações técnicas"
             items={[
               { label: 'Quadro técnico', hint: 'prova, tabela, altura, velocidade…', onSelect: insertInfoBox },
               { label: 'Tabela de alturas', hint: 'lê as alturas dos obstáculos', onSelect: insertHeightTable },

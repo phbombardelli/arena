@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { setLocked, setObjectPosition, setObjectRotation, deleteObjects } from '@core/commands/ops';
 import { ORNAMENTS } from '@core/library/ornaments';
-import { getPosition, getRotation } from '@core/model/transform';
+import { getPosition, getRotation, isPaperAnchored } from '@core/model/transform';
 import { measureFrame } from '@core/model/measureFrame';
 import { hasLinked } from '@core/commands/groupOps';
 import { linkSelection, unlinkSelection } from '@ui/actions/editActions';
@@ -170,7 +170,8 @@ export function ObjectPanel() {
               </label>
             </>
           )}
-          {getRotation(single) !== null && (
+          {/* A partida/chegada gira e anda com o obstáculo (B-53). */}
+          {getRotation(single) !== null && single.kind !== 'timing' && (
             <>
               <NumberField
                 label="Rotação"
@@ -188,6 +189,7 @@ export function ObjectPanel() {
               />
             </>
           )}
+          {mostraPosicao(single) && (
           <details className="fold">
             <summary>Mais opções</summary>
             <h3>Posição</h3>
@@ -225,6 +227,7 @@ export function ObjectPanel() {
             />
             {single.kind === 'obstacle' && <ObstacleMore obstacle={single} />}
           </details>
+          )}
         </>
       )}
     </section>
@@ -291,3 +294,10 @@ function LinkRow({ ids }: { ids: string[] }) {
     </div>
   );
 }
+
+/**
+ * Posição em metros só faz sentido para o que mora no terreno: quadro,
+ * tabela e logo ficam na folha (arrastam-se ali), e a partida/chegada é
+ * presa ao obstáculo.
+ */
+const mostraPosicao = (obj: SceneObject): boolean => !isPaperAnchored(obj) && obj.kind !== 'timing';

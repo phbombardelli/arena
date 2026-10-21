@@ -1,6 +1,6 @@
 import type { CourseDocument, ObjectId, Obstacle, SceneObject } from '@core/model/types';
 import { isLayerVisible } from '@core/model/document';
-import { objectScope } from '@core/model/transform';
+import { boundsIn, objectScope } from '@core/model/transform';
 import type { ObjectScope } from '@core/model/types';
 import { LAYER_ORDER } from '@core/model/types';
 import { pageSize } from '@core/scale/units';
@@ -175,6 +175,18 @@ export function RenderDocument(opts: RenderOptions) {
         })();
 
         if (conteudo === null) return null;
+        // Área de clique folgada (B-50): a envoltória do objeto mais 9 px
+        // de TELA, por baixo do desenho dele. Linha de partida, ornamento e
+        // texto pequenos viravam fios em escala grande.
+        const folga = onPointerDown && GENEROUS_HIT.has(obj.kind) ? hitBox(doc, obj, onPointerDown) : null;
+        if (folga) {
+          return (
+            <g key={obj.id}>
+              {folga}
+              {conteudo}
+            </g>
+          );
+        }
         return ativo ? (
           conteudo
         ) : (
@@ -236,5 +248,34 @@ export function RenderDocument(opts: RenderOptions) {
       {/* Por último, para a legenda nunca ficar debaixo de um objeto. */}
       <ScaleLegend page={doc.page} />
     </>
+  );
+}
+
+/** Folga da área de clique, em pixels de tela (como a dos obstáculos). */
+const HIT_MARGIN_PX = 9;
+
+/** Tipos que ganham a área de clique pela envoltória. Obstáculo, pista e
+ * traçado têm a sua, feita sob medida na própria camada. */
+const GENEROUS_HIT = new Set<SceneObject['kind']>(['timing', 'ornament', 'text', 'infobox', 'heighttable', 'logo']);
+
+function hitBox(doc: CourseDocument, obj: SceneObject, onPointerDown: (e: React.PointerEvent) => void) {
+  const b = boundsIn(doc, obj);
+  const k = 1000 / doc.page.printScale;
+  const x = doc.originMm.x + b.min.x * k;
+  const y = doc.originMm.y + b.min.y * k;
+  return (
+    <rect
+      data-part="hit-area"
+      x={x}
+      y={y}
+      width={Math.max(0.01, (b.max.x - b.min.x) * k)}
+      height={Math.max(0.01, (b.max.y - b.min.y) * k)}
+      fill="transparent"
+      stroke="transparent"
+      strokeWidth={HIT_MARGIN_PX * 2}
+      vectorEffect="non-scaling-stroke"
+      onPointerDown={onPointerDown}
+      style={{ cursor: 'move' }}
+    />
   );
 }

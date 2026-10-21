@@ -1348,3 +1348,26 @@ roda numa cópia de até 1400 px do print. O OCR é carregado só pelo
 assistente (chunk próprio de 16 kB; motor e dados vêm da CDN no primeiro
 uso, cerca de 4 MB). "Ajustar ao papel" e "Centralizar" passaram a usar a
 envoltória dos vértices — com contorno livre, liam uma pista 0×0.
+
+## 65. Seleção certa e folgada; partida e chegada à mão
+
+**Moldura dos elementos da folha** (B-48). Quadro técnico, tabela de
+alturas e logo moram em mm de papel; a envoltória deles era convertida
+para metros sem descontar a origem do desenho na folha, e a moldura de
+seleção saía deslocada exatamente dessa distância. `boundsIn` agora
+desconta — vale para a moldura, o laço e o giro.
+
+**Área de clique folgada em tudo** (B-50). Partida/chegada, ornamentos,
+textos, quadro, tabela e logo ganham, por baixo do desenho, um retângulo
+invisível da envoltória com 9 px de tela de folga (`non-scaling-stroke`),
+como os obstáculos (decisão 58).
+
+**Barra da esquerda** (B-51, B-52). No modo Percurso, um botão "Partida e
+chegada" com as duas opções — continuam só quando pedidas. "Folha" passa
+a se chamar "Informações técnicas".
+
+**Painel da partida/chegada** (B-53). A linha é solidária ao obstáculo:
+saem inverter direção, paraflancos, rotação (campo, barra e alça no
+desenho) e "Mais opções"/posição. Ficam distância até a vara, papel,
+largura, texto, seta e traço. Quadro, tabela e logo também deixam de
+mostrar X/Y em metros — arrastam-se na folha.

@@ -321,9 +321,17 @@ function polygonCentroid(points: Vec2[]): Vec2 {
  * que a tabela desenhada.
  */
 export function boundsIn(doc: CourseDocument, obj: SceneObject): Bounds {
-  return getBounds(
+  const b = getBounds(
     obj,
     doc.page.printScale,
     doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'),
   );
+  if (!isPaperAnchored(obj)) return b;
+  // Quadro, tabela e logo moram em mm da FOLHA: para cair no mesmo sistema
+  // do resto (metros do modelo), desconta-se a origem do desenho na folha.
+  // Sem isso, a moldura de seleção saía deslocada dessa distância (B-48).
+  const k = 1000 / doc.page.printScale;
+  const dx = doc.originMm.x / k;
+  const dy = doc.originMm.y / k;
+  return { min: { x: b.min.x - dx, y: b.min.y - dy }, max: { x: b.max.x - dx, y: b.max.y - dy } };
 }

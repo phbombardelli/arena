@@ -7,6 +7,7 @@ import { usableArea } from '@core/scale/units';
 import type { CourseDocument } from './types';
 import { createDocument, centerOnPage, firstArena, fitScaleToPage, freeAreaMm } from './document';
 import { createPolygonArena } from './arena';
+import { boundsIn } from './transform';
 
 const comQuadroNoTopo = (doc: CourseDocument): CourseDocument =>
   produce(doc, (d) => {
@@ -122,5 +123,19 @@ describe('contorno livre (decisão 64)', () => {
     // 150 × 100 m em A4 paisagem pede 1:600; um contorno lido como 0×0
     // daria a menor escala da lista.
     expect(fitScaleToPage(doc)).toBe(600);
+  });
+});
+
+describe('moldura de seleção dos elementos da folha (B-48)', () => {
+  it('em metros do modelo, a moldura cai exatamente sobre o quadro desenhado', () => {
+    const doc = produce(createDocument(), (d) => {
+      addObject(d, createInfoBox({ x: 40, y: 30 }));
+    });
+    const quadro = doc.objects.find((o) => o.kind === 'infobox')!;
+    const b = boundsIn(doc, quadro);
+    const k = 1000 / doc.page.printScale;
+    // Volta para a folha como a moldura faz: origem + metros × k.
+    expect(doc.originMm.x + b.min.x * k).toBeCloseTo(40, 6);
+    expect(doc.originMm.y + b.min.y * k).toBeCloseTo(30, 6);
   });
 });

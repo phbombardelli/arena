@@ -1,11 +1,16 @@
-import { setTimingLine, setTimingWings } from '@core/commands/timingOps';
+import { setTimingLine } from '@core/commands/timingOps';
 import { clampTimingDistance, TIMING_DISTANCE } from '@core/library/timing';
 import { obstacleLabel } from '@core/library/obstacles';
 import type { TimingLine, WingStyle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
-import { WingStyleField } from './WingStyleField';
 
+/**
+ * Painel da partida/chegada, enxuto (B-53). A linha é solidária ao
+ * obstáculo — o eixo, o giro e o sentido vêm dele —, então aqui não há
+ * inverter direção, suporte, rotação nem posição: só a distância até a
+ * vara, o papel, a largura, o texto e o traço.
+ */
 export function TimingPanel({ line }: { line: TimingLine }) {
   const { doc, apply } = useDocumentStore();
   const travado = line.locked;
@@ -141,32 +146,6 @@ export function TimingPanel({ line }: { line: TimingLine }) {
         />
         Mostrar a seta
       </label>
-      {line.arrow.visible && (
-        <div className="row-buttons">
-          <button
-            disabled={travado}
-            onClick={() =>
-              apply('Inverter a seta', (d) =>
-                setTimingLine(d, line.id, {
-                  arrow: { ...line.arrow, reversed: !line.arrow.reversed },
-                }),
-              )
-            }
-          >
-            Inverter direção
-          </button>
-        </div>
-      )}
-
-      <h3>Paraflancos</h3>
-      <WingStyleField
-        wings={line.wings}
-        disabled={travado}
-        onChange={(patch, rotulo) =>
-          apply(rotulo, (d) => setTimingWings(d, line.id, patch))
-        }
-      />
-
       <label className="field">
         <span>Cor do traço</span>
         <input
@@ -202,10 +181,6 @@ export function TimingPanel({ line }: { line: TimingLine }) {
         </select>
       </label>
 
-      <p className="note dim">
-        A linha não é obstáculo: não tem altura nem número, e não entra na
-        tabela de alturas.
-      </p>
     </>
   );
 }

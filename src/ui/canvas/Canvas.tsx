@@ -565,7 +565,7 @@ export function Canvas() {
             selection={selection}
             zoom={viewport.zoom}
             marquee={gestures.marquee}
-            showRotate={selectedObjects.some((o) => getRotation(o) !== null)}
+            showRotate={selectedObjects.some((o) => getRotation(o) !== null && o.kind !== 'timing')}
             onRotateHandleDown={(e) => {
               e.stopPropagation();
               gestures.beginRotate(e);
