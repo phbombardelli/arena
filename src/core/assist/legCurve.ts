@@ -174,7 +174,7 @@ function checkPoints(pontos: Vec2[], field: Field, params: RideParams): RideWarn
     // As pontas ficam de fora: elas encostam de propósito nos saltos que a
     // volta liga, e acusá-las seria acusar o próprio salto.
     return pontos.slice(3, -3).some((p) => insidePolygon(p, corpo));
-  });
+  }) || (field.decor ?? []).some((corpo) => pontos.some((p) => insidePolygon(p, corpo)));
   if (atropela) avisos.push('passa-por-obstaculo');
 
   return avisos;
@@ -393,6 +393,11 @@ function avalia(
     shape: LegShape,
   ) => {
     const warnings: CurveWarning[] = [...checkPoints(pontos, field, params)];
+    // A reta esticada (curva para trás) também não pode atravessar ilha ou
+    // vaso — ela é parte do traçado, só não é parte da curva (decisão 74).
+    if (!warnings.includes('passa-por-obstaculo') && retaAtropelaDecor(lead, from, to, field)) {
+      warnings.push('passa-por-obstaculo');
+    }
     if (minRadiusM < params.tightRadiusM) warnings.push('curva-fechada');
     const turnDeg = turnOfPoints(pontos);
     // A cúbica não passava pelo teto de giro, só o arco-reta-arco: uma
@@ -419,6 +424,23 @@ function avalia(
       const curve = legCurve(saida, chegada, tension);
       const raio = Math.min(minRadiusOf(curve), teto);
       julga(lead, curveNodes(curve), samplesOfCubic(curve), raio, 'curva');
+    }
+
+    // Desvio de ilha ou vaso (decisão 74): passa ao lado do corpo que
+    // está no caminho, por um ponto de passagem — pela esquerda e pela
+    // direita. As voltas acima seguem a corda e não teriam como contorná-lo.
+    for (const wp of pontosDeDesvio(saida, chegada, field)) {
+      for (const tension of TENSIONS) {
+        const c1 = legCurve(saida, wp, tension);
+        const c2 = legCurve(wp, chegada, tension);
+        const nodes: PathNode[] = [
+          { pos: c1.p0, type: 'smooth', handleIn: null, handleOut: sub(c1.p1, c1.p0), anchor: null },
+          { pos: wp.pos, type: 'smooth', handleIn: sub(c1.p2, wp.pos), handleOut: sub(c2.p1, wp.pos), anchor: null },
+          { pos: c2.p3, type: 'smooth', handleIn: sub(c2.p2, c2.p3), handleOut: null, anchor: null },
+        ];
+        const pontos = [...samplesOfCubic(c1), ...samplesOfCubic(c2).slice(1)];
+        julga(lead, nodes, pontos, Math.min(minRadiusOf(c1), minRadiusOf(c2)), 'curva');
+      }
     }
 
     // Arco-reta-arco: indispensável nas voltas grandes, onde a cúbica bica.
@@ -664,4 +686,58 @@ export function curveNodes(c: Cubic): PathNode[] {
     { pos: c.p0, type: 'smooth', handleIn: null, handleOut: sub(c.p1, c.p0), anchor: null },
     { pos: c.p3, type: 'smooth', handleIn: sub(c.p2, c.p3), handleOut: null, anchor: null },
   ];
+}
+
+/** A reta entre a pose do salto e o começo/fim da curva passa por ilha ou vaso? */
+function retaAtropelaDecor(
+  lead: { after: number; before: number },
+  from: Pose,
+  to: Pose,
+  field: Field,
+): boolean {
+  const corpos = field.decor ?? [];
+  if (corpos.length === 0) return false;
+  const amostra = (a: Vec2, b: Vec2): Vec2[] => {
+    const n = Math.max(2, Math.ceil(distance(a, b) / 0.5));
+    return Array.from({ length: n + 1 }, (_, i) => ({ x: a.x + ((b.x - a.x) * i) / n, y: a.y + ((b.y - a.y) * i) / n }));
+  };
+  const pontos = [
+    ...(lead.after > 0 ? amostra(from.pos, slide(from, lead.after).pos) : []),
+    ...(lead.before > 0 ? amostra(slide(to, -lead.before).pos, to.pos) : []),
+  ];
+  return corpos.some((c) => pontos.some((p) => insidePolygon(p, c)));
+}
+
+/** Folga entre o traçado e a borda da ilha ou do vaso que ele contorna. */
+const FOLGA_DECOR_M = 2;
+
+/**
+ * Pontos de passagem para contornar os corpos decorativos que ficam no
+ * caminho da corda: um de cada lado, além da borda do corpo, com a
+ * direção da corda — a volta passa ao lado e segue.
+ */
+function pontosDeDesvio(de: Pose, para: Pose, field: Field): Pose[] {
+  const corpos = field.decor ?? [];
+  if (corpos.length === 0) return [];
+  const corda = sub(para.pos, de.pos);
+  const len = Math.hypot(corda.x, corda.y);
+  if (len < 1) return [];
+  const u = { x: corda.x / len, y: corda.y / len };
+  const n = { x: -u.y, y: u.x };
+  const rumo = (Math.atan2(u.y, u.x) * 180) / Math.PI;
+  const out: Pose[] = [];
+  for (const c of corpos) {
+    const ao = c.map((p) => ({ t: (p.x - de.pos.x) * u.x + (p.y - de.pos.y) * u.y, l: (p.x - de.pos.x) * n.x + (p.y - de.pos.y) * n.y }));
+    const tMin = Math.min(...ao.map((q) => q.t));
+    const tMax = Math.max(...ao.map((q) => q.t));
+    const lMin = Math.min(...ao.map((q) => q.l));
+    const lMax = Math.max(...ao.map((q) => q.l));
+    // Só o que está entre as duas pontas e atravessa a corda.
+    if (tMax < 0 || tMin > len || lMin > 0 || lMax < 0) continue;
+    const t = (tMin + tMax) / 2;
+    for (const l of [lMax + FOLGA_DECOR_M, lMin - FOLGA_DECOR_M]) {
+      out.push({ pos: { x: de.pos.x + u.x * t + n.x * l, y: de.pos.y + u.y * t + n.y * l }, heading: rumo });
+    }
+  }
+  return out;
 }

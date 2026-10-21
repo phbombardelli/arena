@@ -8,7 +8,7 @@ import { useEditorStore } from '@store/editorStore';
 
 const MOTIVO: Record<CurveWarning, string> = {
   'fora-da-pista': 'a volta não cabe dentro da pista',
-  'passa-por-obstaculo': 'a volta passa por cima de outro obstáculo',
+  'passa-por-obstaculo': 'a volta passa por cima de outro obstáculo, ilha ou vaso',
   'curva-fechada': 'a curva fecha mais do que se galopa',
   'giro-excessivo': 'a volta gira mais de 300 graus',
 };

@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { setLocked, setObjectPosition, setObjectRotation, deleteObjects } from '@core/commands/ops';
 import { ORNAMENTS } from '@core/library/ornaments';
-import { getPosition, getRotation, isPaperAnchored } from '@core/model/transform';
+import { getPosition, getRotation, isPaperAnchored, objectScope } from '@core/model/transform';
 import { measureFrame } from '@core/model/measureFrame';
 import { isWater } from '@core/library/structures';
 import { hasLinked } from '@core/commands/groupOps';
@@ -62,7 +62,11 @@ export function ObjectPanel() {
             ? single.kind === 'arena' && single.structure
               ? isWater(single.structure.type)
                 ? 'Água'
-                : 'Construção'
+                : single.structure.type === 'ilha'
+                  ? objectScope(single) === 'percurso'
+                    ? 'Ilha decorativa'
+                    : 'Ilha'
+                  : 'Construção'
               : KIND_LABEL[single.kind]
             : vinculoUnico
             ? `Cenário vinculado · ${objs.length}`

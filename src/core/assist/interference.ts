@@ -4,6 +4,7 @@ import { arenaPoints } from '@core/model/arena';
 import { flattenPath } from '@core/model/path';
 import { obstacleLabel } from '@core/library/obstacles';
 import { isWater, structureDef } from '@core/library/structures';
+import { decorBodies } from './decor';
 import type { Arena, CourseDocument, CoursePath, ObjectId, Obstacle } from '@core/model/types';
 
 /**
@@ -36,7 +37,8 @@ export type InterferenceKind =
   | 'obstaculos-sobrepostos'
   | 'tracado-cruza-obstaculo'
   | 'obstaculo-fora-da-pista'
-  | 'obstaculo-na-agua';
+  | 'obstaculo-na-agua'
+  | 'tracado-cruza-ornamento';
 
 export interface Interference {
   kind: InterferenceKind;
@@ -219,6 +221,27 @@ export function findInterferences(doc: CourseDocument): Interference[] {
         ids: [o.id, agua.id],
         at: o.pos,
         message: `O ${nomeDe(o)} está sobre uma massa d'água`,
+      });
+    }
+  }
+
+  // Traçado por cima de ilha ou vaso (decisão 74): o cavalo contorna.
+  const corpos = decorBodies(doc);
+  for (const path of paths) {
+    const pontos = flattenPath(path, 0.25);
+    for (const corpo of corpos) {
+      let onde: Vec2 | null = pontos.find((p) => insidePolygon(p, corpo.outline)) ?? null;
+      for (let i = 1; !onde && i < pontos.length; i += 1) {
+        for (let j = 0; !onde && j < corpo.outline.length; j += 1) {
+          onde = segmentIntersection(pontos[i - 1]!, pontos[i]!, corpo.outline[j]!, corpo.outline[(j + 1) % corpo.outline.length]!);
+        }
+      }
+      if (!onde) continue;
+      out.push({
+        kind: 'tracado-cruza-ornamento',
+        ids: [path.id, corpo.id],
+        at: onde,
+        message: corpo.kind === 'ilha' ? 'O traçado passa por cima de uma ilha' : 'O traçado passa por cima de um vaso',
       });
     }
   }

@@ -189,10 +189,12 @@ export interface Field {
   outline: Vec2[] | null;
   /** Obstáculos que a volta não pode atravessar. */
   blockers: Obstacle[];
+  /** Ilhas e vasos: corpos que a volta contorna (decisão 74). */
+  decor?: Vec2[][];
 }
 
-export function fieldFrom(arena: Arena | null, obstacles: Obstacle[]): Field {
-  return { outline: arena ? arenaPoints(arena) : null, blockers: obstacles };
+export function fieldFrom(arena: Arena | null, obstacles: Obstacle[], decor: Vec2[][] = []): Field {
+  return { outline: arena ? arenaPoints(arena) : null, blockers: obstacles, decor };
 }
 
 export type RideWarning = 'fora-da-pista' | 'passa-por-obstaculo';
@@ -223,10 +225,11 @@ function checkPath(path: DubinsPath, field: Field, params: RideParams): RideWarn
     if (escapou) avisos.push('fora-da-pista');
   }
 
-  const atropela = field.blockers.some((o) => {
-    const corpo = obstacleFootprint(o);
-    return pontos.some((p) => insidePolygon(p, corpo));
-  });
+  const atropela =
+    field.blockers.some((o) => {
+      const corpo = obstacleFootprint(o);
+      return pontos.some((p) => insidePolygon(p, corpo));
+    }) || (field.decor ?? []).some((corpo) => pontos.some((p) => insidePolygon(p, corpo)));
   if (atropela) avisos.push('passa-por-obstaculo');
 
   return avisos;

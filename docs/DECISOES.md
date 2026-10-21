@@ -1513,3 +1513,26 @@ alegre:
   cinza-azulado, para não se confundirem com a escolhida em coral.
 
 A FOLHA não muda: o croqui impresso tem as mesmas cores de antes.
+
+## 74. Ornamentos móveis da prova: ilha decorativa e vaso
+
+Dos achados da pesquisa (B-17), entram só dois ornamentos MÓVEIS, no
+botão Ornamento do modo Percurso — fazem parte da prova, não do local, e
+não entram nos modelos de pista:
+- **Ilha decorativa** — arrastando nasce oval (inscrita no retângulo
+  arrastado); também em contorno livre. É uma ilha como a fixa (verde,
+  sem texto, com vértices, ângulo e vínculo), só que no escopo Percurso.
+  A ilha fixa da pista, arrastada, também passa a nascer oval.
+- **Vaso** — o ornamento que já existia, agora da prova.
+
+Nada de novo entre os fixos.
+
+**Influenciam o traçado.** Ilhas (fixas e decorativas) e vasos são corpos
+no chão:
+- o assistente não passa por cima deles — nem na curva nem na reta
+  esticada da volta por fora — e ganha opções de DESVIO: um ponto de
+  passagem de cada lado do corpo que está no caminho, a 2 m da borda, com
+  a direção da corda. Entre dois saltos alinhados com uma ilha no meio, a
+  volta passa ao lado e segue;
+- um traçado desenhado que atravessa um deles vira aviso de
+  interferência ("O traçado passa por cima de uma ilha").

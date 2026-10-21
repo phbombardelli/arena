@@ -121,6 +121,39 @@ export function Sidebar() {
           />
           <RailButton icon="T" label="Texto" shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
           <RailFlyout
+            icon="✿"
+            label="Ornamento"
+            active={
+              (tool === 'ornament' && ornamentType === 'vaso') ||
+              ((tool === 'arena-rect' || tool === 'arena-polygon') && structureType === 'ilha')
+            }
+            onActivate={() => construcao('ilha', 'arena-rect')}
+            items={[
+              {
+                label: 'Ilha decorativa',
+                hint: 'arraste: nasce oval',
+                active: tool === 'arena-rect' && structureType === 'ilha',
+                onSelect: () => construcao('ilha', 'arena-rect'),
+              },
+              {
+                label: 'Ilha em contorno livre',
+                hint: 'clique cada vértice; Enter fecha',
+                active: tool === 'arena-polygon' && structureType === 'ilha',
+                onSelect: () => construcao('ilha', 'arena-polygon'),
+              },
+              {
+                label: 'Vaso',
+                hint: 'clique para colocar',
+                active: tool === 'ornament' && ornamentType === 'vaso',
+                onSelect: () => {
+                  setOrnamentType('vaso');
+                  usa('ornament');
+                },
+              },
+            ]}
+            footer="Móveis da prova: o assistente contorna, e o traçado por cima vira aviso."
+          />
+          <RailFlyout
             icon="⚑"
             label="Partida e chegada"
             items={[
@@ -224,7 +257,7 @@ export function Sidebar() {
             detail={nomeOrnamento}
             active={tool === 'ornament'}
             onActivate={() => usa('ornament')}
-            items={ORNAMENTS.map((o) => ({
+            items={ORNAMENTS.filter((o) => o.type !== 'vaso').map((o) => ({
               label: o.label,
               active: tool === 'ornament' && ornamentType === o.type,
               onSelect: () => {

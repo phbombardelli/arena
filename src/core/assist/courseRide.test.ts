@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { produce } from 'immer';
 import { addObject } from '@core/commands/ops';
 import { createObstacle } from '@core/library/obstacles';
+import { createPolygonStructure } from '@core/library/structures';
 import { placeTimingLine } from '@core/library/timing';
 import { createDocument } from '@core/model/document';
 import { createRectangleArena } from '@core/model/arena';
@@ -197,5 +198,28 @@ describe('traçado do percurso', () => {
       // Seno do ângulo entre as alças: colinear de verdade, não por sorte.
       expect(Math.abs(cruzado) / (escala || 1)).toBeLessThan(1e-6);
     }
+  });
+});
+
+describe('o assistente contorna ilhas e vasos (decisão 74)', () => {
+  it('com uma ilha no caminho entre dois saltos, a volta não passa por cima dela', () => {
+    const um = createObstacle('vertical', { x: 20, y: 20 }, '1');
+    const dois = createObstacle('vertical', { x: 60, y: 20 }, '2');
+    um.rotation = 90;
+    dois.rotation = 90;
+    const ilha = createPolygonStructure(
+      [{ x: 36, y: 17 }, { x: 44, y: 17 }, { x: 44, y: 23 }, { x: 36, y: 23 }],
+      'ilha',
+    );
+    ilha.scope = 'percurso';
+    const doc = produce(createDocument({ arena: true }), (d) => {
+      [um, dois, ilha].forEach((o) => addObject(d, o));
+    });
+    const r = buildCourseRide(doc)!;
+    const pontos = flattenPath(r.path, 0.25);
+    const dentro = pontos.some((p) => p.x > 36 && p.x < 44 && p.y > 17 && p.y < 23);
+    // Contorna: passa ao lado da ilha, sem aviso.
+    expect(dentro).toBe(false);
+    expect(r.problems).toHaveLength(0);
   });
 });

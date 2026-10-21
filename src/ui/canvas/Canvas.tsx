@@ -7,6 +7,7 @@ import { toMillimeterPrecision } from '@core/geometry/snap';
 import { distance, type Vec2 } from '@core/geometry/vec';
 import { createObstacle, nextObstacleNumber } from '@core/library/obstacles';
 import { createOrnament, gateRotation } from '@core/library/ornaments';
+import { ovalPoints } from '@core/assist/decor';
 import { createTextLabel } from '@core/library/annotations';
 import { createPath, createPathNode, smoothedNodes } from '@core/model/path';
 import { createPolygonArena, createRectangleArena } from '@core/model/arena';
@@ -130,6 +131,8 @@ export function Canvas() {
     if (points.length < 3) return;
     const tipo = ed.structureType;
     const arena = tipo ? createPolygonStructure(points, tipo) : createPolygonArena(points);
+    // Ilha desenhada no modo Percurso é ornamento móvel da prova (decisão 74).
+    if (tipo && ed.mode === 'percurso') arena.scope = 'percurso';
     useDocumentStore.getState().apply(tipo ? 'Desenhar construção' : 'Desenhar pista', (d) => addObject(d, arena));
     ed.setSelection([arena.id]);
     ed.setEditingVertices(true);
@@ -167,9 +170,14 @@ export function Canvas() {
     if (widthM < 2 || heightM < 2) return;
     const canto = { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) };
     const tipo = ed.structureType;
-    const arena = tipo
-      ? createRectangleStructure(canto, widthM, heightM, tipo)
-      : createRectangleArena(canto, widthM, heightM);
+    // Ilha arrastada nasce oval, inscrita no retângulo (decisão 74).
+    const arena =
+      tipo === 'ilha'
+        ? createPolygonStructure(ovalPoints(canto, widthM, heightM), 'ilha')
+        : tipo
+          ? createRectangleStructure(canto, widthM, heightM, tipo)
+          : createRectangleArena(canto, widthM, heightM);
+    if (tipo && ed.mode === 'percurso') arena.scope = 'percurso';
     useDocumentStore.getState().apply(tipo ? 'Criar construção' : 'Criar pista', (d) => addObject(d, arena));
     ed.setSelection([arena.id]);
     ed.setTool('select');

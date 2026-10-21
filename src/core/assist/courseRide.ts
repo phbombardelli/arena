@@ -1,3 +1,4 @@
+import { decorBodies } from './decor';
 import { add, fromAngle, scale, distance, type Vec2 } from '@core/geometry/vec';
 import type { Pose } from '@core/geometry/dubins';
 import { solveLegCurve, type CurveSolution, type CurveWarning, type LegShape } from './legCurve';
@@ -196,7 +197,11 @@ export function courseGates(
   const obstacles = doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
   const timings = doc.objects.filter((o): o is TimingLine => o.kind === 'timing');
   const arena = doc.objects.find((o) => o.kind === 'arena' && !o.structure);
-  const field: Field = fieldFrom(arena?.kind === 'arena' ? arena : null, obstacles);
+  const field: Field = fieldFrom(
+    arena?.kind === 'arena' ? arena : null,
+    obstacles,
+    decorBodies(doc).map((d) => d.outline),
+  );
 
   const partida = timings.find((t) => t.role === 'start');
   const chegada = timings.find((t) => t.role === 'finish');

@@ -3,6 +3,7 @@ import { produce } from 'immer';
 import { addObject } from '@core/commands/ops';
 import { createObstacle } from '@core/library/obstacles';
 import { createPolygonStructure } from '@core/library/structures';
+import { createOrnament } from '@core/library/ornaments';
 import { createDocument } from '@core/model/document';
 import { createRectangleArena } from '@core/model/arena';
 import { createPath, createPathNode, flattenPath } from '@core/model/path';
@@ -176,5 +177,20 @@ describe('água do cenário (decisão 72)', () => {
     const agua = findInterferences(doc).filter((i) => i.kind === 'obstaculo-na-agua');
     expect(agua).toHaveLength(1);
     expect(agua[0]!.ids).toContain(noLago.id);
+  });
+});
+
+describe('ornamentos que ocupam o chão (decisão 74)', () => {
+  it('traçado por cima de ilha decorativa ou de vaso vira aviso', () => {
+    const ilha = createPolygonStructure([{ x: 20, y: 10 }, { x: 30, y: 10 }, { x: 30, y: 16 }, { x: 20, y: 16 }], 'ilha');
+    ilha.scope = 'percurso';
+    const vaso = createOrnament('vaso', { x: 50, y: 25 });
+    const p = createPath([createPathNode({ x: 10, y: 13 }, 'corner'), createPathNode({ x: 60, y: 25 }, 'corner')]);
+    const doc = produce(createDocument({ arena: true }), (d) => {
+      [ilha, vaso, p].forEach((o) => addObject(d, o));
+    });
+    const avisos = findInterferences(doc).filter((i) => i.kind === 'tracado-cruza-ornamento');
+    expect(avisos.map((a) => a.ids[1])).toContain(ilha.id);
+    expect(vaso.scope).toBe('percurso');
   });
 });

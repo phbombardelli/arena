@@ -84,7 +84,8 @@ export function createOrnament(type: OrnamentType, pos: Vec2): Ornament {
     layer: 'ornaments',
     locked: false,
     visible: true,
-    scope: 'pista',
+    // O vaso é ornamento móvel da prova (decisão 74); o resto é do local.
+    scope: type === 'vaso' ? 'percurso' : 'pista',
     z: 0,
     type,
     pos,
