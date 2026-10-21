@@ -1,10 +1,10 @@
-import type { CourseDocument, ObjectId, Obstacle, SceneObject } from '@core/model/types';
+import type { Arena, CourseDocument, ObjectId, Obstacle, SceneObject } from '@core/model/types';
 import { isLayerVisible } from '@core/model/document';
 import { boundsIn, objectScope } from '@core/model/transform';
 import type { ObjectScope } from '@core/model/types';
 import { LAYER_ORDER } from '@core/model/types';
 import { pageSize } from '@core/scale/units';
-import { ArenaLayer } from './layers/ArenaLayer';
+import { ArenaLayer, PerimeterRulerLayer } from './layers/ArenaLayer';
 import { GridLayer } from './layers/GridLayer';
 import { measureFrame } from '@core/model/measureFrame';
 import { ImageLayer } from './layers/ImageLayer';
@@ -242,6 +242,16 @@ export function RenderDocument(opts: RenderOptions) {
         viewBoxMm={viewBoxMm}
         metersPerPixel={mode === 'paper' ? 0 : metersPerPixel}
       />
+
+      {/* Régua do perímetro por cima das construções e da grade (decisão 70). */}
+      {fundo
+        .filter((o): o is Arena => o.kind === 'arena' && !o.structure && isLayerVisible(doc, o.layer))
+        .map((a) => (
+          // Fora do modo Pista ela esmaece junto com a pista.
+          <g key={`regua-${a.id}`} opacity={opts.editScope != null && objectScope(a) !== opts.editScope ? 0.45 : 1}>
+            <PerimeterRulerLayer arena={a} printScale={doc.page.printScale} originMm={doc.originMm} />
+          </g>
+        ))}
 
       {frente.map(desenha)}
 

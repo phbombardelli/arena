@@ -1435,3 +1435,26 @@ Retângulo ou Contorno livre — que vale para o tipo escolhido em seguida
 (arquibancada, concreto, edificação, ilha, construção). Antes havia um
 item só, "Arquibancada em contorno livre", que dependia do último tipo
 usado.
+
+## 70. Régua do perímetro na borda real, legível sobre as construções
+
+- **Mais perto da cerca.** Traço menor de 1,0 mm, maior de 1,6 mm, folga
+  de 0,5 mm: o número fica a cerca de 3,5 mm da borda (eram ~5 mm), no
+  mesmo tamanho de letra.
+- **Por cima das construções, com contorno branco.** A régua é desenhada
+  depois das construções e da grade; o número leva uma cópia branca com
+  traço por baixo (seguro no PDF). Arquibancada encostada na cerca não
+  esconde mais a metragem — e a construção fica onde está, em escala.
+- **Acompanha a borda real.** Os traços continuam nos múltiplos do passo
+  contados do canto superior esquerdo (como a grade), verticais em cima e
+  embaixo e horizontais nos lados, mas saem do ponto da CERCA à frente de
+  cada um — também nos trechos inclinados e nos cantos redondos —, e não
+  mais da caixa retangular da pista. O número fica sempre de pé.
+- Fora do modo Pista, a régua esmaece junto com a pista.
+
+Descartado: passar os números para dentro da pista onde houver
+construção — toma espaço do percurso.
+
+**Posição do texto da construção.** O painel da construção ganhou "Texto
+↔ / ↕", em metros, para afastar o rótulo de outra escrita (o "Júri" de
+cima da metragem) sem mover a construção.

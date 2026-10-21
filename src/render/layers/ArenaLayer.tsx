@@ -1,7 +1,7 @@
 import type { Vec2 } from '@core/geometry/vec';
 import { arenaExtent, arenaPoints } from '@core/model/arena';
 import { outlinePolygon, polygonPathD } from '@core/geometry/outline';
-import { hatchSegments, longestEdgeAngle, polygonCentroid } from '@core/geometry/hatch';
+import { hatchSegments, insideIntervals, longestEdgeAngle, polygonCentroid } from '@core/geometry/hatch';
 import { STRUCTURE_LABEL_MM, structureDef, structureLabelAngle } from '@core/library/structures';
 import { mmPerMeter } from '@core/scale/units';
 import type { Arena } from '@core/model/types';
@@ -15,9 +15,10 @@ interface Props {
   onPointerDown?: (e: React.PointerEvent) => void;
 }
 
-const TICK_MM = 1.3;
-const TICK_MAJOR_MM = 2.2;
-const LABEL_GAP_MM = 1.2;
+// Mais curtos que antes (decisão 70): o número fica a ~3,5 mm da cerca.
+const TICK_MM = 1.0;
+const TICK_MAJOR_MM = 1.6;
+const LABEL_GAP_MM = 0.5;
 
 /** Largura da faixa de clique de uma linha, em pixels de tela. */
 export const HIT_BAND_PX = 16;
@@ -59,11 +60,8 @@ export function ArenaLayer({ arena, printScale, originMm, selected, onPointerDow
           style={{ cursor: 'pointer' }}
         />
       )}
-      {arena.structure ? (
-        <StructureDetails arena={arena} toPaper={toPaper} />
-      ) : (
-        arena.perimeterRuler.visible && <PerimeterRuler arena={arena} k={k} toPaper={toPaper} />
-      )}
+      {/* A régua do perímetro é desenhada à parte, por cima das construções. */}
+      {arena.structure && <StructureDetails arena={arena} toPaper={toPaper} />}
     </g>
   );
 }
@@ -83,7 +81,9 @@ function StructureDetails({ arena, toPaper }: { arena: Arena; toPaper: (p: Vec2)
   const linhas = def.hatch
     ? hatchSegments(pts, def.hatch.angle === 'aresta' ? aresta : def.hatch.angle, def.hatch.spacingM)
     : [];
-  const centro = toPaper(polygonCentroid(pts));
+  const meio = polygonCentroid(pts);
+  const desloc = info.labelOffsetM ?? { x: 0, y: 0 };
+  const centro = toPaper({ x: meio.x + desloc.x, y: meio.y + desloc.y });
   // Giro e letra escolhidos no painel; no automático, o rótulo acompanha a
   // aresta longa, nunca de cabeça para baixo (B-23).
   const giro = structureLabelAngle(arena);
@@ -118,28 +118,37 @@ function StructureDetails({ arena, toPaper }: { arena: Arena; toPaper: (p: Vec2)
 }
 
 /**
- * Régua de metros impressa no perímetro da pista, como nos croquis FEI.
- * Faz parte do desenho (vai para o PDF), diferente da régua da interface.
+ * Régua do perímetro (decisão 70).
+ *
+ * Os traços saem da BORDA REAL da pista — num contorno irregular, cada
+ * traço encosta no trecho de cerca à frente dele, também no inclinado —,
+ * mas continuam verticais (em cima e embaixo) e horizontais (nos lados),
+ * nos múltiplos do passo contados do canto superior esquerdo, como a
+ * grade. O número fica sempre de pé, logo depois do traço.
+ *
+ * É desenhada por cima das construções, com um contorno branco no número:
+ * uma arquibancada encostada na cerca não esconde mais a metragem.
  */
-function PerimeterRuler({
+export function PerimeterRulerLayer({
   arena,
-  k,
-  toPaper,
+  printScale,
+  originMm,
 }: {
   arena: Arena;
-  k: number;
-  toPaper: (p: Vec2) => Vec2;
+  printScale: number;
+  originMm: Vec2;
 }) {
   const { stepM, labelEveryM, sides } = arena.perimeterRuler;
-  if (!(stepM > 0)) return null;
+  if (!arena.visible || !arena.perimeterRuler.visible || !(stepM > 0)) return null;
+  const k = mmPerMeter(printScale);
+  const toPaper = (p: Vec2): Vec2 => ({ x: originMm.x + p.x * k, y: originMm.y + p.y * k });
 
-  // Pela caixa envolvente: num contorno irregular, a régua continua sendo
-  // uma referência retilínea, como nos croquis impressos.
   const extent = arenaExtent(arena);
   const x0 = extent.origin.x;
   const y0 = extent.origin.y;
-  const x1 = x0 + extent.widthM;
-  const y1 = y0 + extent.heightM;
+  const contorno = outlinePolygon(arenaPoints(arena), arena.corner.style, arena.corner.radiusM);
+  // Exatamente no canto a linha toca só um vértice: amostra um fio para dentro.
+  const fio = 1e-6;
 
   const ticks: JSX.Element[] = [];
   const isLabel = (m: number) => labelEveryM > 0 && Math.abs(m % labelEveryM) < stepM / 1000;
@@ -155,28 +164,28 @@ function PerimeterRuler({
   ) => {
     const a = toPaper(from);
     const b = toPaper(to);
+    const t = toPaper(labelAt);
+    const props = {
+      x: t.x,
+      y: t.y,
+      fontFamily: font.family,
+      fontSize: text.tiny,
+      textAnchor: anchor,
+      dominantBaseline: baseline,
+    } as const;
     ticks.push(
       <g key={key}>
-        <line
-          x1={a.x}
-          y1={a.y}
-          x2={b.x}
-          y2={b.y}
-          stroke={color.arenaLine}
-          strokeWidth={stroke.hairline}
-        />
+        <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={color.arenaLine} strokeWidth={stroke.hairline} />
         {label != null && (
-          <text
-            x={toPaper(labelAt).x}
-            y={toPaper(labelAt).y}
-            fontFamily={font.family}
-            fontSize={text.tiny}
-            fill={color.ink}
-            textAnchor={anchor}
-            dominantBaseline={baseline}
-          >
-            {label}
-          </text>
+          <>
+            {/* Contorno branco por baixo (cópia com traço), seguro no PDF. */}
+            <text {...props} fill="#ffffff" stroke="#ffffff" strokeWidth={0.7} strokeLinejoin="round">
+              {label}
+            </text>
+            <text {...props} fill={color.ink}>
+              {label}
+            </text>
+          </>
         )}
       </g>,
     );
@@ -190,12 +199,16 @@ function PerimeterRuler({
     const major = isLabel(m);
     const len = major ? tickMajorM : tickM;
     const x = x0 + m;
+    const trechos = insideIntervals(contorno, 'x', Math.min(x0 + extent.widthM - fio, Math.max(x0 + fio, x)));
+    if (trechos.length === 0) continue;
+    const topo = Math.min(...trechos.map((t) => t[0]));
+    const base = Math.max(...trechos.map((t) => t[1]));
     const label = major && m > 0 && m < extent.widthM ? String(Math.round(m)) : null;
     if (sides.top) {
-      push(`t${m}`, { x, y: y0 }, { x, y: y0 - len }, label, { x, y: y0 - len - gapM }, 'middle', 'auto');
+      push(`t${m}`, { x, y: topo }, { x, y: topo - len }, label, { x, y: topo - len - gapM }, 'middle', 'auto');
     }
     if (sides.bottom) {
-      push(`b${m}`, { x, y: y1 }, { x, y: y1 + len }, label, { x, y: y1 + len + gapM }, 'middle', 'hanging');
+      push(`b${m}`, { x, y: base }, { x, y: base + len }, label, { x, y: base + len + gapM }, 'middle', 'hanging');
     }
   }
 
@@ -203,12 +216,16 @@ function PerimeterRuler({
     const major = isLabel(m);
     const len = major ? tickMajorM : tickM;
     const y = y0 + m;
+    const trechos = insideIntervals(contorno, 'y', Math.min(y0 + extent.heightM - fio, Math.max(y0 + fio, y)));
+    if (trechos.length === 0) continue;
+    const esq = Math.min(...trechos.map((t) => t[0]));
+    const dir = Math.max(...trechos.map((t) => t[1]));
     const label = major && m > 0 && m < extent.heightM ? String(Math.round(m)) : null;
     if (sides.left) {
-      push(`l${m}`, { x: x0, y }, { x: x0 - len, y }, label, { x: x0 - len - gapM, y }, 'end', 'middle');
+      push(`l${m}`, { x: esq, y }, { x: esq - len, y }, label, { x: esq - len - gapM, y }, 'end', 'middle');
     }
     if (sides.right) {
-      push(`r${m}`, { x: x1, y }, { x: x1 + len, y }, label, { x: x1 + len + gapM, y }, 'start', 'middle');
+      push(`r${m}`, { x: dir, y }, { x: dir + len, y }, label, { x: dir + len + gapM, y }, 'start', 'middle');
     }
   }
 

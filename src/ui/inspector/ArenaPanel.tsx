@@ -107,6 +107,35 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
                 />
               </div>
               <RotuloGiro arena={arena} />
+              {/* Afastar o texto de outra escrita sem mexer na construção. */}
+              <div className="field-pair">
+                <NumberField
+                  label="Texto ↔"
+                  unit="m"
+                  value={obra.labelOffsetM?.x ?? 0}
+                  decimals={1}
+                  step={0.5}
+                  disabled={arena.locked}
+                  onCommit={(v) =>
+                    apply('Posição do rótulo', (d) =>
+                      setStructure(d, arena.id, { labelOffsetM: { x: v, y: obra.labelOffsetM?.y ?? 0 } }),
+                    )
+                  }
+                />
+                <NumberField
+                  label="↕"
+                  unit="m"
+                  value={obra.labelOffsetM?.y ?? 0}
+                  decimals={1}
+                  step={0.5}
+                  disabled={arena.locked}
+                  onCommit={(v) =>
+                    apply('Posição do rótulo', (d) =>
+                      setStructure(d, arena.id, { labelOffsetM: { x: obra.labelOffsetM?.x ?? 0, y: v } }),
+                    )
+                  }
+                />
+              </div>
             </>
           )}
         </>

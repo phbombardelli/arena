@@ -80,6 +80,8 @@ export interface StructureInfo {
   labelSizeMm?: number;
   /** Giro do rótulo, em graus. Ausente = acompanha a aresta mais longa. */
   labelRotation?: number;
+  /** Deslocamento do rótulo a partir do centro, em metros (decisão 70). */
+  labelOffsetM?: Vec2;
 }
 export type CornerStyle = 'square' | 'rounded' | 'chamfer';
 
