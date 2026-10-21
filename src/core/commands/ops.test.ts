@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { produce, enablePatches } from 'immer';
 import { createDocument } from '@core/model/document';
 import { createOrnament } from '@core/library/ornaments';
+import { createRectangleArena } from '@core/model/arena';
 import type { CourseDocument, CoursePath, Ornament } from '@core/model/types';
 import {
   boundsContains,
@@ -227,5 +228,40 @@ describe('envoltória', () => {
     expect(u.max.x).toBeCloseTo(21.5, 9);
     expect(u.min.y).toBeCloseTo(-1.5, 9);
     expect(u.max.y).toBeCloseTo(11.5, 9);
+  });
+});
+
+describe('girar o cenário vinculado (decisão 66)', () => {
+  it('pista e árvore giram juntas em torno do centro comum, como uma peça só', () => {
+    const pista = createRectangleArena({ x: 0, y: 0 }, 40, 20);
+    const arvore = orn(50, 10);
+    const doc = edit(createDocument(), (d) => {
+      addObject(d, pista);
+      addObject(d, arvore);
+    });
+    // Centro comum: x de 0 a 50,5 (a árvore tem 1 m), y de 0 a 20.
+    const next = edit(doc, (d) => rotateObjects(d, [pista.id, arvore.id], 90));
+    const p = next.objects.find((o) => o.id === pista.id)!;
+    const pts = p.kind === 'arena' ? p.points : [];
+    expect(pts).toHaveLength(4);
+    // Girada 90°, a pista de 40 × 20 fica de pé: 20 de largura, 40 de altura.
+    const xs = pts.map((q) => q.x);
+    const ys = pts.map((q) => q.y);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(20, 6);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(40, 6);
+    // A árvore, que estava à direita da pista, fica embaixo dela.
+    const a = getPosition(next.objects.find((o) => o.id === arvore.id)!, 200);
+    expect(a.y).toBeGreaterThan(Math.max(...ys) - 1);
+  });
+
+  it('uma construção sozinha gira em torno do próprio centro', () => {
+    const c = createRectangleArena({ x: 10, y: 10 }, 10, 4);
+    const doc = edit(createDocument(), (d) => addObject(d, c));
+    const next = edit(doc, (d) => rotateObjects(d, [c.id], 90));
+    const p = next.objects.find((o) => o.id === c.id)!;
+    const pts = p.kind === 'arena' ? p.points : [];
+    const xs = pts.map((q) => q.x);
+    expect((Math.max(...xs) + Math.min(...xs)) / 2).toBeCloseTo(15, 6);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(4, 6);
   });
 });

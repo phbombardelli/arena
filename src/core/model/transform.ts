@@ -3,7 +3,7 @@ import { rotate } from '@core/geometry/vec';
 import { obstacleExtent } from '@core/library/obstacles';
 import { timingExtent } from '@core/library/timing';
 import { heightTableLayout, infoBoxLayout } from './annotationLayout';
-import { arenaPoints } from './arena';
+import { arenaPoints, toPolygon } from './arena';
 import { flattenPath } from './path';
 import { paperToMeters } from '@core/scale/units';
 import type { Meters, PrintScale } from '@core/scale/units';
@@ -138,6 +138,24 @@ export function rotateAround(
   deltaDeg: number,
   printScale: PrintScale,
 ): void {
+  // Contorno e traçado não têm ângulo guardado: giram-se os próprios
+  // pontos. Antes só o ponto de referência andava, e num cenário
+  // vinculado cada peça parecia girar no próprio eixo (decisão 66).
+  if (obj.kind === 'arena') {
+    toPolygon(obj);
+    obj.points = obj.points.map((p) => rotate(p, deltaDeg, pivotM));
+    return;
+  }
+  if (obj.kind === 'path') {
+    for (const n of obj.nodes) {
+      n.pos = rotate(n.pos, deltaDeg, pivotM);
+      if (n.handleIn) n.handleIn = rotate(n.handleIn, deltaDeg);
+      if (n.handleOut) n.handleOut = rotate(n.handleOut, deltaDeg);
+    }
+    return;
+  }
+  // Quadro, tabela e logo ficam na folha: não giram com o desenho.
+  if (isPaperAnchored(obj)) return;
   const pos = getPosition(obj, printScale);
   setPosition(obj, rotate(pos, deltaDeg, pivotM), printScale);
   const r = getRotation(obj);

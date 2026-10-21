@@ -42,8 +42,11 @@ export function rotateObjects(doc: CourseDocument, ids: ObjectId[], deltaDeg: nu
   const objs = selected(doc, ids);
   if (objs.length === 0) return;
   if (objs.length === 1) {
-    const r = getRotation(objs[0]!);
-    if (r !== null) setRotation(objs[0]!, normalizeAngle(r + deltaDeg));
+    const obj = objs[0]!;
+    const r = getRotation(obj);
+    if (r !== null) setRotation(obj, normalizeAngle(r + deltaDeg));
+    // Construção (e qualquer contorno) gira em torno do próprio centro.
+    else if (obj.kind === 'arena') rotateAround(obj, boundsCenter(boundsIn(doc, obj)), deltaDeg, doc.page.printScale);
     return;
   }
   const bounds = unionBounds(objs.map((o) => boundsIn(doc, o)));

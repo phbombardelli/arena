@@ -486,3 +486,34 @@ export function findRoofs(img: Pixels, pista: PolygonPx): Suggestion[] {
       return { kind: 'edificacao' as const, outline: fitRectangle(boundaryPoints(mask, w, h, 1)) };
     });
 }
+
+/* ------------------------------------------------------------ giro */
+
+export interface RotationFrame {
+  /** Tamanho da imagem girada (a envoltória da original). */
+  width: number;
+  height: number;
+  /** Ponto da imagem original → ponto da imagem girada. */
+  map: (p: Vec2) => Vec2;
+}
+
+/**
+ * Giro do print em torno do centro (decisão 66): o print do Maps vem com
+ * o norte para cima, e a pista pode estar torta. A imagem girada é a
+ * envoltória da original, e `map` leva um ponto de uma para a outra — é
+ * assim que a medida, lida no print original (o OCR não lê texto
+ * inclinado), chega à imagem girada.
+ */
+export function rotationFrame(w: number, h: number, graus: number): RotationFrame {
+  const a = (graus * Math.PI) / 180;
+  const cos = Math.cos(a);
+  const sin = Math.sin(a);
+  const width = Math.round(Math.abs(w * cos) + Math.abs(h * sin));
+  const height = Math.round(Math.abs(w * sin) + Math.abs(h * cos));
+  const map = (p: Vec2): Vec2 => {
+    const x = p.x - w / 2;
+    const y = p.y - h / 2;
+    return { x: x * cos - y * sin + width / 2, y: x * sin + y * cos + height / 2 };
+  };
+  return { width, height, map };
+}

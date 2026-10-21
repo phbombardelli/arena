@@ -78,3 +78,14 @@ export function structureLabelAngle(arena: Arena): number {
   if (giro > 90) giro -= 180;
   return giro;
 }
+
+/**
+ * Ângulo de uma construção (decisão 66): o da aresta mais longa, entre −90
+ * e 90°. Contorno não guarda giro; o ângulo se lê da própria forma, e
+ * mudá-lo gira os pontos em torno do centro.
+ */
+export function structureAngle(arena: Arena): number {
+  let a = ((longestEdgeAngle(arenaPoints(arena)) % 180) + 180) % 180;
+  if (a > 90) a -= 180;
+  return Math.round(a * 10) / 10;
+}

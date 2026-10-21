@@ -5,6 +5,7 @@ import {
   findRoofs,
   fitRectangle,
   parseDistance,
+  rotationFrame,
   segmentArena,
   type Pixels,
 } from './mapImport';
@@ -96,5 +97,23 @@ describe('pista pelo print do Maps (B-40)', () => {
     const telhados = findRoofs(img, g.outline);
     expect(telhados).toHaveLength(1);
     expect(telhados[0]!.outline).toHaveLength(4);
+  });
+});
+
+describe('girar o print (decisão 66)', () => {
+  it('90° troca largura e altura e leva os cantos para o lugar certo', () => {
+    const r = rotationFrame(400, 300, 90);
+    expect(r.width).toBe(300);
+    expect(r.height).toBe(400);
+    // O canto superior esquerdo vai para o superior direito.
+    const p = r.map({ x: 0, y: 0 });
+    expect(p.x).toBeCloseTo(300, 6);
+    expect(p.y).toBeCloseTo(0, 6);
+  });
+  it('a distância entre dois pontos não muda — a escala da medida vale igual', () => {
+    const r = rotationFrame(1228, 966, 17);
+    const a = r.map({ x: 385, y: 621 });
+    const b = r.map({ x: 638, y: 629 });
+    expect(Math.hypot(b.x - a.x, b.y - a.y)).toBeCloseTo(Math.hypot(253, 8), 6);
   });
 });

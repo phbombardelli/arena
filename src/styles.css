@@ -672,3 +672,7 @@ button.mini.neutral { color: var(--text); }
 .wizard-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .wizard-list li { display: flex; align-items: center; gap: 4px; font-size: 12.5px; }
 .wizard-nav { justify-content: space-between; border-top: 1px solid var(--border); padding-top: 8px; }
+.wizard-rotate { display: flex; align-items: center; gap: 6px; }
+.wizard-rotate .rotation-slider { flex: 1; margin: 0; }
+.wizard-rotate .mono { min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+.row-buttons.wrap { flex-wrap: wrap; }

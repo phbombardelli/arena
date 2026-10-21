@@ -7,6 +7,7 @@ import {
   findMeasureMarkers,
   findRoofs,
   fitRectangle,
+  rotationFrame,
   segmentArena,
   type ArenaGuess,
   type MeasureMarkers,
@@ -20,19 +21,23 @@ import { placeAsBackground } from '@ui/actions/imageActions';
 import { Dialog } from '@ui/common/Popover';
 
 /**
- * Assistente "Montar pista pelo mapa" (B-40, decisão 64).
+ * Assistente "Montar pista pelo mapa" (decisões 64 e 66).
  *
- * 1. Medida: acha os dois marcadores do "Medir distância" do Maps e lê o
- *    número por OCR; o desenhador confirma ou corrige.
- * 2. Pista: propõe o contorno da areia — livre ou ajustado a retângulo —,
- *    com os vértices para arrastar.
- * 3. Sugestões: ilhas e telhados vizinhos, para marcar quais entram.
- * 4. Outros elementos: o que o assistente não viu, à mão.
+ * 1. Girar: o print do Maps vem com o norte para cima; gira-se até a pista
+ *    ficar reta. A análise toda roda na imagem já girada.
+ * 2. Medida: os dois marcadores do "Medir distância" e o número, lidos no
+ *    print ORIGINAL (o OCR não lê texto inclinado) e levados para a
+ *    imagem girada; o desenhador confirma ou corrige.
+ * 3. Pista: contorno da areia — livre ou ajustado a retângulo —, com
+ *    vértices para arrastar, inserir (duplo clique na aresta) e remover
+ *    (duplo clique no vértice).
+ * 4. Sugestões: ilhas e telhados vizinhos, para marcar quais entram.
+ * 5. Outros elementos: construção e ilha em retângulo ou contorno livre, e
+ *    árvores, para o que o assistente não viu.
  * Ao confirmar, tudo entra vinculado e na escala.
  *
- * A análise roda numa cópia reduzida do print (lado maior até 1400 px),
- * para ficar rápida com prints de tela retina; as coordenadas voltam para
- * o tamanho original no fim.
+ * A análise roda numa cópia reduzida (lado maior até 1400 px); as
+ * coordenadas voltam ao tamanho original no fim.
  */
 
 const LADO_MAX = 1400;
@@ -40,8 +45,8 @@ const PREVIEW_W = 760;
 const PREVIEW_H = 470;
 const PEGA_PX = 11;
 
-type Passo = 'inicio' | 'medida' | 'pista' | 'sugestoes' | 'extras';
-type Ferramenta = 'construcao' | 'ilha' | 'arvore' | null;
+type Passo = 'inicio' | 'girar' | 'medida' | 'pista' | 'sugestoes' | 'extras';
+type Ferramenta = 'construcao' | 'construcao-livre' | 'ilha' | 'ilha-livre' | 'arvore' | null;
 
 interface Item {
   type: StructureType;
@@ -51,6 +56,8 @@ interface Item {
 }
 
 const ROTULO: Record<string, string> = { ilha: 'Ilha', edificacao: 'Construção', outra: 'Construção' };
+const PASSOS: Passo[] = ['girar', 'medida', 'pista', 'sugestoes', 'extras'];
+const NOMES = ['Girar', 'Medida', 'Pista', 'Sugestões', 'Outros elementos'];
 
 export function MapWizardHost() {
   const img = useEditorStore((s) => s.mapWizard);
@@ -58,14 +65,38 @@ export function MapWizardHost() {
   return <MapWizard key={img.asset.dataUrl.length + img.widthPx} image={img} />;
 }
 
+/** Desenha `src` girado em `graus` numa tela do tamanho da envoltória. */
+function girado(
+  src: HTMLCanvasElement | HTMLImageElement,
+  w: number,
+  h: number,
+  graus: number,
+  fundo = '#7f7f7f',
+): HTMLCanvasElement {
+  const r = rotationFrame(w, h, graus);
+  const c = document.createElement('canvas');
+  c.width = r.width;
+  c.height = r.height;
+  const g = c.getContext('2d')!;
+  // Cantos que sobram: cinza na análise (não se confunde com areia, grama
+  // nem com o branco da medida); branco na imagem final, que some na folha.
+  g.fillStyle = fundo;
+  g.fillRect(0, 0, c.width, c.height);
+  g.translate(r.width / 2, r.height / 2);
+  g.rotate((graus * Math.PI) / 180);
+  g.drawImage(src, -w / 2, -h / 2, w, h);
+  return c;
+}
+
 function MapWizard({ image }: { image: ImportedImage }) {
   const fecha = useCallback(() => useEditorStore.getState().setMapWizard(null), []);
   const [passo, setPasso] = useState<Passo>('inicio');
-  const [pixels, setPixels] = useState<{ px: Pixels; f: number; bitmap: HTMLCanvasElement } | null>(null);
+  const [original, setOriginal] = useState<{ el: HTMLImageElement; reduzido: HTMLCanvasElement; px: Pixels; f: number } | null>(null);
+  const [angulo, setAngulo] = useState(0);
+  const [marcasOrig, setMarcasOrig] = useState<MeasureMarkers | null | undefined>(undefined);
   const [marcas, setMarcas] = useState<MeasureMarkers | null>(null);
   const [metros, setMetros] = useState('');
   const [ocr, setOcr] = useState<'parado' | 'lendo' | 'lido' | 'falhou'>('parado');
-  const [semente, setSemente] = useState<Vec2 | null>(null);
   const [palpite, setPalpite] = useState<ArenaGuess | null>(null);
   const [retangulo, setRetangulo] = useState(false);
   const [pista, setPista] = useState<Vec2[]>([]);
@@ -73,8 +104,9 @@ function MapWizard({ image }: { image: ImportedImage }) {
   const [itens, setItens] = useState<Item[]>([]);
   const [arvores, setArvores] = useState<Vec2[]>([]);
   const [ferramenta, setFerramenta] = useState<Ferramenta>(null);
+  const [livre, setLivre] = useState<Vec2[]>([]);
 
-  // Decodifica o print numa cópia reduzida.
+  // Print original, reduzido; marcadores e OCR já começam aqui, no original.
   useEffect(() => {
     const el = new Image();
     el.onload = () => {
@@ -85,55 +117,68 @@ function MapWizard({ image }: { image: ImportedImage }) {
       const g = c.getContext('2d')!;
       g.drawImage(el, 0, 0, c.width, c.height);
       const d = g.getImageData(0, 0, c.width, c.height);
-      setPixels({ px: { data: d.data, width: c.width, height: c.height }, f, bitmap: c });
+      const px = { data: d.data, width: c.width, height: c.height };
+      setOriginal({ el, reduzido: c, px, f });
+      const m = findMeasureMarkers(px);
+      setMarcasOrig(m);
+      if (m) {
+        setOcr('lendo');
+        void readMeasureDistance(px, m).then((v) => {
+          if (v) {
+            setMetros(String(Math.round(v * 100) / 100).replace('.', ','));
+            setOcr('lido');
+          } else setOcr('falhou');
+        });
+      }
     };
     el.src = image.asset.dataUrl;
   }, [image]);
 
-  // Passo 1: marcadores e OCR.
-  useEffect(() => {
-    if (passo !== 'medida' || !pixels || marcas) return;
-    const m = findMeasureMarkers(pixels.px);
-    setMarcas(m);
-    if (!m) return;
-    setOcr('lendo');
-    void readMeasureDistance(pixels.px, m).then((v) => {
-      if (v) {
-        setMetros(String(Math.round(v * 100) / 100).replace('.', ','));
-        setOcr('lido');
-      } else setOcr('falhou');
-    });
-  }, [passo, pixels, marcas]);
+  // A imagem de trabalho: o print reduzido, girado.
+  const trabalho = useMemo(() => {
+    if (!original) return null;
+    const c = girado(original.reduzido, original.reduzido.width, original.reduzido.height, angulo);
+    const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height);
+    const quadro = rotationFrame(original.reduzido.width, original.reduzido.height, angulo);
+    return { bitmap: c, px: { data: d.data, width: c.width, height: c.height } as Pixels, map: quadro.map };
+  }, [original, angulo]);
 
-  // Passo 2: contorno a partir da semente (o meio da medida, de início).
+  // Mudou o giro: medida e pista se refazem a partir do original.
+  useEffect(() => {
+    if (!trabalho || marcasOrig === undefined) return;
+    setMarcas(marcasOrig ? { ...marcasOrig, a: trabalho.map(marcasOrig.a), b: trabalho.map(marcasOrig.b) } : null);
+    setPalpite(null);
+    setPista([]);
+    setRetangulo(false);
+  }, [trabalho, marcasOrig]);
+
   const refazPista = useCallback(
-    (p: Vec2) => {
-      if (!pixels) return;
-      const g = segmentArena(pixels.px, p);
-      setSemente(p);
+    (p: Vec2, ret: boolean) => {
+      if (!trabalho) return;
+      const g = segmentArena(trabalho.px, p);
       setPalpite(g);
-      setPista(g ? (retangulo ? fitRectangle(g.outline) : g.outline) : []);
+      setPista(g ? (ret ? fitRectangle(g.outline) : g.outline) : []);
     },
-    [pixels, retangulo],
+    [trabalho],
   );
   useEffect(() => {
-    if (passo !== 'pista' || palpite || !marcas || semente) return;
-    refazPista({ x: (marcas.a.x + marcas.b.x) / 2, y: (marcas.a.y + marcas.b.y) / 2 + marcas.radiusPx * 3 });
-  }, [passo, palpite, marcas, semente, refazPista]);
+    if (passo !== 'pista' || palpite || pista.length || !marcas) return;
+    refazPista({ x: (marcas.a.x + marcas.b.x) / 2, y: (marcas.a.y + marcas.b.y) / 2 + marcas.radiusPx * 3 }, false);
+  }, [passo, palpite, pista.length, marcas, refazPista]);
 
-  // Passo 3: sugestões, calculadas uma vez ao chegar.
+  // Sugestões, uma vez ao chegar ao passo.
   const sugeriu = useRef(false);
   useEffect(() => {
-    if (passo !== 'sugestoes' || sugeriu.current || !pixels || !palpite) return;
+    if (passo !== 'sugestoes' || sugeriu.current || !trabalho || !palpite) return;
     sugeriu.current = true;
-    const ilhas = findIslands(palpite, pixels.px, marcas ? [marcas.a, marcas.b] : []);
-    const telhados = findRoofs(pixels.px, pista);
+    const ilhas = findIslands(palpite, trabalho.px, marcas ? [marcas.a, marcas.b] : []);
+    const telhados = findRoofs(trabalho.px, pista);
     setItens((atual) => [
       ...atual,
       ...ilhas.map((s) => ({ type: 'ilha' as const, outline: s.outline, on: true, origem: 'sugestao' as const })),
       ...telhados.map((s) => ({ type: 'edificacao' as const, outline: s.outline, on: true, origem: 'sugestao' as const })),
     ]);
-  }, [passo, pixels, palpite, marcas, pista]);
+  }, [passo, trabalho, palpite, marcas, pista]);
 
   const mpp = useMemo(() => {
     const n = Number(metros.replace(',', '.'));
@@ -144,27 +189,28 @@ function MapWizard({ image }: { image: ImportedImage }) {
   /* ------------------------------------------------------- preview */
 
   const canvas = useRef<HTMLCanvasElement>(null);
-  const escala = pixels ? Math.min(PREVIEW_W / pixels.px.width, PREVIEW_H / pixels.px.height) : 1;
-  const arrasto = useRef<{ alvo: 'a' | 'b' | number; } | null>(null);
+  const escala = trabalho ? Math.min(PREVIEW_W / trabalho.px.width, PREVIEW_H / trabalho.px.height) : 1;
+  const arrasto = useRef<{ alvo: 'a' | 'b' | number } | null>(null);
   const desenho = useRef<{ de: Vec2; ate: Vec2 } | null>(null);
   const [, redesenha] = useState(0);
 
   useEffect(() => {
     const c = canvas.current;
-    if (!c || !pixels) return;
+    if (!c || !trabalho) return;
     const g = c.getContext('2d')!;
-    c.width = Math.round(pixels.px.width * escala);
-    c.height = Math.round(pixels.px.height * escala);
+    c.width = Math.round(trabalho.px.width * escala);
+    c.height = Math.round(trabalho.px.height * escala);
     g.clearRect(0, 0, c.width, c.height);
-    g.globalAlpha = passo === 'inicio' || passo === 'medida' ? 1 : 0.55;
-    g.drawImage(pixels.bitmap, 0, 0, c.width, c.height);
+    const forte = passo === 'inicio' || passo === 'girar' || passo === 'medida';
+    g.globalAlpha = forte ? 1 : 0.55;
+    g.drawImage(trabalho.bitmap, 0, 0, c.width, c.height);
     g.globalAlpha = 1;
     const P = (p: Vec2) => [p.x * escala, p.y * escala] as const;
-    const poligono = (pts: Vec2[], traco: string, fundo: string | null, larg = 2) => {
+    const poligono = (pts: Vec2[], traco: string, fundo: string | null, larg = 2, fechar = true) => {
       if (pts.length < 2) return;
       g.beginPath();
       pts.forEach((p, i) => (i ? g.lineTo(...P(p)) : g.moveTo(...P(p))));
-      g.closePath();
+      if (fechar) g.closePath();
       if (fundo) {
         g.fillStyle = fundo;
         g.fill();
@@ -182,7 +228,24 @@ function MapWizard({ image }: { image: ImportedImage }) {
       g.lineWidth = 2;
       g.stroke();
     };
-    if (passo !== 'inicio' && passo !== 'medida') {
+    if (passo === 'girar') {
+      // Quadriculado de referência para alinhar a cerca.
+      g.strokeStyle = 'rgba(255,255,255,0.55)';
+      g.lineWidth = 1;
+      for (let x = 0; x < c.width; x += 40) {
+        g.beginPath();
+        g.moveTo(x + 0.5, 0);
+        g.lineTo(x + 0.5, c.height);
+        g.stroke();
+      }
+      for (let y = 0; y < c.height; y += 40) {
+        g.beginPath();
+        g.moveTo(0, y + 0.5);
+        g.lineTo(c.width, y + 0.5);
+        g.stroke();
+      }
+    }
+    if (!forte) {
       poligono(pista, '#d0193a', 'rgba(208, 25, 58, 0.08)', 3);
       if (passo === 'pista') pista.forEach((p) => bolinha(p, '#f2b705'));
       for (const it of itens) {
@@ -190,6 +253,10 @@ function MapWizard({ image }: { image: ImportedImage }) {
         poligono(it.outline, it.type === 'ilha' ? '#2e7d32' : '#7a4b1f', it.type === 'ilha' ? 'rgba(46,125,50,0.25)' : 'rgba(122,75,31,0.25)');
       }
       for (const t of arvores) bolinha(t, '#2e7d32', 7);
+      if (livre.length) {
+        poligono(livre, '#111', null, 2, false);
+        livre.forEach((p) => bolinha(p, '#111', 4));
+      }
       const d = desenho.current;
       if (d) {
         g.setLineDash([5, 4]);
@@ -198,7 +265,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
         g.setLineDash([]);
       }
     }
-    if (marcas && (passo === 'medida' || passo === 'inicio')) {
+    if (marcas && passo === 'medida') {
       g.beginPath();
       g.moveTo(...P(marcas.a));
       g.lineTo(...P(marcas.b));
@@ -210,13 +277,12 @@ function MapWizard({ image }: { image: ImportedImage }) {
     }
   });
 
-  // O CSS pode encolher o canvas para caber no diálogo: converte pelo
-  // tamanho mostrado, não pelo desenhado.
+  // O CSS pode encolher o canvas: converte pelo tamanho mostrado.
   const naTela = () => {
     const c = canvas.current!;
     return c.getBoundingClientRect().width / c.width;
   };
-  const noPrint = (e: React.PointerEvent): Vec2 => {
+  const noPrint = (e: React.PointerEvent | React.MouseEvent): Vec2 => {
     const r = canvas.current!.getBoundingClientRect();
     const k = escala * naTela();
     return { x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k };
@@ -224,6 +290,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
   const perto = (a: Vec2, b: Vec2) => Math.hypot(a.x - b.x, a.y - b.y) * escala * naTela() < PEGA_PX;
 
   const aoApertar = (e: React.PointerEvent) => {
+    if (e.detail > 1) return; // o duplo clique tem tratamento próprio
     const p = noPrint(e);
     try {
       (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -244,7 +311,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
       if (escolhendoPonto) {
         setEscolhendoPonto(false);
         setRetangulo(false);
-        refazPista(p);
+        refazPista(p, false);
         return;
       }
       const i = pista.findIndex((q) => perto(p, q));
@@ -253,9 +320,41 @@ function MapWizard({ image }: { image: ImportedImage }) {
     }
     if (passo === 'extras') {
       if (ferramenta === 'arvore') setArvores((a) => [...a, p]);
+      else if (ferramenta === 'construcao-livre' || ferramenta === 'ilha-livre') setLivre((l) => [...l, p]);
       else if (ferramenta) desenho.current = { de: p, ate: p };
     }
   };
+
+  const aoDuploClique = (e: React.MouseEvent) => {
+    const p = noPrint(e);
+    if (passo === 'pista') {
+      // Duplo clique no vértice remove; perto de uma aresta, insere.
+      const i = pista.findIndex((q) => perto(p, q));
+      if (i >= 0) {
+        if (pista.length > 3) setPista((pts) => pts.filter((_, k) => k !== i));
+        return;
+      }
+      let melhor = -1;
+      let dmin = Infinity;
+      pista.forEach((a, k) => {
+        const b = pista[(k + 1) % pista.length]!;
+        const ab = { x: b.x - a.x, y: b.y - a.y };
+        const len2 = ab.x * ab.x + ab.y * ab.y || 1;
+        const t = Math.max(0, Math.min(1, ((p.x - a.x) * ab.x + (p.y - a.y) * ab.y) / len2));
+        const d = Math.hypot(p.x - (a.x + ab.x * t), p.y - (a.y + ab.y * t));
+        if (d < dmin) {
+          dmin = d;
+          melhor = k;
+        }
+      });
+      if (melhor >= 0 && dmin * escala * naTela() < PEGA_PX * 2) {
+        setPista((pts) => [...pts.slice(0, melhor + 1), p, ...pts.slice(melhor + 1)]);
+      }
+      return;
+    }
+    if (passo === 'extras' && (ferramenta === 'construcao-livre' || ferramenta === 'ilha-livre')) fechaLivre();
+  };
+
   const aoMover = (e: React.PointerEvent) => {
     const p = noPrint(e);
     const a = arrasto.current;
@@ -268,11 +367,12 @@ function MapWizard({ image }: { image: ImportedImage }) {
       redesenha((n) => n + 1);
     }
   };
+
   const aoSoltar = () => {
     arrasto.current = null;
     const d = desenho.current;
     desenho.current = null;
-    if (d && ferramenta && ferramenta !== 'arvore' && Math.abs(d.ate.x - d.de.x) > 3 && Math.abs(d.ate.y - d.de.y) > 3) {
+    if (d && (ferramenta === 'construcao' || ferramenta === 'ilha') && Math.abs(d.ate.x - d.de.x) > 3 && Math.abs(d.ate.y - d.de.y) > 3) {
       const [x0, x1] = [Math.min(d.de.x, d.ate.x), Math.max(d.de.x, d.ate.x)];
       const [y0, y1] = [Math.min(d.de.y, d.ate.y), Math.max(d.de.y, d.ate.y)];
       setItens((it) => [
@@ -288,15 +388,39 @@ function MapWizard({ image }: { image: ImportedImage }) {
     redesenha((n) => n + 1);
   };
 
+  function fechaLivre() {
+    setLivre((pts) => {
+      // O duplo clique também entrou como ponto: tira a repetição do fim.
+      const limpos = pts.filter((p, i) => i === 0 || Math.hypot(p.x - pts[i - 1]!.x, p.y - pts[i - 1]!.y) > 1);
+      if (limpos.length >= 3) {
+        setItens((it) => [
+          ...it,
+          { type: ferramenta === 'ilha-livre' ? 'ilha' : 'outra', outline: limpos, on: true, origem: 'manual' },
+        ]);
+      }
+      return [];
+    });
+  }
+
   /* ------------------------------------------------------- confirmar */
 
   const confirma = () => {
-    if (!pixels || !marcas || !mpp || pista.length < 3) return;
-    const volta = (p: Vec2) => ({ x: p.x / pixels.f, y: p.y / pixels.f });
+    if (!original || !marcas || !mpp || pista.length < 3) return;
+    // O asset é o print inteiro, girado como na tela; sem giro, o original.
+    let imagem = image;
+    if (angulo !== 0) {
+      const c = girado(original.el, original.el.naturalWidth, original.el.naturalHeight, angulo, '#ffffff');
+      imagem = {
+        widthPx: c.width,
+        heightPx: c.height,
+        asset: { ...image.asset, mime: 'image/jpeg', dataUrl: c.toDataURL('image/jpeg', 0.9), width: c.width, height: c.height },
+      };
+    }
+    const volta = (p: Vec2) => ({ x: p.x / original.f, y: p.y / original.f });
     let ids: string[] = [];
     useDocumentStore.getState().apply('Montar pista pelo mapa', (d) => {
       ids = buildFromMap(d, {
-        image,
+        image: imagem,
         measure: { a: volta(marcas.a), b: volta(marcas.b), meters: Number(metros.replace(',', '.')) },
         arena: pista.map(volta),
         structures: itens.filter((i) => i.on).map((i) => ({ type: i.type, outline: i.outline.map(volta) })),
@@ -317,27 +441,28 @@ function MapWizard({ image }: { image: ImportedImage }) {
     return `${f(Math.max(...xs) - Math.min(...xs))} × ${f(Math.max(...ys) - Math.min(...ys))} m`;
   })();
 
-  const passos: Passo[] = ['medida', 'pista', 'sugestoes', 'extras'];
-  const indice = passos.indexOf(passo);
+  const indice = PASSOS.indexOf(passo);
+  const desenhaLivre = ferramenta === 'construcao-livre' || ferramenta === 'ilha-livre';
 
   return (
     <Dialog title="Montar pista pelo mapa" onClose={fecha}>
       <div className="map-wizard">
         {passo !== 'inicio' && (
           <ol className="wizard-steps">
-            {['Medida', 'Pista', 'Sugestões', 'Outros elementos'].map((n, i) => (
+            {NOMES.map((n, i) => (
               <li key={n} className={i === indice ? 'atual' : i < indice ? 'feito' : ''}>{n}</li>
             ))}
           </ol>
         )}
 
         <div className="wizard-preview">
-          {pixels ? (
+          {trabalho ? (
             <canvas
               ref={canvas}
               onPointerDown={aoApertar}
               onPointerMove={aoMover}
               onPointerUp={aoSoltar}
+              onDoubleClick={aoDuploClique}
               style={{ cursor: escolhendoPonto || (passo === 'extras' && ferramenta) ? 'crosshair' : 'default' }}
             />
           ) : (
@@ -352,7 +477,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
               acerta a escala e propõe o contorno da pista.
             </p>
             <div className="row-buttons">
-              <button className="primary" onClick={() => setPasso('medida')}>Montar pista pelo mapa</button>
+              <button className="primary" onClick={() => setPasso('girar')}>Montar pista pelo mapa</button>
               <button
                 onClick={() => {
                   placeAsBackground(image);
@@ -361,6 +486,29 @@ function MapWizard({ image }: { image: ImportedImage }) {
               >
                 Só usar como imagem de fundo
               </button>
+            </div>
+          </>
+        )}
+
+        {passo === 'girar' && (
+          <>
+            <p className="note">Gire até a cerca da pista ficar paralela ao quadriculado.</p>
+            <div className="wizard-rotate">
+              <button onClick={() => setAngulo((a) => a - 90)} title="90° para a esquerda">⟲ 90°</button>
+              <button onClick={() => setAngulo((a) => Math.round((a - 1) * 10) / 10)}>−1°</button>
+              <input
+                type="range"
+                className="rotation-slider"
+                aria-label="Giro do print"
+                min={-180}
+                max={180}
+                step={0.5}
+                value={((angulo + 540) % 360) - 180}
+                onChange={(e) => setAngulo(Number(e.target.value))}
+              />
+              <button onClick={() => setAngulo((a) => Math.round((a + 1) * 10) / 10)}>+1°</button>
+              <button onClick={() => setAngulo((a) => a + 90)} title="90° para a direita">⟳ 90°</button>
+              <span className="mono">{(((angulo + 540) % 360) - 180).toFixed(1).replace('.', ',')}°</span>
             </div>
           </>
         )}
@@ -398,8 +546,8 @@ function MapWizard({ image }: { image: ImportedImage }) {
         {passo === 'pista' && (
           <>
             <p className="note">
-              {palpite
-                ? `Contorno sugerido${tamanho ? ` · ${tamanho}` : ''}. Arraste os pontos amarelos para ajustar.`
+              {palpite || pista.length >= 3
+                ? `Contorno sugerido${tamanho ? ` · ${tamanho}` : ''}. Arraste os pontos amarelos; duplo clique numa aresta acrescenta um ponto, num ponto o remove.`
                 : 'Não reconheci a pista a partir da medida. Clique em "Escolher um ponto da pista".'}
             </p>
             <div className="row-buttons">
@@ -415,10 +563,10 @@ function MapWizard({ image }: { image: ImportedImage }) {
               </button>
               <button
                 className={retangulo ? 'active' : ''}
-                disabled={!palpite}
+                disabled={pista.length < 3}
                 onClick={() => {
                   setRetangulo(true);
-                  setPista(fitRectangle(pista.length >= 3 ? pista : palpite!.outline));
+                  setPista(fitRectangle(pista));
                 }}
               >
                 Ajustar a retângulo
@@ -460,19 +608,34 @@ function MapWizard({ image }: { image: ImportedImage }) {
 
         {passo === 'extras' && (
           <>
-            <p className="note">Inclua o que faltou: escolha o tipo e desenhe no print.</p>
-            <div className="row-buttons">
+            <p className="note">
+              {desenhaLivre
+                ? 'Clique cada ponto do contorno; duplo clique ou "Fechar contorno" termina.'
+                : 'Inclua o que faltou: escolha o tipo e desenhe no print.'}
+            </p>
+            <div className="row-buttons wrap">
               {(
                 [
-                  ['construcao', 'Construção (arraste)'],
-                  ['ilha', 'Ilha (arraste)'],
-                  ['arvore', 'Árvore (clique)'],
+                  ['construcao', 'Construção ▭'],
+                  ['construcao-livre', 'Construção livre'],
+                  ['ilha', 'Ilha ▭'],
+                  ['ilha-livre', 'Ilha livre'],
+                  ['arvore', 'Árvore'],
                 ] as const
               ).map(([f, n]) => (
-                <button key={f} className={ferramenta === f ? 'active' : ''} onClick={() => setFerramenta(ferramenta === f ? null : f)}>
+                <button
+                  key={f}
+                  className={ferramenta === f ? 'active' : ''}
+                  onClick={() => {
+                    setLivre([]);
+                    setFerramenta(ferramenta === f ? null : f);
+                  }}
+                >
                   {n}
                 </button>
               ))}
+              {desenhaLivre && livre.length >= 3 && <button onClick={fechaLivre}>Fechar contorno</button>}
+              {desenhaLivre && livre.length > 0 && <button onClick={() => setLivre((l) => l.slice(0, -1))}>Desfazer ponto</button>}
             </div>
             {(itens.some((i) => i.origem === 'manual') || arvores.length > 0) && (
               <ul className="wizard-list">
@@ -497,12 +660,17 @@ function MapWizard({ image }: { image: ImportedImage }) {
 
         {passo !== 'inicio' && (
           <div className="row-buttons wizard-nav">
-            <button onClick={() => setPasso(indice > 0 ? passos[indice - 1]! : 'inicio')}>Voltar</button>
+            <button onClick={() => setPasso(indice > 0 ? PASSOS[indice - 1]! : 'inicio')}>Voltar</button>
             {passo !== 'extras' ? (
               <button
                 className="primary"
                 disabled={(passo === 'medida' && !mpp) || (passo === 'pista' && pista.length < 3)}
-                onClick={() => setPasso(passos[indice + 1]!)}
+                onClick={() => {
+                  // Voltar ao giro e girar de novo invalida as sugestões feitas.
+                  if (passo === 'pista') sugeriu.current = false;
+                  if (passo === 'pista') setItens((l) => l.filter((i) => i.origem === 'manual'));
+                  setPasso(PASSOS[indice + 1]!);
+                }}
               >
                 Próximo
               </button>

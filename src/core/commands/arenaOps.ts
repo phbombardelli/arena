@@ -2,6 +2,8 @@ import type { Vec2 } from '@core/geometry/vec';
 import { toMillimeterPrecision } from '@core/geometry/snap';
 import { toPolygon } from '@core/model/arena';
 import type { Arena, CornerStyle, CourseDocument, ObjectId } from '@core/model/types';
+import { structureAngle } from '@core/library/structures';
+import { boundsCenter, boundsIn, rotateAround } from '@core/model/transform';
 
 /**
  * Operações específicas da pista. Separadas de `ops.ts` porque a pista é o
@@ -176,4 +178,13 @@ function clampCornerRadius(arena: Arena): void {
   if (arena.shape !== 'rectangle') return;
   const max = Math.min(arena.widthM, arena.heightM) / 2;
   if (arena.corner.radiusM > max) arena.corner.radiusM = toMillimeterPrecision(max);
+}
+
+/** Gira a construção até a aresta mais longa ficar em `degrees` (decisão 66). */
+export function setStructureAngle(doc: CourseDocument, id: ObjectId, degrees: number): void {
+  const arena = arenaOf(doc, id);
+  if (!arena || arena.locked) return;
+  const delta = degrees - structureAngle(arena);
+  if (Math.abs(delta) < 1e-9) return;
+  rotateAround(arena, boundsCenter(boundsIn(doc, arena)), delta, doc.page.printScale);
 }

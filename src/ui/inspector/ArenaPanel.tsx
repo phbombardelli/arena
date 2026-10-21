@@ -7,8 +7,9 @@ import {
   setArenaStyle,
   setPerimeterRuler,
   setStructure,
+  setStructureAngle,
 } from '@core/commands/arenaOps';
-import { STRUCTURES, STRUCTURE_LABEL_MM, structureDef, structureLabelAngle } from '@core/library/structures';
+import { STRUCTURES, STRUCTURE_LABEL_MM, structureAngle, structureDef, structureLabelAngle } from '@core/library/structures';
 import { arenaArea, arenaPerimeter } from '@core/model/arena';
 import type { Arena, CornerStyle, StructureType } from '@core/model/types';
 import { formatMeters } from '@core/scale/units';
@@ -57,6 +58,18 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
               ))}
             </select>
           </label>
+          <NumberField
+            label="Ângulo"
+            unit="°"
+            value={structureAngle(arena)}
+            decimals={1}
+            step={1}
+            min={-90}
+            max={90}
+            disabled={arena.locked}
+            onCommit={(v) => apply('Ângulo da construção', (d) => setStructureAngle(d, arena.id, v))}
+          />
+          <AnguloObra arena={arena} />
           <label className="field">
             <span>Rótulo</span>
             <input
@@ -363,5 +376,33 @@ function RotuloGiro({ arena }: { arena: Arena }) {
         </button>
       )}
     </div>
+  );
+}
+
+/** Barra do ângulo da construção: gira ao vivo, um desfazer por arrasto. */
+function AnguloObra({ arena }: { arena: Arena }) {
+  const { apply } = useDocumentStore();
+  const arrasto = useRef(0);
+  return (
+    <input
+      type="range"
+      className="rotation-slider"
+      aria-label="Girar a construção"
+      min={-90}
+      max={90}
+      step={1}
+      value={Math.round(structureAngle(arena))}
+      disabled={arena.locked}
+      onPointerDown={() => {
+        arrasto.current += 1;
+      }}
+      onChange={(e) =>
+        apply(
+          'Ângulo da construção',
+          (d) => setStructureAngle(d, arena.id, Number(e.target.value)),
+          `angulo-obra-${arena.id}-${arrasto.current}`,
+        )
+      }
+    />
   );
 }

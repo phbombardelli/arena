@@ -1371,3 +1371,31 @@ saem inverter direção, paraflancos, rotação (campo, barra e alça no
 desenho) e "Mais opções"/posição. Ficam distância até a vara, papel,
 largura, texto, seta e traço. Quadro, tabela e logo também deixam de
 mostrar X/Y em metros — arrastam-se na folha.
+
+## 66. Girar o print, editar o contorno, girar o cenário inteiro
+
+**Assistente** (ajustes da decisão 64):
+- Primeiro passo novo, **Girar**: barra de −180° a 180°, ±1° e ±90°, com
+  quadriculado para alinhar a cerca. A análise roda na imagem girada; a
+  medida e o OCR rodam no print ORIGINAL (o OCR não lê texto inclinado) e
+  os pontos são levados para a imagem girada — a distância não muda com o
+  giro. A imagem que fica no croqui é o print inteiro girado (JPEG, cantos
+  brancos); na análise os cantos são cinza, para não parecerem areia.
+- **Contorno da pista**: duplo clique numa aresta acrescenta um ponto; num
+  ponto, remove (mínimo de três).
+- **Outros elementos**: construção e ilha também em contorno livre
+  (clique cada ponto; duplo clique ou "Fechar contorno" termina), além do
+  retângulo — o que dá qualquer ângulo.
+
+**Girar o cenário vinculado.** O giro de vários objetos girava a posição
+de cada um em torno do centro comum, mas contorno (pista, construção,
+ilha) e traçado não têm ângulo guardado: só o ponto de referência andava,
+e cada peça parecia girar no próprio eixo. Agora os pontos do contorno e
+os nós (e alças) do traçado giram em torno do centro comum — o conjunto
+gira como uma peça só. Quadro, tabela e logo, que moram na folha, não
+giram.
+
+**Ângulo da construção.** Construção e ilha ganham alça de giro no
+desenho e, no painel, "Ângulo" com barra: é o ângulo da aresta mais
+longa (−90° a 90°), e mudá-lo gira o contorno em torno do centro.
+Sozinha, uma construção gira em torno do próprio centro.
