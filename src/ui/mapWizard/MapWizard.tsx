@@ -515,8 +515,32 @@ function MapWizard({ image }: { image: ImportedImage }) {
   // fora giro, medida, contorno e elementos (decisão 68). No primeiro
   // passo ainda não há nada a perder.
   const pedeParaFechar = () => {
+    // Esc com um contorno livre em andamento cancela só o contorno.
+    if (livre.length > 0) {
+      setLivre([]);
+      return;
+    }
     if (passo === 'inicio' || window.confirm('Sair do assistente? O que foi feito até aqui se perde.')) fecha();
   };
+
+  // Contorno livre pelo teclado, como no editor: Enter fecha, Backspace
+  // tira o último ponto (decisão 69).
+  useEffect(() => {
+    if (livre.length === 0) return;
+    const tecla = (e: KeyboardEvent) => {
+      const alvo = e.target as HTMLElement | null;
+      if (alvo && /^(INPUT|TEXTAREA|SELECT)$/.test(alvo.tagName)) return;
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        fechaLivre();
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault();
+        setLivre((l) => l.slice(0, -1));
+      }
+    };
+    window.addEventListener('keydown', tecla);
+    return () => window.removeEventListener('keydown', tecla);
+  });
 
   const indice = PASSOS.indexOf(passo);
   const desenhaLivre = ferramenta === 'construcao-livre' || ferramenta === 'ilha-livre';
@@ -702,7 +726,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
           <>
             <p className="note">
               {desenhaLivre
-                ? 'Clique cada ponto do contorno; duplo clique ou "Fechar contorno" termina.'
+                ? 'Clique cada ponto do contorno. Enter (ou duplo clique) fecha; Backspace tira o último ponto; Esc cancela.'
                 : 'Inclua o que faltou: escolha o tipo e desenhe no print.'}
             </p>
             <div className="row-buttons wrap">

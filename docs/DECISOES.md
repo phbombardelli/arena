@@ -1421,3 +1421,17 @@ movendo a seleção toda.
 Esc, clique fora da janela ou ✕ no meio do assistente "Montar pista pelo
 mapa" perguntam antes: "Sair do assistente? O que foi feito até aqui se
 perde." No primeiro passo, antes de começar, fecha direto.
+
+## 69. Contorno livre pelo teclado no assistente; forma da construção
+
+**No assistente**, o contorno livre de construção e ilha responde ao
+teclado como no editor: Enter fecha, Backspace tira o último ponto, Esc
+cancela o contorno em andamento — e só o contorno, sem fechar o
+assistente nem perguntar. Antes só fechava com duplo clique ou pelo
+botão, e o Esc fechava a janela inteira.
+
+**No editor**, o menu Construção ganhou a escolha da forma no topo —
+Retângulo ou Contorno livre — que vale para o tipo escolhido em seguida
+(arquibancada, concreto, edificação, ilha, construção). Antes havia um
+item só, "Arquibancada em contorno livre", que dependia do último tipo
+usado.

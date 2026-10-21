@@ -47,6 +47,10 @@ export function Sidebar() {
     usa(alvo);
   };
   const nomeConstrucao = STRUCTURES.find((s) => s.type === structureType)?.label ?? 'Arquibancada';
+  // Forma da construção (decisão 69): vale para o tipo que se escolher
+  // depois — antes só a arquibancada parecia ter contorno livre.
+  const [construcaoLivre, setConstrucaoLivre] = useState(false);
+  const formaConstrucao: Tool = construcaoLivre ? 'arena-polygon' : 'arena-rect';
   const nomeObstaculo = OBSTACLES.find((o) => o.type === obstacleType)?.label ?? '';
   const nomeOrnamento = ORNAMENTS.find((o) => o.type === ornamentType)?.label ?? '';
 
@@ -163,21 +167,33 @@ export function Sidebar() {
             label="Construção"
             detail={structureType ? nomeConstrucao : undefined}
             active={desenhandoContorno && structureType !== null}
-            onActivate={() => construcao(structureType ?? 'arquibancada', 'arena-rect')}
+            onActivate={() => construcao(structureType ?? 'arquibancada', formaConstrucao)}
             items={[
+              {
+                label: 'Retângulo',
+                hint: 'arraste um retângulo',
+                active: !construcaoLivre,
+                onSelect: () => {
+                  setConstrucaoLivre(false);
+                  construcao(structureType ?? 'arquibancada', 'arena-rect');
+                },
+              },
+              {
+                label: 'Contorno livre',
+                hint: 'clique cada vértice; Enter fecha',
+                active: construcaoLivre,
+                onSelect: () => {
+                  setConstrucaoLivre(true);
+                  construcao(structureType ?? 'arquibancada', 'arena-polygon');
+                },
+              },
+              'separator' as const,
               ...STRUCTURES.map((s) => ({
                 label: s.label,
-                hint: 'arraste um retângulo, dentro ou fora da pista',
-                active: tool === 'arena-rect' && structureType === s.type,
-                onSelect: () => construcao(s.type, 'arena-rect'),
+                hint: construcaoLivre ? 'em contorno livre' : 'em retângulo',
+                active: (tool === 'arena-rect' || tool === 'arena-polygon') && structureType === s.type,
+                onSelect: () => construcao(s.type, formaConstrucao),
               })),
-              'separator' as const,
-              {
-                label: `${nomeConstrucao} em contorno livre`,
-                hint: 'clique cada vértice; Enter fecha',
-                active: tool === 'arena-polygon' && structureType !== null,
-                onSelect: () => construcao(structureType ?? 'arquibancada', 'arena-polygon'),
-              },
             ]}
             footer="Referência do local: arquibancada, área de concreto, prédios. Não limita o traçado."
           />
