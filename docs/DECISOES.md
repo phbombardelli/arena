@@ -1415,3 +1415,9 @@ continuava: depois do assistente, mesmo desvinculando o cenário, clicar
 numa construção mantinha as oito peças selecionadas e o painel nunca
 mostrava os campos dela (rótulo, tipo, ângulo). Arrastar continua
 movendo a seleção toda.
+
+## 68. Confirmar antes de sair do assistente
+
+Esc, clique fora da janela ou ✕ no meio do assistente "Montar pista pelo
+mapa" perguntam antes: "Sair do assistente? O que foi feito até aqui se
+perde." No primeiro passo, antes de começar, fecha direto.

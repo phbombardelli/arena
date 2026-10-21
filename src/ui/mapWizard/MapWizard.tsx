@@ -511,11 +511,18 @@ function MapWizard({ image }: { image: ImportedImage }) {
     return `${f(Math.max(...xs) - Math.min(...xs))} × ${f(Math.max(...ys) - Math.min(...ys))} m`;
   })();
 
+  // Esc, clique fora ou ✕ no meio do trabalho: confirma antes de jogar
+  // fora giro, medida, contorno e elementos (decisão 68). No primeiro
+  // passo ainda não há nada a perder.
+  const pedeParaFechar = () => {
+    if (passo === 'inicio' || window.confirm('Sair do assistente? O que foi feito até aqui se perde.')) fecha();
+  };
+
   const indice = PASSOS.indexOf(passo);
   const desenhaLivre = ferramenta === 'construcao-livre' || ferramenta === 'ilha-livre';
 
   return (
-    <Dialog title="Montar pista pelo mapa" onClose={fecha}>
+    <Dialog title="Montar pista pelo mapa" onClose={pedeParaFechar}>
       <div className="map-wizard">
         {passo !== 'inicio' && (
           <ol className="wizard-steps">
