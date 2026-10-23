@@ -37,7 +37,7 @@ export function CenterGuideOverlay({ zoom }: Props) {
   const horizontal = Math.abs(cy - meioY) <= tol;
   if (!vertical && !horizontal) return null;
 
-  const traco = { stroke: '#D9603B', strokeWidth: 1 / zoom, strokeDasharray: `${6 / zoom} ${4 / zoom}` };
+  const traco = { stroke: '#B8975A', strokeWidth: 1 / zoom, strokeDasharray: `${6 / zoom} ${4 / zoom}` };
   return (
     <g data-part="center-guide" pointerEvents="none">
       {vertical && <line x1={meioX} y1={folha.y} x2={meioX} y2={folha.y + folha.height} {...traco} />}

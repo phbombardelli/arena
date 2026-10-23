@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { exportDocumentPdf } from '@platform/exportPdf';
 import { printDocument } from '@platform/print';
+import { installApp, usePwa } from '@platform/pwa';
 import {
   newDocument,
   openDocument,
@@ -76,6 +77,7 @@ export function Toolbar() {
     fn();
   };
 
+  const pwa = usePwa();
   const arquivo: MenuEntry[] = [
     { label: 'Novo', shortcut: 'Ctrl+N', onSelect: () => newDocument() },
     { label: 'Abrir…', shortcut: 'Ctrl+O', onSelect: () => void openDocument() },
@@ -93,6 +95,9 @@ export function Toolbar() {
     { label: 'Configurar folha…', onSelect: () => setDialog('folha') },
     { label: 'Modelos de pista…', onSelect: () => setDialog('modelos') },
     { label: 'Pista pelo mapa…', onSelect: () => void startMapWizard() },
+    ...(pwa.instalavel
+      ? (['separator', { label: 'Instalar como app…', onSelect: () => void installApp() }] as MenuEntry[])
+      : []),
   ];
 
   const editar: MenuEntry[] = [

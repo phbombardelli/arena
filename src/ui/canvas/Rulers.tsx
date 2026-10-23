@@ -42,13 +42,13 @@ export function Rulers({ viewport, size, printScale, originMm, metersPerPixel, c
   return (
     <>
       <svg className="ruler ruler-top" width={size.width} height={RULER_SIZE}>
-        <rect width={size.width} height={RULER_SIZE} fill="#F6ECD9" />
+        <rect width={size.width} height={RULER_SIZE} fill="#ECE7DC" />
         {xs.map((m) => {
           const x = toScreenX(m);
           return (
             <g key={m}>
               <line x1={x} y1={RULER_SIZE - 6} x2={x} y2={RULER_SIZE} stroke="#B9A889" strokeWidth={1} />
-              <text x={x + 2} y={11} fontSize={9} fill="#62553F" fontFamily="system-ui, sans-serif">
+              <text x={x + 2} y={11} fontSize={9} fill="#5A6272" fontFamily="'Manrope Variable', system-ui, sans-serif">
                 {formatTick(m)}
               </text>
             </g>
@@ -60,15 +60,15 @@ export function Rulers({ viewport, size, printScale, originMm, metersPerPixel, c
             y1={0}
             x2={toScreenX(cursorM.x)}
             y2={RULER_SIZE}
-            stroke="#D9603B"
+            stroke="#B8975A"
             strokeWidth={1}
           />
         )}
-        <line x1={0} y1={RULER_SIZE - 0.5} x2={size.width} y2={RULER_SIZE - 0.5} stroke="#EEDFC4" />
+        <line x1={0} y1={RULER_SIZE - 0.5} x2={size.width} y2={RULER_SIZE - 0.5} stroke="#E1DACB" />
       </svg>
 
       <svg className="ruler ruler-left" width={RULER_SIZE} height={size.height}>
-        <rect width={RULER_SIZE} height={size.height} fill="#F6ECD9" />
+        <rect width={RULER_SIZE} height={size.height} fill="#ECE7DC" />
         {ys.map((m) => {
           const y = toScreenY(m);
           return (
@@ -78,8 +78,8 @@ export function Rulers({ viewport, size, printScale, originMm, metersPerPixel, c
                 x={9}
                 y={y - 3}
                 fontSize={9}
-                fill="#62553F"
-                fontFamily="system-ui, sans-serif"
+                fill="#5A6272"
+                fontFamily="'Manrope Variable', system-ui, sans-serif"
                 transform={`rotate(-90 9 ${y - 3})`}
                 textAnchor="start"
               >
@@ -94,11 +94,11 @@ export function Rulers({ viewport, size, printScale, originMm, metersPerPixel, c
             y1={toScreenY(cursorM.y)}
             x2={RULER_SIZE}
             y2={toScreenY(cursorM.y)}
-            stroke="#D9603B"
+            stroke="#B8975A"
             strokeWidth={1}
           />
         )}
-        <line x1={RULER_SIZE - 0.5} y1={0} x2={RULER_SIZE - 0.5} y2={size.height} stroke="#EEDFC4" />
+        <line x1={RULER_SIZE - 0.5} y1={0} x2={RULER_SIZE - 0.5} y2={size.height} stroke="#E1DACB" />
       </svg>
 
       <div className="ruler-corner" style={{ width: RULER_SIZE, height: RULER_SIZE }}>

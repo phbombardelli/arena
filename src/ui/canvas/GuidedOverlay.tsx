@@ -50,7 +50,7 @@ export function GuidedOverlay({ zoom }: { zoom: number }) {
             key={i}
             d={pathD(createPath(opcao.nodes), toPaper)}
             fill="none"
-            stroke={escolhida ? '#D9603B' : '#5B7A99'}
+            stroke={escolhida ? '#B8975A' : '#7D8BA1'}
             strokeWidth={mm(escolhida ? 3 : 1.6)}
             strokeOpacity={escolhida ? 1 : 0.7}
             strokeDasharray={escolhida ? undefined : `${mm(4)} ${mm(4)}`}

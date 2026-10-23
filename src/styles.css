@@ -1,32 +1,35 @@
 /* Interface de ferramenta técnica: densa, sem animação, sem enfeite. */
 
 :root {
-  /* Identidade 1c, "âmbar ensolarado" (decisão 73): papel quente, âmbar
-     vivo na ação e no modo ativo, coral nos destaques (item ativo, título
-     do painel, seleção no desenho). Todo texto acima de 4,5:1. */
-  --bg: #FBF5EA;          /* fundo geral */
+  /* Identidade "Marinho A" (decisão 85), a do logo do Arena: papel
+     claro, azul-marinho na ação, no modo e no item ativo; dourado só na
+     seleção do desenho, como no logo. Os nomes "gold" ficaram por
+     história: hoje guardam o marinho. Todo texto acima de 4,5:1. */
+  --bg: #F4F1EA;          /* fundo geral */
   --chrome: #FFFFFF;      /* superfícies: painéis, menus */
-  --chrome-2: #F6ECD9;    /* superfície recuada: réguas, barra de cima */
-  --border: #EEDFC4;
-  --text: #241A0E;
-  --text-dim: #62553F;    /* 7,3:1 sobre branco */
-  --gold: #C98A12;        /* âmbar escuro: contorno de ativo */
-  --gold-b: #E3A52A;      /* âmbar: preenchimento do botão principal e do modo */
-  --gold-l: #F2C25A;      /* âmbar claro */
-  --gold-ink: #8A5B08;    /* âmbar para TEXTO sobre fundo claro: 5,9:1 */
-  --gold-soft: rgba(227, 165, 42, 0.18);
-  --gold-hover: rgba(227, 165, 42, 0.12);
-  --focus: rgba(227, 165, 42, 0.30);
-  --act: #D9603B;         /* coral: o que está ativo ou selecionado */
-  --act-ink: #A3401F;     /* coral para texto: 6,3:1 sobre branco, 5,3:1 sobre o coral-claro */
-  --act-soft: #FCE5DA;    /* coral-claro: fundo do item ativo */
+  --chrome-2: #ECE7DC;    /* superfície recuada: réguas, barra de cima */
+  --border: #E1DACB;
+  --text: #141C2B;
+  --text-dim: #5A6272;    /* 6,1:1 sobre branco */
+  --gold: #13294B;        /* marinho: contorno de ativo */
+  --gold-b: #13294B;      /* marinho: preenchimento do botão principal e do modo */
+  --gold-l: #2D4A78;      /* marinho claro */
+  --gold-ink: #13294B;    /* marinho para TEXTO de destaque: 14:1 */
+  --gold-soft: rgba(19, 41, 75, 0.10);
+  --gold-hover: rgba(19, 41, 75, 0.06);
+  --focus: rgba(184, 151, 90, 0.45);  /* foco em dourado */
+  --on-primary: #FFFFFF;  /* texto sobre o marinho */
+  --brass: #B8975A;       /* dourado do logo: só linha e preenchimento */
+  --act: #13294B;         /* o que está ativo */
+  --act-ink: #13294B;
+  --act-soft: #E7ECF4;    /* marinho-claro: fundo do item ativo */
   --ok: #1F6B49;  --ok-soft: #DDF1E7;  /* 5,5:1 */
   --warn: #9A4420; --warn-soft: #F8E6DC;
   --danger: #A32D2D; --danger-soft: #F6E3E3;
   --accent: var(--gold-ink);
   --toolbar-h: 40px;
   --status-h: 26px;
-  font-family: 'Bahnschrift', 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Manrope Variable', 'Segoe UI', system-ui, sans-serif;
   font-size: 13px;
   color: var(--text);
 }
@@ -434,7 +437,7 @@ kbd {
   color: var(--text-dim); margin: 0 0 6px;
 }
 .settings .note { margin: 2px 0 4px; }
-.row-buttons button.primary, button.primary { background: var(--gold-b); border-color: var(--gold-b); color: var(--text); font-weight: 700; }
+.row-buttons button.primary, button.primary { background: var(--gold-b); border-color: var(--gold-b); color: var(--on-primary); font-weight: 700; }
 button.primary:hover:not(:disabled) { background: #B8983F; border-color: #B8983F; }
 
 /* ----- barra da esquerda */
@@ -510,7 +513,7 @@ button.primary:hover:not(:disabled) { background: #B8983F; border-color: #B8983F
   width: 20px; height: 20px; padding: 0; border-radius: 50%;
   font-weight: 700; font-size: 11px; color: var(--text-dim);
 }
-.hint-toggle.active { background: var(--gold-b); border-color: var(--gold-b); color: var(--text); }
+.hint-toggle.active { background: var(--gold-b); border-color: var(--gold-b); color: var(--on-primary); }
 .panel:not(.show-hints) .note.dim { display: none; }
 .panel .object-panel, .panel .summary { margin-top: 0; }
 .panel .object-panel h3:first-child, .panel .summary h2 { padding-right: 26px; }
@@ -595,7 +598,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
    pesava demais sobre o desenho; aqui o contraste de todo texto fica
    acima de 4,5:1 (decisão 53). */
 .toolbar { background: var(--chrome-2); border-bottom: 1px solid var(--border); color: var(--text); }
-.brand { color: var(--gold-ink); font-weight: 700; letter-spacing: 0.08em; padding-right: 12px; margin-right: 4px;
+.brand { color: var(--gold-ink); font-family: 'Montserrat', 'Manrope Variable', sans-serif; font-weight: 800;
+  font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; padding-right: 12px; margin-right: 4px;
   border-right: 1px solid var(--border); }
 .toolbar .menu-trigger { color: var(--text); font-weight: 500; }
 .toolbar .menu-trigger:hover:not(:disabled), .toolbar .menu-trigger.active { background: var(--gold-soft); color: var(--text); }
@@ -611,7 +615,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .mode-switch { background: var(--chrome); border: 1px solid var(--border); border-radius: 8px; padding: 2px; gap: 2px; }
 .mode-switch button { background: none; border-color: transparent; color: var(--text-dim); border-radius: 6px; }
 .mode-switch button:hover:not(:disabled) { background: var(--gold-hover); color: var(--text); border-color: transparent; }
-.mode-switch button.active { background: var(--gold-b); border-color: var(--gold-b); color: var(--text); }
+.mode-switch button.active { background: var(--gold-b); border-color: var(--gold-b); color: var(--on-primary); }
 .toolbar .popover-panel, .menu-popup { color: var(--text); }
 
 /* menus e painéis suspensos */
@@ -705,4 +709,22 @@ button.mini.neutral { color: var(--text); }
   border-color: var(--act);
   border-radius: 1px;
   outline: none;
+}
+
+/* Aviso de versão nova (B-34). */
+.update-notice {
+  position: fixed;
+  left: 50%;
+  bottom: 36px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 8px 14px;
+  background: var(--chrome);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+  font-size: 13px;
+  z-index: 50;
 }

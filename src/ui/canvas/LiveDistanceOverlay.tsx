@@ -52,10 +52,10 @@ export function LiveDistanceOverlay({ zoom }: Props) {
               rx={fonte * 0.85}
               fill="#ffffff"
               fillOpacity={0.92}
-              stroke="#D9603B"
+              stroke="#B8975A"
               strokeWidth={mm(1.2)}
             />
-            <text y={fonte * 0.36} fontSize={fonte} fontWeight={700} fill="#A3401F" textAnchor="middle">
+            <text y={fonte * 0.36} fontSize={fonte} fontWeight={700} fill="#13294B" textAnchor="middle">
               {texto}
             </text>
           </g>

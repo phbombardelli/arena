@@ -1748,3 +1748,48 @@ Pesquisa feita antes da escolha: não há programa de croqui de salto com
 esse nome; há apps de hipismo com "Arena" no nome (Arena Time, Pivo
 Arena) e softwares de outros ramos (Rockwell Arena, PTC Arena). Registro
 no INPI (classes 9 e 42) fica com o autor.
+
+## 84. Instalar como app (B-34)
+
+O Arena é um PWA: instala como aplicativo (ícone próprio, janela sem
+barra do navegador) e abre sem internet.
+
+- **Manifesto** (`public/manifest.webmanifest`): nome "Arena", âmbar como
+  cor do tema, ícones 192/512, um "maskable" para o Android recortar e o
+  de iPhone (180). O ícone é a vara com o traçado tracejado cruzando-a de
+  frente, sobre a areia da pista.
+- **Service worker gerado no build** (plugin em `vite.config.ts`, sem
+  dependência nova): guarda a lista exata do que foi publicado — os
+  arquivos com hash e todo o `public/`, inclusive o banco de pistas — e
+  serve primeiro o que está guardado. A versão do cache sai da lista e do
+  próprio código do service worker. A busca no cache ignora `Vary`: o
+  script do app vai com `crossorigin` e não casaria com a cópia guardada.
+- **Atualização sem susto**: versão nova baixada não recarrega sozinha —
+  aparece um aviso, e o usuário recarrega quando tiver salvado. O app
+  aberto confere atualização a cada hora.
+- **Instalar**: onde o navegador oferece (Chrome, Edge), o menu Arquivo
+  ganha "Instalar como app…". No iPhone é pelo Safari, "Adicionar à Tela
+  de Início".
+- Fica de fora em desenvolvimento e quando o `dist/` é aberto por
+  `file://`. O leitor de texto do mapa (OCR) continua baixando a parte
+  pesada na hora; sem rede, o assistente pede a medida digitada.
+
+## 85. Identidade "Marinho A" e fontes Manrope e Montserrat
+
+A interface passa às cores do logo do Arena (substitui a 1c, decisão 73):
+- **Azul-marinho** `#13294B` na ação, no modo ativo, no item ativo e nos
+  títulos do painel; texto branco sobre ele.
+- **Dourado** `#B8975A` só na seleção do desenho, nas guias e nas medidas
+  ao vivo — como no logo, um destaque só. Nunca como cor de texto: sobre
+  branco não tem contraste.
+- Papel `#F4F1EA`, superfícies brancas, mesa em bege neutro `#E6DFD0`.
+- Os nomes das variáveis (`--gold*`, `--act*`) ficaram; mudaram os valores.
+
+**Fontes**: Manrope (variável) em toda a interface — moderna, números muito
+claros, legível a 11 px; Montserrat ExtraBold só na palavra ARENA do
+cabeçalho, a mesma família do logotipo. Vêm como arquivos do app
+(`@fontsource`), não do Google: o PWA continua funcionando offline.
+
+O croqui impresso e o PDF NÃO mudam: continuam em Helvetica/Arial e nas
+cores de sempre. O ícone do PWA foi recolorido em marinho e dourado
+enquanto não chega o ícone do logo em alta resolução.
