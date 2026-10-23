@@ -85,7 +85,7 @@ export function Dialogs() {
   }
   if (dialog === 'sobre') {
     return (
-      <Dialog title="Sobre o Percurso" onClose={fecha}>
+      <Dialog title="Sobre o Arena" onClose={fecha}>
         <p>Editor de croquis de percurso de salto. Funciona offline, sem servidor e sem nuvem.</p>
         <p className="note">O arquivo do croqui (.pcs) fica no seu computador.</p>
       </Dialog>

@@ -158,7 +158,7 @@ export function ArenaLibraryPanel() {
         </button>
       </div>
       <p className="note dim">
-        As pistas "do programa" vêm com o Percurso, para todos. As suas ficam
+        As pistas "do programa" vêm com o Arena, para todos. As suas ficam
         neste navegador; para levar a outro computador, exporte em arquivo.
       </p>
     </section>

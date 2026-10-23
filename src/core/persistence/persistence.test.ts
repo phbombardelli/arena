@@ -90,7 +90,7 @@ describe('recusa de arquivos', () => {
 
   it('rejeita JSON de outro programa', () => {
     expect(() => deserialize(JSON.stringify({ foo: 1 }))).toThrow(
-      /não é um projeto do Percurso/,
+      /não é um projeto do Arena/,
     );
   });
 

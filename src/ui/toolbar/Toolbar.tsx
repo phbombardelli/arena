@@ -165,7 +165,7 @@ export function Toolbar() {
 
   const ajuda: MenuEntry[] = [
     { label: 'Atalhos do teclado', shortcut: '?', onSelect: () => setDialog('atalhos') },
-    { label: 'Sobre o Percurso', onSelect: () => setDialog('sobre') },
+    { label: 'Sobre o Arena', onSelect: () => setDialog('sobre') },
   ];
 
   const pct = Math.round((viewport.zoom / ZOOM_ACTUAL_SIZE) * 100);
@@ -174,7 +174,7 @@ export function Toolbar() {
   return (
     <header className="toolbar">
       <div className="toolbar-group">
-        <span className="brand">Percurso</span>
+        <span className="brand">Arena</span>
         <Menu label="Arquivo" entries={arquivo} />
         <Menu label="Editar" entries={editar} />
         <Menu label="Inserir" entries={inserir} />

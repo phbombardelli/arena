@@ -1,4 +1,4 @@
-# Percurso
+# Arena
 
 Editor gráfico vetorial para croquis de percurso de salto de equitação.
 Aplicação web local, offline, sem servidor e sem nuvem.

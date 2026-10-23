@@ -1730,3 +1730,21 @@ Regras do armador, tiradas de dois croquis de exemplo (curvas 1 e 2):
   metros leva cada metade do giro. Uma variante que passa uns graus do
   teto de 300° por redistribuir o raio (até 10° acima da melhor) não é
   laçada e entra.
+
+## 83. O programa se chama Arena
+
+O nome "Percurso" saiu: confundia o programa com o modo de trabalho
+(Pista | Percurso) e com a própria palavra do ofício. O programa passa a
+se chamar **Arena** — do latim *arena*, a areia do piso da pista.
+
+Muda o que o usuário lê: título da janela, marca no cabeçalho, "Sobre o
+Arena", mensagens de arquivo e o autor gravado no PDF. Não muda o que
+garante compatibilidade: o formato do arquivo (`percurso-croqui`, `.pcs`
+e `.pista`), as chaves do repositório local (`percurso.*`), o pacote e o
+endereço publicado (…/percurso/). Trocar esses quebraria arquivos e
+pistas já guardados, ou o link que já circula.
+
+Pesquisa feita antes da escolha: não há programa de croqui de salto com
+esse nome; há apps de hipismo com "Arena" no nome (Arena Time, Pivo
+Arena) e softwares de outros ramos (Rockwell Arena, PTC Arena). Registro
+no INPI (classes 9 e 42) fica com o autor.

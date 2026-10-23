@@ -33,19 +33,19 @@ export function deserialize(text: string): ValidationResult {
     parsed = JSON.parse(text);
   } catch (err) {
     throw new CourseFileError(
-      'Este arquivo não é um projeto do Percurso.',
+      'Este arquivo não é um projeto do Arena.',
       err instanceof Error ? err.message : undefined,
     );
   }
 
   if (typeof parsed !== 'object' || parsed === null) {
-    throw new CourseFileError('Este arquivo não é um projeto do Percurso.');
+    throw new CourseFileError('Este arquivo não é um projeto do Arena.');
   }
 
   const envelope = parsed as Partial<CourseFile>;
   if (envelope.format !== FILE_FORMAT) {
     throw new CourseFileError(
-      'Este arquivo não é um projeto do Percurso.',
+      'Este arquivo não é um projeto do Arena.',
       `Formato lido: ${String(envelope.format ?? 'ausente')}.`,
     );
   }

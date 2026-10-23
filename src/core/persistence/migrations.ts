@@ -275,7 +275,7 @@ export function applyMigrations(
 ): RawDocument {
   if (fromVersion > toVersion) {
     throw new CourseFileError(
-      'Este arquivo foi salvo por uma versão mais nova do Percurso.',
+      'Este arquivo foi salvo por uma versão mais nova do Arena.',
       `Versão do arquivo: ${fromVersion}. Versão suportada: ${toVersion}.`,
     );
   }

@@ -36,7 +36,7 @@ function marcarFicha(pdf: jsPDF, doc: CourseDocument, fileName: string): void {
   pdf.setProperties({
     title: fileName.replace(/\.pdf$/i, ''),
     subject: `Croqui de percurso - escala 1:${doc.page.printScale}`,
-    creator: 'Percurso',
+    creator: 'Arena',
     keywords: 'salto, percurso, croqui, equitacao',
   });
 }
@@ -109,7 +109,7 @@ const DIAGNOSTIC_BODY = `
 <rect x="0" y="0" width="297" height="210" fill="#ffffff"/>
 
 <text x="10" y="12" font-family="${F}" font-size="7" fill="#111111">Diagnostico de exportacao PDF</text>
-<text x="10" y="19" font-family="${F}" font-size="3.5" fill="#555555">Percurso - verificacao da fase 2 - svg2pdf.js + jsPDF</text>
+<text x="10" y="19" font-family="${F}" font-size="3.5" fill="#555555">Arena - verificacao da fase 2 - svg2pdf.js + jsPDF</text>
 <line x1="10" y1="22" x2="287" y2="22" stroke="#111111" stroke-width="0.5"/>
 
 <text x="10" y="32" font-family="${F}" font-size="3.5" fill="#111111">1. Acentuacao WinAnsi</text>
