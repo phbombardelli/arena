@@ -17,6 +17,7 @@ import {
   OBSTACLES,
   acceptsLiverpool,
   hasBars,
+  semParaflanco,
   obstacleDef,
 } from '@core/library/obstacles';
 import type { BarStyle, Obstacle, ObstacleType } from '@core/model/types';
@@ -155,12 +156,17 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
     <>
       {hasBars(obstacle.type) && (
         <>
-          <h3 title="O paraflanco é o painel lateral que sustenta as varas.">Suporte</h3>
-          <WingStyleField
-            wings={obstacle.wings}
-            disabled={travado}
-            onChange={(patch, rotulo) => apply(rotulo, (d) => setWings(d, obstacle.id, patch))}
-          />
+          {/* Vara no chão e cavalete não têm suporte para escolher. */}
+          {!semParaflanco(obstacle.type) && (
+            <>
+              <h3 title="O paraflanco é o painel lateral que sustenta as varas.">Suporte</h3>
+              <WingStyleField
+                wings={obstacle.wings}
+                disabled={travado}
+                onChange={(patch, rotulo) => apply(rotulo, (d) => setWings(d, obstacle.id, patch))}
+              />
+            </>
+          )}
 
           <h3>Varas</h3>
           <label className="field">

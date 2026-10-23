@@ -5,7 +5,7 @@ import { createDocument } from '@core/model/document';
 import { distance } from '@core/geometry/vec';
 import type { CourseDocument, Obstacle, ObstacleType } from '@core/model/types';
 import { addObject } from './ops';
-import { alignCombination, alignCurve, COMBINATION_GAP, confirmCombination, currentGaps, freeGaps, isStraightLine, orderAlongLine, setFreeGap, splitCombination } from './alignOps';
+import { alignCombination, COMBINATION_GAP, confirmCombination, currentGaps, freeGaps, orderAlongLine, setFreeGap, splitCombination } from './alignOps';
 
 const salto = (
   tipo: ObstacleType,
@@ -275,20 +275,5 @@ describe('composto ou linha (decisão 80)', () => {
     expect(rotulos(linha)).toEqual(['1', '2', '3', '4']);
   });
 
-  it('alinhar na curva gira cada um para a curva, dentro do limite', () => {
-    const a = createObstacle('vertical', { x: 0, y: 0 }, '1');
-    const b = createObstacle('vertical', { x: 10, y: -4 }, '2');
-    const c = createObstacle('vertical', { x: 20, y: 0 }, '3');
-    const doc = produce(createDocument(), (d) => {
-      d.objects.length = 0;
-      for (const o of [a, b, c]) addObject(d, o);
-    });
-    const feito = produce(doc, (d) => alignCurve(d, [a.id, b.id, c.id]));
-    const [na, nb, nc] = feito.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
-    // O do meio fica de frente para a direção geral (leste); as pontas, abertas.
-    expect(nb!.rotation).toBeCloseTo(90, 6);
-    expect(na!.rotation).not.toBeCloseTo(nc!.rotation, 1);
-    expect(na!.pos).toEqual(a.pos);
-    expect(isStraightLine([na!, nb!, nc!])).toBe(false);
-  });
+
 });

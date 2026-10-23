@@ -1,4 +1,4 @@
-import { arrowGeometry, wingDepth } from '@core/library/obstacles';
+import { arrowGeometry, semParaflanco, wingDepth } from '@core/library/obstacles';
 import type { BarAppearance, Obstacle, WingsAppearance } from '@core/model/types';
 import { color, stroke } from '@render/style/tokens';
 
@@ -35,14 +35,16 @@ export function ObstacleShape({ obstacle, k }: Props) {
   const corpo = () => {
     switch (obstacle.type) {
       case 'vertical':
+        return <Bar halfW={halfW} y={0} k={k} bar={bar} wings={obstacle.wings} />;
       case 'plano':
-        return <Bar halfW={halfW} y={0} k={k} bar={bar} wings={obstacle.wings} thin={obstacle.type === 'plano'} />;
+        // Vara no chão: só a vara, sem pilar nem paraflanco.
+        return <Bar halfW={halfW} y={0} k={k} bar={bar} wings={{ ...obstacle.wings, style: 'nenhum' }} thin />;
 
       case 'cavalete':
         // Vara no chão com o suporte em X em cada ponta, visto de cima.
         return (
           <>
-            <Bar halfW={halfW} y={0} k={k} bar={bar} wings={obstacle.wings} thin />
+            <Bar halfW={halfW} y={0} k={k} bar={bar} wings={{ ...obstacle.wings, style: 'nenhum' }} thin />
             {[-halfW, halfW].map((x) => {
               const h = CAVALETE_X_M * k;
               return (
@@ -96,7 +98,7 @@ export function ObstacleShape({ obstacle, k }: Props) {
     <>
       {/* A água entra por baixo de tudo; os paraflancos, sob as varas. */}
       {obstacle.liverpool.enabled && <Liverpool obstacle={obstacle} k={k} />}
-      {obstacle.wings.style === 'paraflanco' && <Wings obstacle={obstacle} k={k} />}
+      {obstacle.wings.style === 'paraflanco' && !semParaflanco(obstacle.type) && <Wings obstacle={obstacle} k={k} />}
       {corpo()}
     </>
   );

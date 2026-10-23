@@ -80,6 +80,9 @@ export const BAR_TYPES: readonly ObstacleType[] = ['vertical', 'oxer', 'triplice
 
 export const hasBars = (type: ObstacleType): boolean => BAR_TYPES.includes(type);
 
+/** Deitados no chão: nunca levam paraflanco nem pilar, seja qual for o estilo. */
+export const semParaflanco = (type: ObstacleType): boolean => type === 'plano' || type === 'cavalete';
+
 /** O liverpool só faz sentido acoplado a um vertical ou a um oxer. */
 export const LIVERPOOL_TYPES: readonly ObstacleType[] = ['vertical', 'oxer'];
 
@@ -111,8 +114,8 @@ export function createObstacle(type: ObstacleType, pos: Vec2, numero = ''): Obst
     letter: '',
     elements: emptyElements(def.elements),
     bar: { style: 'pontas', color: '#ffffff', accent: '#c62828', stripes: 6 },
-    // O cavalete se apoia no próprio X: não tem paraflanco.
-    wings: { style: type === 'cavalete' ? 'nenhum' : 'paraflanco', widthM: 0.4, depthM: 0.9, color: '#2e7d32' },
+    // Vara no chão e cavalete não têm paraflanco: a vara é pura.
+    wings: { style: semParaflanco(type) ? 'nenhum' : 'paraflanco', widthM: 0.4, depthM: 0.9, color: '#2e7d32' },
     liverpool: {
       enabled: false,
       // 3 x 0,50 m: mais estreito que a vara de 3,50 m, de modo que as
@@ -187,7 +190,7 @@ export function obstacleExtent(obstacle: Obstacle): ObstacleExtent {
     halfWidthM = Math.max(halfWidthM, obstacle.liverpool.widthM / 2);
   }
 
-  if (obstacle.wings.style === 'paraflanco') {
+  if (obstacle.wings.style === 'paraflanco' && !semParaflanco(obstacle.type)) {
     const meia = wingDepth(obstacle) / 2;
     frontM = Math.min(frontM, -meia);
     backM = Math.max(backM, meia);

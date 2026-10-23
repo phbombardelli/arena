@@ -1676,3 +1676,23 @@ Lagreca (107 × 81) e Oeste (86 × 64) viraram retângulos de cantos retos
 e medidas inteiras, mantendo o centro; Dragões da Independência já era
 (106 × 42). Com o mesmo nome no navegador e no programa, vale agora a
 versão gravada por último — assim a corrigida substitui a cópia antiga.
+
+## 81. Curva sem alinhar, composto solidário, vínculo livre, vara pura
+
+- **Curva não se alinha.** Em Linha + Curva o painel não tem botão: cada
+  obstáculo mantém o próprio ângulo, e digitar a distância a encaixa a
+  partir do primeiro (pelo traçado, quando ele passa pelos dois). Sai o
+  "Alinhar na curva" da decisão 80.
+- **Composto é solidário.** Confirmar o composto vincula os elementos; ao
+  digitar a distância que chega a um deles (4 → 5A), o composto inteiro
+  anda junto e o vão 5A–5B fica. Digitar o próprio vão (5A → 5B) mexe
+  só nos de depois. "Linha" solta esse vínculo — mas não um trecho maior
+  que o armador tenha vinculado.
+- **Vínculo livre.** Qualquer seleção de obstáculos (também a de 2 ou 3,
+  que abre o painel de composto ou linha) tem Vincular / Desvincular.
+  Distância digitada, Alt + setas e arrasto movem o que está vinculado ao
+  obstáculo de destino: o trecho preservado vai inteiro.
+- **Vara no chão** é só a vara: sem paraflanco nem pilar (também nas já
+  desenhadas), e o painel não oferece suporte para ela nem para o
+  cavalete.
+- Na trena, "Casas" passa a "Casas decimais".

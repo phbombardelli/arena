@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   alignCombination,
-  alignCurve,
   COMBINATION_GAP,
   confirmCombination,
   currentGaps,
@@ -16,6 +15,7 @@ import { obstacleLabel } from '@core/library/obstacles';
 import { canSetDistance, courseDistances, setCourseDistance } from '@core/commands/distanceOps';
 import type { CoursePath, Obstacle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
+import { LinkRow } from './LinkRow';
 import { NumberField } from './NumberField';
 
 /**
@@ -151,23 +151,20 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
         );
       })}
 
-      <div className="row-buttons">
-        <button
-          disabled={travado}
-          title={
-            emCurva
-              ? 'Cada obstáculo gira de frente para a curva que passa pelos centros, num ângulo que dá para saltar'
-              : 'Todos no eixo do primeiro e na mesma inclinação, sem mudar as distâncias'
-          }
-          onClick={() =>
-            apply(emCurva ? 'Alinhar na curva' : 'Alinhar em reta', (d) =>
-              emCurva ? alignCurve(d, ids) : alignCombination(d, ids, vaos),
-            )
-          }
-        >
-          {emCurva ? 'Alinhar na curva' : 'Alinhar em reta'}
-        </button>
-      </div>
+      {/* Na curva não há o que alinhar: cada um mantém o próprio ângulo. */}
+      {!emCurva && (
+        <div className="row-buttons">
+          <button
+            disabled={travado}
+            title="Todos no eixo do primeiro e na mesma inclinação, sem mudar as distâncias"
+            onClick={() => apply('Alinhar em reta', (d) => alignCombination(d, ids, vaos))}
+          >
+            Alinhar em reta
+          </button>
+        </div>
+      )}
+
+      <LinkRow ids={ids} />
 
       <p className="note dim">
         Da vara de saída de um até a vara de entrada do seguinte. O primeiro

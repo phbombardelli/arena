@@ -74,7 +74,7 @@ export function MeasurePanel({ measure }: { measure: MeasureLine }) {
         </button>
       </div>
       <NumberField
-        label="Casas"
+        label="Casas decimais"
         value={measure.decimals}
         decimals={0}
         step={1}

@@ -1,7 +1,9 @@
-import { add, normalize, scale, sub } from '@core/geometry/vec';
+import { normalize, scale, sub, type Vec2 } from '@core/geometry/vec';
 import { courseDistancesAlong, pathSampler, type ObstacleDistance } from '@core/assist/obstacleDistances';
 import { syncTimingLines } from '@core/library/timing';
 import type { CourseDocument, CoursePath, ObjectId, Obstacle, TimingLine } from '@core/model/types';
+import { withLinked } from './groupOps';
+import { moveObjects } from './ops';
 import { syncPathAnchors } from './pathAnchors';
 
 /**
@@ -52,6 +54,32 @@ function timingEnd(doc: CourseDocument, d: ObstacleDistance): TimingLine | null 
   return null;
 }
 
+const ordemDe = (o: Obstacle): [number, string] => {
+  const n = parseInt(o.number, 10);
+  return [Number.isFinite(n) ? n : Number.POSITIVE_INFINITY, o.letter];
+};
+const depoisOuIgual = (a: Obstacle, b: Obstacle): boolean => {
+  const [na, la] = ordemDe(a);
+  const [nb, lb] = ordemDe(b);
+  return na > nb || (na === nb && la >= lb);
+};
+
+/**
+ * Move o obstáculo com quem está vinculado a ele (decisão 81) — o
+ * composto, ou o trecho que o armador vinculou para preservar. Se a outra
+ * ponta da medida (`fromId`) é do mesmo vínculo, só andam o destino e os
+ * do vínculo que vêm depois dele no percurso: 5A→5B empurra 5B e 5C.
+ */
+function moveComVinculados(doc: CourseDocument, destino: Obstacle, fromId: ObjectId | null, passo: Vec2): void {
+  let ids = withLinked(doc, [destino.id]);
+  if (fromId && ids.includes(fromId)) {
+    ids = doc.objects
+      .filter((o): o is Obstacle => o.kind === 'obstacle' && ids.includes(o.id) && depoisOuIgual(o, destino))
+      .map((o) => o.id);
+  }
+  moveObjects(doc, ids, passo);
+}
+
 /** Leva a distância `key` do traçado a `meters`. Devolve se conseguiu. */
 export function setCourseDistance(doc: CourseDocument, pathId: ObjectId, key: string, meters: number): boolean {
   if (!(meters > 0)) return false;
@@ -70,16 +98,18 @@ export function setCourseDistance(doc: CourseDocument, pathId: ObjectId, key: st
       const destino = doc.objects.find((o): o is Obstacle => o.id === d.toId && o.kind === 'obstacle')!;
       const amostra = pathSampler(path);
       if (!amostra) return false;
+      let passo: Vec2;
       if (presoAo(path, destino.id)) {
         const frente = normalize(sub(amostra.pointAt(d.sTo + 0.05).p, amostra.pointAt(d.sTo - 0.05).p));
-        destino.pos = add(destino.pos, scale(frente, falta));
+        passo = scale(frente, falta);
       } else {
         // Solto: o cruzamento desliza pela curva, mantendo o afastamento
         // que o obstáculo já tinha da linha.
         const total = amostra.acumulado[amostra.acumulado.length - 1]!;
         const novo = Math.max(0, Math.min(total, d.sTo + falta));
-        destino.pos = add(destino.pos, sub(amostra.pointAt(novo).p, amostra.pointAt(d.sTo).p));
+        passo = sub(amostra.pointAt(novo).p, amostra.pointAt(d.sTo).p);
       }
+      moveComVinculados(doc, destino, d.fromId, passo);
     }
     syncTimingLines(doc);
     syncPathAnchors(doc);
@@ -137,6 +167,6 @@ export function slideAlongPath(doc: CourseDocument, obstacleId: ObjectId, meters
   if (!comEle) return false;
   const s = comEle.toId === o.id ? comEle.sTo : comEle.sFrom;
   const frente = normalize(sub(amostra.pointAt(s + 0.05).p, amostra.pointAt(s - 0.05).p));
-  o.pos = add(o.pos, scale(frente, meters));
+  moveComVinculados(doc, o, null, scale(frente, meters));
   return true;
 }

@@ -9,6 +9,7 @@ import { createPath, createPathNode } from '@core/model/path';
 import type { CourseDocument, CoursePath, Obstacle } from '@core/model/types';
 import { canSetDistance, courseDistances, enforceLockedDistances, lockDistance, setCourseDistance, slideAlongPath } from './distanceOps';
 import { addObject, moveObjects } from './ops';
+import { confirmCombination } from './alignOps';
 import { syncPathAnchors } from './pathAnchors';
 import { placeAssistantPath } from './pathOps';
 
@@ -131,5 +132,32 @@ describe('Alt + setas sobre o traçado (B-65)', () => {
     });
     expect(par(doc, '1', '2').meters).toBeCloseTo(p.meters + 1, 1);
     expect((doc.objects.find((o) => o.id === p.toId) as Obstacle).pos.y).toBeCloseTo(30, 6);
+  });
+});
+
+describe('vinculados andam juntos (decisão 81)', () => {
+  it('distância de 4 a 5A empurra 5B junto; a de 5A a 5B só mexe no 5B', () => {
+    let doc = edit(createDocument(), (d) => {
+      d.objects.length = 0;
+      addObject(d, salto('4', 0, 0, 90));
+      addObject(d, salto('5', 20, 0, 90));
+      addObject(d, salto('6', 28, 0, 90));
+      addObject(d, createPath([createPathNode({ x: -5, y: 0 }), createPathNode({ x: 40, y: 0 })]));
+    });
+    const [, a, b] = doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
+    doc = edit(doc, (d) => confirmCombination(d, [a!.id, b!.id]));
+    const pos = (id: string) => (doc.objects.find((o) => o.id === id) as Obstacle).pos.x;
+    const p = par(doc, '4', '5A');
+    doc = edit(doc, (d) => {
+      setCourseDistance(d, tracado(d).id, p.key, p.meters + 3);
+    });
+    expect(pos(a!.id)).toBeCloseTo(23, 2);
+    expect(pos(b!.id)).toBeCloseTo(31, 2);
+    const q = par(doc, '5A', '5B');
+    doc = edit(doc, (d) => {
+      setCourseDistance(d, tracado(d).id, q.key, q.meters + 1);
+    });
+    expect(pos(a!.id)).toBeCloseTo(23, 2);
+    expect(pos(b!.id)).toBeCloseTo(32, 2);
   });
 });

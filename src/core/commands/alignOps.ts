@@ -1,4 +1,5 @@
-import { add, angleOf, fromAngle, normalize, normalizeAngle, scale, sub, type Vec2 } from '@core/geometry/vec';
+import { add, fromAngle, normalizeAngle, scale, sub, type Vec2 } from '@core/geometry/vec';
+import { linkObjects } from './groupOps';
 import { jumpHeading } from '@core/assist/ridePath';
 import type { CourseDocument, ObjectId, Obstacle } from '@core/model/types';
 
@@ -177,6 +178,11 @@ export function confirmCombination(doc: CourseDocument, ids: ObjectId[]): void {
     o.number = String(numero);
     o.letter = letras[i]!;
   });
+  // Composto é uma peça só: os elementos ficam vinculados (decisão 81).
+  linkObjects(
+    doc,
+    sel.map((o) => o.id),
+  );
 }
 
 /**
@@ -201,6 +207,13 @@ export function splitCombination(doc: CourseDocument, ids: ObjectId[]): void {
     o.number = String(numero + i);
     o.letter = '';
   });
+  // Solta o vínculo do composto — só se ele for só do composto: um trecho
+  // maior que o armador vinculou continua vinculado.
+  const grupo = ord[0]!.group;
+  if (grupo && ord.every((o) => o.group === grupo)) {
+    const membros = doc.objects.filter((o) => o.group === grupo);
+    if (membros.every((o) => meus.has(o.id))) for (const o of membros) delete o.group;
+  }
 }
 
 /** Linha reta hoje? Todos no eixo do primeiro, com a mesma inclinação. */
@@ -216,56 +229,6 @@ export function isStraightLine(ordered: Obstacle[], toleranciaM = 0.05): boolean
   });
 }
 
-/**
- * Quanto o salto pode apontar para fora da reta que o liga ao vizinho
- * numa linha curva, e ainda ser saltado direito: o cavalo chega à face
- * num ângulo que o armador aceita.
- */
-export const CURVE_MAX_DEG = 25;
-
-/**
- * Alinha uma linha CURVA (B-73): os obstáculos ficam onde estão e cada um
- * gira para ficar de frente para a curva suave que passa pelos centros —
- * a tangente é a média das direções de quem vem antes e de quem vem
- * depois; nas pontas, o espelho da tangente vizinha. O giro em relação à
- * reta até o vizinho fica limitado a {@link CURVE_MAX_DEG}. O sentido do
- * salto (a seta) de cada um é respeitado.
- */
-export function alignCurve(doc: CourseDocument, ids: ObjectId[]): void {
-  const sel = ids
-    .map((id) => doc.objects.find((o) => o.id === id))
-    .filter((o): o is Obstacle => o?.kind === 'obstacle');
-  const ord = orderAlongLine(sel);
-  const n = ord.length;
-  if (n < 2) return;
-  const corda = (i: number): Vec2 => normalize(sub(ord[i + 1]!.pos, ord[i]!.pos));
-  const tangentes: Vec2[] = ord.map((_, i) => {
-    if (i === 0 || i === n - 1) return { x: 0, y: 0 };
-    return normalize(add(corda(i - 1), corda(i)));
-  });
-  if (n === 2) {
-    tangentes[0] = corda(0);
-    tangentes[1] = corda(0);
-  } else {
-    // Espelho da vizinha em torno da corda: o arco continua igual na ponta.
-    const c0 = corda(0);
-    tangentes[0] = normalize(sub(scale(c0, 2 * (c0.x * tangentes[1]!.x + c0.y * tangentes[1]!.y)), tangentes[1]!));
-    const cf = corda(n - 2);
-    tangentes[n - 1] = normalize(
-      sub(scale(cf, 2 * (cf.x * tangentes[n - 2]!.x + cf.y * tangentes[n - 2]!.y)), tangentes[n - 2]!),
-    );
-  }
-  ord.forEach((o, i) => {
-    if (o.locked) return;
-    const ref = angleOf(i < n - 1 ? corda(i) : corda(i - 1));
-    let ang = angleOf(tangentes[i]!);
-    let desvio = normalizeAngle(ang - ref + 180) - 180;
-    desvio = Math.max(-CURVE_MAX_DEG, Math.min(CURVE_MAX_DEG, desvio));
-    ang = ref + desvio;
-    // jumpHeading = rotação ∓ 90 conforme a seta: aqui o inverso.
-    o.rotation = normalizeAngle(ang + (o.arrow.reversed ? -90 : 90));
-  });
-}
 
 /**
  * Vãos de uma linha curva ou quebrada: de vara a vara, mas medidos na reta
