@@ -1696,3 +1696,37 @@ versão gravada por último — assim a corrigida substitui a cópia antiga.
   desenhadas), e o painel não oferece suporte para ela nem para o
   cavalete.
 - Na trena, "Casas" passa a "Casas decimais".
+
+## 82. Assistente de curvas: o que não se oferece e o que faltava (B-73)
+
+Regras do armador, tiradas de dois croquis de exemplo (curvas 1 e 2):
+
+**O que sai da lista** (cada corte só vale se sobrar alternativa):
+- **Reta não tem opções.** Se a melhor ligação gira menos de 15°, é ela
+  e mais nada. Opções que nunca se afastam mais de 0,75 m uma da outra
+  são o mesmo desenho e aparecem uma vez só.
+- **Raio mínimo de 6 m** (era 5): 5,0 e 5,4 m foram recusados como
+  apertados; de 6,4 m para cima passou.
+- **Folga de 1 m** de ilha, vaso e obstáculo — passar rente não serve.
+- **Contracurva.** Volta grande (giro líquido de 90° ou mais) que torce
+  para o lado contrário: com 25° ou mais de torção sai sempre; leve (3° a
+  25°) sai se houver opção sem nenhuma, e senão paga 3° de custo por grau.
+  O S entre dois saltos deslocados, que se equilibra, não é contracurva.
+  Só contam trocas de mão de 3° ou mais — a junção de dois arcos troca
+  por frações de grau e isso não é serpentear.
+- **Por fora à toa.** Havendo volta direta, a por fora só entra girando
+  no máximo 20° a mais que ela.
+- **Chegada desalinhada.** A linha tem de chegar ao salto alinhada por
+  pelo menos 7 m (reta de aproximação mais o fim da volta já na direção);
+  a que chega ainda virando sai, e no custo paga 6° por metro que falta.
+
+**O que faltava:**
+- **Raios intermediários**: a forma da volta passou a ser agrupada também
+  por faixa de raio (abaixo de 7,5; até 10; até 14; acima), então a volta
+  entre a ampla e a apertada não some mais dentro do grupo da melhor.
+- **Onde a volta abre**: curvas com tensões diferentes nas pontas e voltas
+  grandes em dois raios (o primeiro arco num raio, o resto noutro). O
+  grupo separa a que abre no começo, no meio e no fim, medindo quantos
+  metros leva cada metade do giro. Uma variante que passa uns graus do
+  teto de 300° por redistribuir o raio (até 10° acima da melhor) não é
+  laçada e entra.

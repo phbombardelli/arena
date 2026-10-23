@@ -155,18 +155,14 @@ describe('opções da pernada', () => {
     expect(lista[0]!.turnDeg).toBeLessThan(5);
   });
 
-  it('numa volta de verdade, oferece caminhos diferentes', () => {
-    // A meia-volta entre dois saltos opostos deixou de servir de exemplo:
-    // as "outras formas" que ela oferecia eram laçadas e bicos, que agora
-    // saem da lista. Aqui a virada de 90 graus tem duas ideias reais: a
-    // curva direta e a que troca de mão para abrir a entrada.
+  it('numa volta de verdade, oferece caminhos diferentes — sem contracurva', () => {
+    // A virada de 90 graus já ofereceu "a que troca de mão para abrir a
+    // entrada": é contracurva, e saiu (decisão 82). As ideias reais que
+    // ficam variam o raio e o lugar onde a volta abre.
     const lista = opcoes(salto('1', 30, 40, 0), salto('2', 55, 15, 90));
     expect(lista.length).toBeGreaterThan(1);
-
-    // E são ideias diferentes, não a mesma curva com meio grau a mais.
-    const formas = new Set(
-      lista.map((c) => `${c.inflections}|${Math.round(c.turnDeg / 45)}|${c.lead.after > 0}`),
-    );
+    expect(lista.every((c) => !c.counterTurn)).toBe(true);
+    const formas = new Set(lista.map((c) => `${Math.round(c.minRadiusM)}|${c.opensAt}|${c.lead.after > 0}`));
     expect(formas.size).toBeGreaterThan(1);
   });
 
@@ -204,7 +200,9 @@ describe('redondeza (decisão 50)', () => {
   it('a volta grande sai pela rota do arco-reta-arco, arredondada (decisão 51)', () => {
     // A meia-volta para trás: a cúbica única bica, e só a rota em arcos
     // resolve. Ela sai arredondada — curvatura contínua, sem esquina.
-    const v = volta(salto('5', 40, 40, 90), salto('6', 52, 32, 0));
+    // Com espaço para o raio de 6 m: mais colado, a arredondada fica abaixo
+    // do piso e o arco-reta-arco assume (decisão 82).
+    const v = volta(salto('5', 40, 40, 90), salto('6', 46, 23, 0));
     expect(v.shape).toBe('curva');
     expect(v.turnDeg).toBeGreaterThan(180);
     expect(v.inflections).toBe(0);

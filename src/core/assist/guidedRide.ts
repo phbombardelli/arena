@@ -122,6 +122,11 @@ function retaComoOpcao(de: Vec2, para: Vec2): CurveSolution {
     inflections: 0,
     turnDeg: 0,
     shape: 'curva',
+    samples: [de, para],
+    counterTurn: false,
+    counterDeg: 0,
+    arrivalM: distance(de, para),
+    opensAt: 'meio',
   };
 }
 

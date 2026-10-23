@@ -24,8 +24,9 @@ export interface RideParams {
   radiusM: number;
   /**
    * Raio mais fechado que o traçado aceita, e é piso: abaixo dele a volta
-   * não se galopa e o assistente não a entrega como solução. 5 m de raio
-   * (10 m de diâmetro) é o mínimo do desenhador (decisão 49).
+   * não se galopa e o assistente não a entrega como solução. Era 5 m
+   * (decisão 49); o armador recusou voltas de 5,0 e 5,4 m como apertadas
+   * demais e aceitou de 6,4 m para cima, e o piso subiu para 6 (decisão 82).
    */
   tightRadiusM: number;
   /**
@@ -48,7 +49,7 @@ export const DEFAULT_RIDE: RideParams = {
   approachM: 8,
   getawayM: 8,
   radiusM: 11,
-  tightRadiusM: 5,
+  tightRadiusM: 6,
   railMarginM: 1,
   maxTurnDeg: 300,
 };

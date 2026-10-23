@@ -80,6 +80,11 @@ function retaEntre(de: Pose, para: Pose): CurveSolution {
     inflections: 0,
     turnDeg: 0,
     shape: 'curva',
+    samples: [de.pos, para.pos],
+    counterTurn: false,
+    counterDeg: 0,
+    arrivalM: distance(de.pos, para.pos),
+    opensAt: 'meio',
   };
 }
 

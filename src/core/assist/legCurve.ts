@@ -1,6 +1,6 @@
 import { cubicPoint, type Cubic } from '@core/geometry/bezier';
 import { DEG, add, distance, fromAngle, scale, sub, type Vec2 } from '@core/geometry/vec';
-import { dubinsPaths, poseAt, samplePath, type DubinsPath, type Pose } from '@core/geometry/dubins';
+import { dubinsPaths, poseAt, samplePath, type ArcSegment, type DubinsPath, type Pose } from '@core/geometry/dubins';
 import { nodesFromDubins } from '@core/model/pathFromDubins';
 import type { PathNode } from '@core/model/types';
 import {
@@ -44,16 +44,30 @@ import {
 /** Quanto a curva "puxa" na direção do salto, como fração do vão. */
 const TENSIONS = [0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1.1, 1.35];
 
-export function legCurve(from: Pose, to: Pose, tension: number): Cubic {
+export function legCurve(from: Pose, to: Pose, tension: number, tensionTo = tension): Cubic {
   const vao = distance(from.pos, to.pos);
-  const puxa = Math.max(1, vao * tension);
   return {
     p0: from.pos,
-    p1: add(from.pos, scale(fromAngle(from.heading), puxa)),
-    p2: sub(to.pos, scale(fromAngle(to.heading), puxa)),
+    p1: add(from.pos, scale(fromAngle(from.heading), Math.max(1, vao * tension))),
+    p2: sub(to.pos, scale(fromAngle(to.heading), Math.max(1, vao * tensionTo))),
     p3: to.pos,
   };
 }
+
+/**
+ * Pares de tensão diferentes nas duas pontas: a volta que abre mais no
+ * começo e fecha no fim, e a que faz o contrário. Sem eles o leque só
+ * tinha voltas simétricas, e o armador sentia falta das outras
+ * (decisão 82).
+ */
+const ASYMMETRIC: [number, number][] = [
+  [0.4, 0.9],
+  [0.9, 0.4],
+  [0.5, 1.2],
+  [1.2, 0.5],
+  [0.6, 1.0],
+  [1.0, 0.6],
+];
 
 /**
  * Menor raio de curvatura ao longo da curva, em metros.
@@ -127,6 +141,19 @@ export interface CurveSolution {
   /** Giro total da volta, em graus. Medida de economia. */
   turnDeg: number;
   shape: LegShape;
+  /** A linha amostrada: para comparar desenhos e medir a chegada. */
+  samples: Vec2[];
+  /**
+   * Contracurva: a volta grande começa (ou termina) torcendo para o lado
+   * contrário. "Se o cavaleiro fizer isso, ele errou" (decisão 82).
+   */
+  counterTurn: boolean;
+  /** Quanto a contracurva torce para o lado errado, em graus (0 sem ela). */
+  counterDeg: number;
+  /** Metros de linha já alinhada com o salto antes de chegar a ele. */
+  arrivalM: number;
+  /** Onde a volta gira mais: no começo, no meio ou no fim. */
+  opensAt: 'inicio' | 'meio' | 'fim';
 }
 
 /**
@@ -158,6 +185,15 @@ export function inflectionCount(pontos: Vec2[]): number {
   return trocas;
 }
 
+/**
+ * Folga mínima entre a linha e uma ilha, um vaso ou outro obstáculo: passar
+ * rente não é passar (decisão 82).
+ */
+export const CLEARANCE_M = 1;
+
+const encosta = (p: Vec2, corpo: Vec2[]): boolean =>
+  insidePolygon(p, corpo) || distanceToOutline(p, corpo) < CLEARANCE_M;
+
 function checkPoints(pontos: Vec2[], field: Field, params: RideParams): RideWarning[] {
   const avisos: RideWarning[] = [];
   if (field.outline) {
@@ -173,8 +209,8 @@ function checkPoints(pontos: Vec2[], field: Field, params: RideParams): RideWarn
     const corpo = obstacleFootprint(o);
     // As pontas ficam de fora: elas encostam de propósito nos saltos que a
     // volta liga, e acusá-las seria acusar o próprio salto.
-    return pontos.slice(3, -3).some((p) => insidePolygon(p, corpo));
-  }) || (field.decor ?? []).some((corpo) => pontos.some((p) => insidePolygon(p, corpo)));
+    return pontos.slice(3, -3).some((p) => encosta(p, corpo));
+  }) || (field.decor ?? []).some((corpo) => pontos.some((p) => encosta(p, corpo)));
   if (atropela) avisos.push('passa-por-obstaculo');
 
   return avisos;
@@ -296,12 +332,20 @@ export function legCandidates(
   // Volta acima do teto de giro só entra quando não há outra, e então só
   // as próximas da melhor: entre dois saltos lado a lado a volta inteira é
   // a resposta, mas as de 450 graus que vinham junto não são de ninguém.
+  // A mesma volta com o raio redistribuído pode passar uns graus do teto:
+  // perto da melhor, o excesso de giro não é laçada, é variação (decisão 82).
+  const giroBase = Math.min(...todos.filter((c) => galopavel(c, params)).map((c) => c.turnDeg), Infinity);
+  for (const c of todos) {
+    if (c.warnings.includes('giro-excessivo') && c.turnDeg <= giroBase + GIRO_PARELHO) {
+      c.warnings = c.warnings.filter((w) => w !== 'giro-excessivo');
+    }
+  }
   const limpoExiste = todos.some((c) => c.warnings.length === 0);
   const galopavelExiste = todos.some((c) => galopavel(c, params));
   const dentroDoTeto = (c: CurveSolution) => !c.warnings.includes('giro-excessivo');
   const dentroExiste = todos.some(dentroDoTeto);
   const tetoGiro = melhor.turnDeg + (dentroExiste ? 180 : 45);
-  const candidatos = todos.filter(
+  let candidatos = todos.filter(
     (c) =>
       (!limpoExiste || c.warnings.length === 0) &&
       (!galopavelExiste || galopavel(c, params)) &&
@@ -309,14 +353,89 @@ export function legCandidates(
       c.turnDeg <= tetoGiro,
   );
 
+  // As regras do armador (decisão 82). Cada uma só corta se sobrar
+  // alternativa: melhor uma opção imperfeita que nenhuma.
+  const seSobrar = (fica: (c: CurveSolution) => boolean) => {
+    const restam = candidatos.filter(fica);
+    if (restam.length > 0) candidatos = restam;
+  };
+  // Contracurva franca (abrir para um lado e virar para o outro) sai;
+  // a leve só sai se houver opção sem nenhuma, e senão paga no custo.
+  seSobrar((c) => c.counterDeg < CONTRA_FORTE_DEG);
+  seSobrar((c) => !c.counterTurn);
+  seSobrar((c) => significantInflections(c.samples) <= 1);
+  // Por fora só se não houver volta direta, ou se girar quase o mesmo.
+  const diretas = candidatos.filter((c) => c.lead.after <= 0 && c.lead.before <= 0);
+  if (diretas.length > 0) {
+    const giroDireto = Math.min(...diretas.map((c) => c.turnDeg));
+    seSobrar((c) => (c.lead.after <= 0 && c.lead.before <= 0) || c.turnDeg <= giroDireto + POR_FORA_FOLGA_DEG);
+  }
+  // Chegada ao salto já alinhada, com reta de verdade.
+  seSobrar((c) => c.arrivalM >= CHEGADA_MIN_M);
+  if (candidatos.length === 0) return [];
+
+  const ordenados = [...candidatos].sort((a, b) => compara(a, b, params));
+  // Ligação reta entre dois saltos: não há o que escolher.
+  const primeiro = ordenados[0]!;
+  // A ondulação de meio grau que a cúbica faz numa reta não a faz curva.
+  if (primeiro.turnDeg < RETA_DEG) return [primeiro];
+
   const porForma = new Map<string, CurveSolution>();
-  for (const c of candidatos) {
+  for (const c of ordenados) {
     const chave = assinatura(c);
-    const atual = porForma.get(chave);
-    if (!atual || compara(c, atual, params) < 0) porForma.set(chave, c);
+    if (!porForma.has(chave)) porForma.set(chave, c);
   }
 
-  return [...porForma.values()].sort((a, b) => compara(a, b, params)).slice(0, maximo);
+  // Formas diferentes no papel podem dar o mesmo desenho: fica uma.
+  const escolhidas: CurveSolution[] = [];
+  for (const c of [...porForma.values()].sort((a, b) => compara(a, b, params))) {
+    if (escolhidas.some((e) => sameDrawing(e, c))) continue;
+    escolhidas.push(c);
+    if (escolhidas.length >= maximo) break;
+  }
+  return escolhidas;
+}
+
+/**
+ * Torção para o lado errado que já é contracurva franca: o armador recusou
+ * 32° e 39° e deixou passar 8° a 18° (decisão 82).
+ */
+const CONTRA_FORTE_DEG = 25;
+/** Giro abaixo do qual a ligação é uma reta e não tem opções (decisão 82). */
+const RETA_DEG = 15;
+/** Quanto a volta por fora pode girar além da direta e ainda ser opção. */
+const POR_FORA_FOLGA_DEG = 20;
+/** Linha alinhada com o salto antes de chegar a ele: reta mais o fim da volta. */
+export const CHEGADA_MIN_M = 7;
+/** Duas voltas que nunca se afastam mais que isso são o mesmo desenho. */
+const MESMO_DESENHO_M = 0.75;
+
+/** Reamostra a linha em `n` pontos igualmente espaçados pelo comprimento. */
+function resample(pontos: Vec2[], n = 24): Vec2[] {
+  const acum = [0];
+  for (let i = 1; i < pontos.length; i += 1) acum.push(acum[i - 1]! + distance(pontos[i - 1]!, pontos[i]!));
+  const total = acum[acum.length - 1]!;
+  const out: Vec2[] = [];
+  let j = 1;
+  for (let k = 0; k <= n; k += 1) {
+    const s = (total * k) / n;
+    while (j < pontos.length - 1 && acum[j]! < s) j += 1;
+    const a = pontos[j - 1]!;
+    const b = pontos[j]!;
+    const seg = acum[j]! - acum[j - 1]!;
+    const t = seg === 0 ? 0 : (s - acum[j - 1]!) / seg;
+    out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+  }
+  return out;
+}
+
+function sameDrawing(a: CurveSolution, b: CurveSolution): boolean {
+  if (Math.abs(a.lead.after - b.lead.after) > MESMO_DESENHO_M || Math.abs(a.lead.before - b.lead.before) > MESMO_DESENHO_M) {
+    return false;
+  }
+  const ra = resample(a.samples);
+  const rb = resample(b.samples);
+  return ra.every((p, i) => distance(p, rb[i]!) < MESMO_DESENHO_M);
 }
 
 /**
@@ -328,7 +447,18 @@ function assinatura(c: CurveSolution): string {
   // direta da volta por fora, e marcar as duas coisas fazia a mesma reta
   // aparecer duas vezes — uma delas com seis metros a mais e nenhuma
   // diferença de desenho.
-  return `${maoInicial(c.nodes)}|${c.inflections}|${Math.round(c.turnDeg / 45)}`;
+  //
+  // A faixa de raio e o lugar onde a volta abre entram desde a decisão 82:
+  // sem elas, a volta intermediária (mais fechada que a ampla, menos que a
+  // apertada) e a que abre no fim caíam no grupo da melhor e sumiam.
+  return `${maoInicial(c.nodes)}|${c.inflections}|${Math.round(c.turnDeg / 45)}|${faixaDeRaio(c.minRadiusM)}|${c.opensAt}`;
+}
+
+function faixaDeRaio(r: number): number {
+  if (r < 7.5) return 0;
+  if (r < 10) return 1;
+  if (r < 14) return 2;
+  return 3;
 }
 
 /** Para que lado a linha vira primeiro: -1 esquerda, 1 direita, 0 reta. */
@@ -403,6 +533,7 @@ function avalia(
     // A cúbica não passava pelo teto de giro, só o arco-reta-arco: uma
     // laçada desenhada como cúbica entrava limpa.
     if (turnDeg > params.maxTurnDeg) warnings.push('giro-excessivo');
+    const giros = signedTurns(pontos);
     candidatos.push({
       nodes,
       lead,
@@ -411,6 +542,11 @@ function avalia(
       inflections: inflectionCount(pontos),
       turnDeg,
       shape,
+      samples: pontos,
+      counterTurn: counterTurnDeg(giros) >= CONTRA_MIN_DEG,
+      counterDeg: counterTurnDeg(giros),
+      arrivalM: Math.max(0, params.approachM + lead.before) + alignedTail(pontos),
+      opensAt: whereItOpens(giros),
     });
   };
 
@@ -422,6 +558,11 @@ function avalia(
 
     for (const tension of TENSIONS) {
       const curve = legCurve(saida, chegada, tension);
+      const raio = Math.min(minRadiusOf(curve), teto);
+      julga(lead, curveNodes(curve), samplesOfCubic(curve), raio, 'curva');
+    }
+    for (const [t1, t2] of ASYMMETRIC) {
+      const curve = legCurve(saida, chegada, t1, t2);
       const raio = Math.min(minRadiusOf(curve), teto);
       julga(lead, curveNodes(curve), samplesOfCubic(curve), raio, 'curva');
     }
@@ -458,6 +599,14 @@ function avalia(
         const redonda = roundDubins(path);
         julga(lead, redonda.nodes, redonda.pontos, Math.min(redonda.minRadiusM, teto), 'curva');
       }
+    }
+
+    // Volta grande assimétrica: a primeira metade num raio e a segunda
+    // noutro — abre mais no começo e fecha no fim, ou o contrário. Sem
+    // ela, toda meia-volta saía simétrica (decisão 82).
+    for (const [r1, r2] of asymmetricRadii(params)) {
+      const v = twoRadiusTurn(saida, chegada, r1, r2);
+      if (v) julga(lead, v.nodes, v.pontos, Math.min(v.minRadiusM, teto), 'curva');
     }
   }
   return candidatos;
@@ -516,6 +665,117 @@ export function turnOfPoints(pontos: Vec2[]): number {
   return total;
 }
 
+/** Giro com sinal a cada passo da linha (graus) e o comprimento do passo. */
+interface Giro {
+  deg: number;
+  len: number;
+}
+
+export function signedTurns(pontos: Vec2[]): Giro[] {
+  const out: Giro[] = [];
+  for (let i = 2; i < pontos.length; i += 1) {
+    const a = sub(pontos[i - 1]!, pontos[i - 2]!);
+    const b = sub(pontos[i]!, pontos[i - 1]!);
+    const escala = Math.hypot(a.x, a.y) * Math.hypot(b.x, b.y);
+    const len = Math.hypot(b.x, b.y);
+    if (escala === 0) {
+      out.push({ deg: 0, len });
+      continue;
+    }
+    const cruzado = (a.x * b.y - a.y * b.x) / escala;
+    const alinhado = (a.x * b.x + a.y * b.y) / escala;
+    out.push({ deg: Math.atan2(cruzado, alinhado) / DEG, len });
+  }
+  return out;
+}
+
+/** Abaixo disso a torção para o lado contrário é ruído de desenho. */
+const CONTRA_MIN_DEG = 3;
+/** Volta a partir da qual torcer para o outro lado é contracurva. */
+const CONTRA_VOLTA_DEG = 90;
+
+/**
+ * A volta gira muito para um lado e, em algum trecho, torce para o outro.
+ * É diferente do S entre dois saltos deslocados, em que as duas mãos se
+ * equilibram e o giro líquido é pequeno: aqui o giro líquido é grande e
+ * a torção contrária é desvio (decisão 82).
+ */
+function counterTurnDeg(giros: Giro[]): number {
+  let pos = 0;
+  let neg = 0;
+  for (const g of giros) {
+    if (g.deg > 0) pos += g.deg;
+    else neg -= g.deg;
+  }
+  return Math.abs(pos - neg) >= CONTRA_VOLTA_DEG ? Math.min(pos, neg) : 0;
+}
+
+/**
+ * Onde a volta é mais aberta: compara quantos metros a linha leva para
+ * fazer a primeira metade do giro e a segunda. Metade que leva mais
+ * metros é a parte aberta.
+ */
+function whereItOpens(giros: Giro[]): 'inicio' | 'meio' | 'fim' {
+  const tudo = giros.reduce((t, g) => t + Math.abs(g.deg), 0);
+  if (tudo < 15) return 'meio';
+  // Só a parte que gira: as retas das pontas não são da volta.
+  const vira = giros.filter((g) => Math.abs(g.deg) > 0.05);
+  let acum = 0;
+  let l1 = 0;
+  let l2 = 0;
+  for (const g of vira) {
+    if (acum < tudo / 2) l1 += g.len;
+    else l2 += g.len;
+    acum += Math.abs(g.deg);
+  }
+  if (l1 > l2 * ABRE_RAZAO) return 'inicio';
+  if (l2 > l1 * ABRE_RAZAO) return 'fim';
+  return 'meio';
+}
+
+/**
+ * Trocas de mão que contam: torções de pelo menos {@link CONTRA_MIN_DEG}.
+ * A junção de dois arcos arredondados troca de mão por frações de grau, e
+ * isso não é a linha serpenteando.
+ */
+export function significantInflections(pontos: Vec2[]): number {
+  const corridas: number[] = [];
+  for (const g of signedTurns(pontos)) {
+    if (Math.abs(g.deg) < 1e-6) continue;
+    const ultima = corridas.length - 1;
+    if (ultima >= 0 && Math.sign(corridas[ultima]!) === Math.sign(g.deg)) corridas[ultima]! += g.deg;
+    else corridas.push(g.deg);
+  }
+  const fortes = corridas.filter((c) => Math.abs(c) >= CONTRA_MIN_DEG);
+  let trocas = 0;
+  for (let i = 1; i < fortes.length; i += 1) if (Math.sign(fortes[i]!) !== Math.sign(fortes[i - 1]!)) trocas += 1;
+  return trocas;
+}
+
+/** Uma metade da volta é "mais aberta" quando leva 30% mais metros. */
+const ABRE_RAZAO = 1.3;
+
+/**
+ * Quantos metros do fim da volta já vêm na direção do salto (até 10° de
+ * diferença): somados à reta de aproximação, dizem se o cavalo chega
+ * alinhado ou ainda virando.
+ */
+function alignedTail(pontos: Vec2[]): number {
+  const n = pontos.length;
+  if (n < 2) return 0;
+  const final = sub(pontos[n - 1]!, pontos[n - 2]!);
+  const rumo = Math.atan2(final.y, final.x);
+  let metros = 0;
+  for (let i = n - 1; i > 0; i -= 1) {
+    const d = sub(pontos[i]!, pontos[i - 1]!);
+    let dif = Math.abs(Math.atan2(d.y, d.x) - rumo);
+    if (dif > Math.PI) dif = 2 * Math.PI - dif;
+    if (dif > 10 * DEG) break;
+    metros += Math.hypot(d.x, d.y);
+  }
+  return metros;
+}
+
 const MIN_STRAIGHT_M = 3;
 
 /** Desliza a pose ao longo da própria direção. Sinal já vem do chamador. */
@@ -544,6 +804,76 @@ function radiiForLeg(params: RideParams): number[] {
 }
 
 const galopavel = (c: CurveSolution, params: RideParams) => c.minRadiusM >= params.tightRadiusM;
+
+/** Pares de raios (primeira metade, segunda metade) da volta assimétrica. */
+function asymmetricRadii(params: RideParams): [number, number][] {
+  const amplo = params.radiusM * 1.2;
+  const medio = params.radiusM * 0.85;
+  const fechado = params.tightRadiusM * 1.15;
+  return [
+    [amplo, fechado],
+    [fechado, amplo],
+    [amplo, medio],
+    [medio, amplo],
+  ];
+}
+
+const giroDe = (path: DubinsPath): number =>
+  path.segments.reduce((t, seg) => t + (seg.kind === 'arco' ? seg.sweep : 0), 0);
+
+/** A rota de Dubins que menos gira entre duas poses (o teto o juiz marca). */
+function menosGira(de: Pose, para: Pose, raio: number): DubinsPath | null {
+  const rotas = dubinsPaths(de, para, raio);
+  return rotas.length === 0 ? null : rotas.sort((a, b) => giroDe(a) - giroDe(b))[0]!;
+}
+
+/** Um arco só, como rota: começa na pose, gira `sweep` graus para `hand`. */
+function arcPath(de: Pose, raio: number, sweep: number, hand: ArcSegment['hand']): DubinsPath {
+  const turn = hand === 'direita' ? 1 : -1;
+  const center = add(de.pos, scale(fromAngle(de.heading + turn * 90), raio));
+  const startAngle = de.heading - turn * 90;
+  const endAngle = startAngle + turn * sweep;
+  const length = raio * sweep * DEG;
+  return {
+    word: hand === 'direita' ? 'D' : 'E',
+    segments: [{ kind: 'arco', center, radius: raio, startAngle, endAngle, hand, sweep, length }],
+    length,
+    radius: raio,
+  };
+}
+
+/**
+ * Volta assimétrica: o primeiro arco da volta-base é refeito noutro raio
+ * (mais aberto ou mais fechado) e, de onde ele termina, a rota de menor
+ * giro no segundo raio leva ao salto. Assim a volta abre mais no começo e
+ * fecha no fim, ou o contrário, sem trocar de mão.
+ */
+function twoRadiusTurn(
+  de: Pose,
+  para: Pose,
+  r1: number,
+  r2: number,
+): { nodes: PathNode[]; pontos: Vec2[]; minRadiusM: number } | null {
+  const base = menosGira(de, para, (r1 + r2) / 2);
+  // Só para voltas de verdade: numa virada mansa a cúbica assimétrica já
+  // cobre, e aqui sobraria rabisco.
+  const primeiro = base?.segments[0];
+  if (!base || giroDe(base) < 120 || primeiro?.kind !== 'arco') return null;
+  const h1 = arcPath(de, r1, primeiro.sweep, primeiro.hand);
+  const fim = poseAt(h1, h1.length);
+  const h2 = menosGira(fim, para, r2);
+  if (!h2) return null;
+  const a = roundDubins(h1);
+  const b = roundDubins(h2);
+  const juntaA = a.nodes[a.nodes.length - 1]!;
+  const juntaB = b.nodes[0]!;
+  const nodes: PathNode[] = [
+    ...a.nodes.slice(0, -1),
+    { ...juntaA, handleOut: juntaB.handleOut },
+    ...b.nodes.slice(1),
+  ];
+  return { nodes, pontos: [...a.pontos, ...b.pontos.slice(1)], minRadiusM: Math.min(a.minRadiusM, b.minRadiusM) };
+}
 
 /**
  * A ordem do juiz.
@@ -607,6 +937,10 @@ const TAXA_APERTO = 30;
  */
 const TAXA_ALONGA = 0.5;
 const DEGRAU_CUSTO = 5;
+/** Graus de custo por grau de contracurva. */
+const TAXA_CONTRA = 3;
+/** Graus de custo por metro que falta de chegada alinhada. */
+const TAXA_CHEGADA = 6;
 
 function compara(a: CurveSolution, b: CurveSolution, params: RideParams): number {
   const ga = galopavel(a, params);
@@ -623,8 +957,12 @@ function compara(a: CurveSolution, b: CurveSolution, params: RideParams): number
     const quebra = c.shape === 'arco-reta-arco' ? TAXA_QUEBRA : 0;
     const aperto = TAXA_APERTO * Math.max(0, params.radiusM / c.minRadiusM - 1);
     const alonga = TAXA_ALONGA * (Math.max(0, c.lead.after) + Math.max(0, c.lead.before));
+    // Contracurva custa como mais uma troca de mão; chegar sem reta custa
+    // por metro que falta (decisão 82).
+    const contra = TAXA_CONTRA * c.counterDeg;
+    const chegada = TAXA_CHEGADA * Math.max(0, CHEGADA_MIN_M - c.arrivalM);
     return Math.round(
-      (c.turnDeg + c.inflections * TAXA_INFLEXAO + quebra + aperto + alonga) / DEGRAU_CUSTO,
+      (c.turnDeg + c.inflections * TAXA_INFLEXAO + quebra + aperto + alonga + contra + chegada) / DEGRAU_CUSTO,
     );
   };
   return custo(a) - custo(b) || b.minRadiusM - a.minRadiusM || mexeu(a) - mexeu(b);
