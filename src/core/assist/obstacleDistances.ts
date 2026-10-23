@@ -1,7 +1,7 @@
 import { distance, type Vec2 } from '@core/geometry/vec';
 import { flattenPath } from '@core/model/path';
 import { obstacleLabel } from '@core/library/obstacles';
-import type { CoursePath, Obstacle } from '@core/model/types';
+import type { CoursePath, Obstacle, TimingLine } from '@core/model/types';
 import { courseOrder } from './courseRide';
 
 /**
@@ -20,6 +20,8 @@ import { courseOrder } from './courseRide';
 export interface ObstacleDistance {
   /** "idDe>idPara" — a chave guardada em `path.obstacleDistances`. */
   key: string;
+  fromId: string;
+  toId: string;
   fromLabel: string;
   toLabel: string;
   meters: number;
@@ -66,6 +68,24 @@ const PASSA_PELO_OBSTACULO_M = 3;
 export const distanceKey = (from: Obstacle, to: Obstacle): string => `${from.id}>${to.id}`;
 
 export function obstacleDistancesAlong(path: CoursePath, obstacles: Obstacle[]): ObstacleDistance[] {
+  return courseDistancesAlong(path, obstacles, []);
+}
+
+/** Onde o traçado passa pela cruzada: até a meia largura dela, ou 3 m. */
+const PASSA_PELA_CRUZADA_M = 3;
+
+/**
+ * Todas as distâncias do percurso, de vara a vara, na ordem (decisão 76):
+ * partida → 1 → 2 → … → chegada. A cruzada de tempo não tem largura: a
+ * distância vai da linha até a vara de entrada do primeiro (e da vara de
+ * saída do último até a linha). É o mesmo número no croqui, no painel do
+ * traçado, no composto e durante o arraste.
+ */
+export function courseDistancesAlong(
+  path: CoursePath,
+  obstacles: Obstacle[],
+  timings: TimingLine[],
+): ObstacleDistance[] {
   const amostra = pathSampler(path);
   if (!amostra) return [];
   const { pts, acumulado } = amostra;
@@ -90,26 +110,65 @@ export function obstacleDistancesAlong(path: CoursePath, obstacles: Obstacle[]):
     return melhor <= Math.max(PASSA_PELO_OBSTACULO_M, o.faceWidthM / 2) ? s : null;
   };
 
-  const elementos = courseOrder(obstacles).flatMap((st) => st.elements);
+  // A cruzada é cruzada no ponto do traçado mais perto do centro dela.
+  const posicaoDaCruzada = (t: TimingLine): number | null => {
+    let melhor = Infinity;
+    let s = 0;
+    for (let i = 1; i < pts.length; i += 1) {
+      const a = pts[i - 1]!;
+      const b = pts[i]!;
+      const ab = { x: b.x - a.x, y: b.y - a.y };
+      const len2 = ab.x * ab.x + ab.y * ab.y;
+      const t0 = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((t.pos.x - a.x) * ab.x + (t.pos.y - a.y) * ab.y) / len2));
+      const d = distance({ x: a.x + ab.x * t0, y: a.y + ab.y * t0 }, t.pos);
+      if (d < melhor) {
+        melhor = d;
+        s = acumulado[i - 1]! + Math.sqrt(len2) * t0;
+      }
+    }
+    return melhor <= Math.max(PASSA_PELA_CRUZADA_M, t.widthM / 2) ? s : null;
+  };
+
+  type Marco = { id: string; label: string; meiaVara: number; s: number | null };
+  const marco = (o: Obstacle): Marco => ({
+    id: o.id,
+    label: obstacleLabel(o) || '?',
+    meiaVara: (o.spreadM ?? 0) / 2,
+    s: posicao(o),
+  });
+  const cruzada = (t: TimingLine): Marco => ({
+    id: t.id,
+    label: t.role === 'start' ? 'Partida' : 'Chegada',
+    meiaVara: 0,
+    s: posicaoDaCruzada(t),
+  });
+  const partida = timings.find((t) => t.role === 'start');
+  const chegada = timings.find((t) => t.role === 'finish');
+  const marcos: Marco[] = [
+    ...(partida ? [cruzada(partida)] : []),
+    ...courseOrder(obstacles).flatMap((st) => st.elements).map(marco),
+    ...(chegada ? [cruzada(chegada)] : []),
+  ];
+
   const out: ObstacleDistance[] = [];
-  for (let i = 0; i + 1 < elementos.length; i += 1) {
-    const de = elementos[i]!;
-    const para = elementos[i + 1]!;
-    const sDe = posicao(de);
-    const sPara = posicao(para);
+  for (let i = 0; i + 1 < marcos.length; i += 1) {
+    const de = marcos[i]!;
+    const para = marcos[i + 1]!;
     // O traçado precisa passar pelos dois, e nessa ordem.
-    if (sDe === null || sPara === null || sPara <= sDe) continue;
-    const metros = sPara - sDe - (de.spreadM ?? 0) / 2 - (para.spreadM ?? 0) / 2;
-    const meio = amostra.pointAt((sDe + sPara) / 2);
+    if (de.s === null || para.s === null || para.s <= de.s) continue;
+    const metros = para.s - de.s - de.meiaVara - para.meiaVara;
+    const meio = amostra.pointAt((de.s + para.s) / 2);
     out.push({
-      key: distanceKey(de, para),
-      fromLabel: obstacleLabel(de) || '?',
-      toLabel: obstacleLabel(para) || '?',
+      key: `${de.id}>${para.id}`,
+      fromId: de.id,
+      toId: para.id,
+      fromLabel: de.label,
+      toLabel: para.label,
       meters: metros,
       at: meio.p,
       normal: meio.normal,
-      sFrom: sDe,
-      sTo: sPara,
+      sFrom: de.s,
+      sTo: para.s,
     });
   }
   return out;

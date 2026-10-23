@@ -28,9 +28,9 @@ export function TextPanel({ label }: { label: TextLabel }) {
       <label className="field">
         <span>Texto</span>
       </label>
-      <input
+      <textarea
         className="full"
-        type="text"
+        rows={Math.min(6, Math.max(2, label.text.split('\n').length))}
         value={label.text}
         disabled={travado}
         placeholder="Entrada, aquecimento, observação..."

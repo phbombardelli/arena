@@ -145,9 +145,9 @@ export function formatHeights(obstacle: Obstacle): string {
   return alturas.map((h) => h.toFixed(2).replace('.', ',')).join('-');
 }
 
-/** Identificação completa: "7", "10a", "" quando sem número. */
+/** Identificação completa: "7", "10A", "" quando sem número (letra em maiúscula, B-67). */
 export function obstacleLabel(obstacle: Obstacle): string {
-  return `${obstacle.number}${obstacle.letter.toLowerCase()}`;
+  return `${obstacle.number}${obstacle.letter.toUpperCase()}`;
 }
 
 /**

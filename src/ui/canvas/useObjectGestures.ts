@@ -146,6 +146,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
           'gesto-mover',
         );
         current.applied = total;
+        if (!useEditorStore.getState().dragging) useEditorStore.getState().setDragging(true);
         return;
       }
 
@@ -156,6 +157,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
       const step = delta - current.applied;
       if (Math.abs(step) < 1e-6) return;
       store.apply('Girar', (doc) => rotateObjects(doc, selection, step), 'gesto-girar');
+      if (!useEditorStore.getState().dragging) useEditorStore.getState().setDragging(true);
       current.applied = delta;
     },
     [updateMarquee],
@@ -305,6 +307,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
     applyPending(shiftHeld.current);
     pending.current = null;
     gesture.current = null;
+    if (useEditorStore.getState().dragging) useEditorStore.getState().setDragging(false);
 
     if (g.kind === 'drag' && g.soEste && Math.abs(g.applied.x) < 1e-9 && Math.abs(g.applied.y) < 1e-9) {
       useEditorStore.getState().setSelection(g.soEste);

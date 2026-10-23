@@ -86,7 +86,7 @@ describe('numeração e combinação', () => {
     const o = createObstacle('oxer', { x: 0, y: 0 }, '4');
     let doc = docCom(o);
     doc = edit(doc, (d) => setObstacleLetter(d, o.id, 'B'));
-    expect(obstacleLabel(obs(doc, o.id))).toBe('4b');
+    expect(obstacleLabel(obs(doc, o.id))).toBe('4B');
   });
 
   it('renumerar é explícito e segue a ordem de inserção', () => {

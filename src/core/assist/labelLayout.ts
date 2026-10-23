@@ -6,7 +6,7 @@ import { formatDistance, legLength, pathLength } from '@core/model/path';
 import type { CourseDocument, Obstacle, ObjectId, TimingLine } from '@core/model/types';
 import { mmPerMeter } from '@core/scale/units';
 import { insidePolygon, obstacleFootprint } from './ridePath';
-import { obstacleDistancesAlong, pathSampler } from './obstacleDistances';
+import { courseDistancesAlong, pathSampler } from './obstacleDistances';
 
 /**
  * Onde cada rótulo AUTOMÁTICO vai, sem cobrir o desenho (decisão 55).
@@ -382,7 +382,9 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
     if (p.kind !== 'path') continue;
     const marcadas = p.obstacleDistances ?? {};
     const temTotal = p.distanceMode === 'total' && p.totalLabel.visible && p.nodes.length > 1;
-    const temTrechos = p.distanceMode === 'trecho';
+    const pares = courseDistancesAlong(p, obstaculos, cruzadas);
+    // De nó a nó só quando o traçado não liga dois obstáculos (decisão 76).
+    const temTrechos = p.distanceMode === 'trecho' && pares.length === 0;
     if (!temTotal && !temTrechos && !Object.values(marcadas).some(Boolean)) continue;
     const amostra = pathSampler(p);
     if (!amostra) continue;
@@ -439,7 +441,7 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
         s0 += len;
       });
     }
-    for (const d of obstacleDistancesAlong(p, obstaculos)) {
+    for (const d of pares) {
       if (!marcadas[d.key]) continue;
       colocar(d.key, d.sFrom, d.sTo, `${formatDistance(d.meters, 2)} m`);
     }

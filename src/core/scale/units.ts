@@ -32,7 +32,10 @@ export const paperToMeters = (mm: Millimeters, printScale: PrintScale): Meters =
  * devolve 1:237 — arredonda para a escala redonda imediatamente superior.
  */
 export const STANDARD_SCALES: readonly PrintScale[] = [
-  50, 75, 100, 125, 150, 200, 250, 300, 400, 500, 600, 750, 1000,
+  // Começa em 1:250 (B-71): é a primeira em que cabe um picadeiro de
+  // adestramento de 20 × 60 m. Escalas maiores não servem a nenhuma pista;
+  // ainda se podem digitar, e croqui antigo abre na escala em que foi salvo.
+  250, 300, 400, 500, 600, 750, 1000,
 ] as const;
 
 /** Menor escala padrão que ainda comporta a extensão pedida. */

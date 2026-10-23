@@ -2,11 +2,13 @@ import { toMillimeterPrecision } from '@core/geometry/snap';
 import { scale, sub, type Vec2 } from '@core/geometry/vec';
 import { createPathNode, legsFor, segmentAt, smoothedNodes } from '@core/model/path';
 import { addObject } from './ops';
+import { anchorNodesToObstacles } from './pathAnchors';
 import type {
   CoursePath,
   CourseDocument,
   DistanceMode,
   ObjectId,
+  Obstacle,
   PathNode,
 } from '@core/model/types';
 
@@ -266,8 +268,11 @@ export function placeAssistantPath(doc: CourseDocument, path: CoursePath): void 
     novo.distanceMode = anterior.distanceMode;
     novo.totalLabel = { ...anterior.totalLabel };
     novo.obstacleDistances = { ...anterior.obstacleDistances };
+    if (anterior.lockedDistances) novo.lockedDistances = { ...anterior.lockedDistances };
   }
   doc.objects = doc.objects.filter((o) => !(o.kind === 'path' && o.assistant === true));
+  // O traçado do assistente nasce preso aos obstáculos (decisão 76).
+  anchorNodesToObstacles(novo, doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'));
   addObject(doc, novo);
 }
 

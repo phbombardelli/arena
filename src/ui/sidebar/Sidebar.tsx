@@ -120,6 +120,13 @@ export function Sidebar() {
             footer="Por trechos e Automático seguem a numeração dos obstáculos."
           />
           <RailButton icon="T" label="Texto" shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
+          <RailButton
+            icon="↔"
+            label="Trena"
+            shortcut="M"
+            active={tool === 'measure'}
+            onClick={() => usa('measure')}
+          />
           <RailFlyout
             icon="✿"
             label="Ornamento"

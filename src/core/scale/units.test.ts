@@ -46,7 +46,8 @@ describe('escalas padrão', () => {
     expect(nextStandardScale(237)).toBe(250);
     expect(nextStandardScale(250)).toBe(250);
     expect(nextStandardScale(251)).toBe(300);
-    expect(nextStandardScale(1)).toBe(50);
+    // A lista começa em 1:250 (B-71): nada abaixo disso é proposto.
+    expect(nextStandardScale(1)).toBe(250);
   });
 
   it('fitScale escolhe escala em que a pista realmente cabe', () => {

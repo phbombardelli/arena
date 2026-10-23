@@ -31,7 +31,8 @@ export type Tool =
   | 'calibrate'
   | 'obstacle'
   | 'path'
-  | 'text';
+  | 'text'
+  | 'measure';
 
 interface EditorState {
   /**
@@ -60,6 +61,9 @@ interface EditorState {
    * sai no PDF nem na impressão, ligada ou desligada.
    */
   showInterference: boolean;
+  /** Arrasto ou giro em andamento: as distâncias aparecem ao vivo (B-61). */
+  dragging: boolean;
+  setDragging: (dragging: boolean) => void;
   /** Área de transferência do editor: cópias profundas, sem id. */
   clipboard: SceneObject[];
   /** Tipo de ornamento que a ferramenta de inserção vai criar. */
@@ -152,6 +156,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   guidedLeg: 0,
   showPageFrame: true,
   showInterference: true,
+  dragging: false,
+  setDragging: (dragging) => set({ dragging }),
   clipboard: [],
   ornamentType: 'arvore',
   obstacleType: 'vertical',

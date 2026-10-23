@@ -1536,3 +1536,91 @@ no chão:
   volta passa ao lado e segue;
 - um traçado desenhado que atravessa um deles vira aviso de
   interferência ("O traçado passa por cima de uma ilha").
+
+## 75. Lote A: letras maiúsculas, rótulo das setas, zoom, escalas, quadro
+
+- **Letra do composto em maiúscula** (B-67): 4A, 4B em todo lugar — no
+  desenho, nas distâncias, na tabela de alturas e nos avisos.
+- **ENTRADA/SAÍDA longe da seta** (B-66): o afastamento conta o tamanho
+  do próprio texto na direção da seta (com a seta deitada a palavra é
+  comprida), mais ~2 mm de folga.
+- **Girar não desfaz o zoom** no assistente do mapa (B-72): o ponto do
+  print que estava no centro da prévia continua no centro.
+- **Escalas a partir de 1:250** (B-71): a lista e o "Ajustar ao papel"
+  não propõem nada abaixo de 1:250, a primeira em que cabe um picadeiro de
+  20 × 60 m. O campo continua aceitando qualquer número, e croqui antigo
+  abre na escala em que foi salvo.
+- **Quadro técnico** (B-70): o valor começa logo depois do título mais
+  longo da sua coluna, e não alinhado à direita da célula.
+
+## 76. Lote B: distâncias do percurso, traçado preso, trava e Alt + setas
+
+**Tudo de vara a vara** (B-58). Há uma só conta de distância: sobre o
+traçado, da vara de saída de um até a vara de entrada do seguinte, na
+ordem do percurso — partida → 1 → … → chegada. O modo "De vara a vara"
+(antigo "Uma por trecho") mostra no croqui as que estiverem marcadas, e ao
+escolhê-lo sem nenhuma marcada marca todas. O comprimento de nó a nó só
+aparece em traçado que não liga dois obstáculos.
+
+**Traçado do assistente preso** (B-59). Os nós da reta que cruza cada
+salto (começo da aproximação, fim da saída) ficam presos ao obstáculo:
+mover ou girar o obstáculo leva esses nós junto, como peça rígida; os nós
+das voltas, livres, deixam a curva esticar. O nó guarda onde o obstáculo
+estava (`anchor.at`) e anda a diferença — a sincronia roda depois de
+toda edição, como a das cruzadas. Mover só o traçado, ou arrastar um nó,
+solta. Traçado à mão nunca nasce preso.
+
+**Digitar a distância** (B-60). No painel do traçado, cada distância é um
+campo. Quem anda é o obstáculo de DESTINO, sobre a reta do próprio salto,
+até a medida bater (a volta muda de comprimento, então repete). Com
+partida ou chegada numa ponta, anda a cruzada. Só no traçado preso; no
+desenhado à mão o campo fica só de leitura. O painel de composto em
+"Curva ou quebrada" usa a mesma conta quando o traçado preso passa pelos
+dois elementos.
+
+**Trava** (B-62). O cadeado de cada distância guarda o valor; depois de
+qualquer edição o programa o repõe, em ordem, movendo o destino sobre o
+traçado. Arrastar o obstáculo de origem arrasta o de destino.
+
+**Ao vivo** (B-61). Arrastando ou girando, as distâncias de e até a peça
+movida aparecem sobre o traçado, marcadas ou não — só na tela.
+
+**Alt + setas** (B-65) desliza o obstáculo preso sobre o traçado: 10 cm,
+ou 1 m com Shift; para cima/direita no sentido do percurso. As setas
+comuns passam a mover pelo mesmo comando de arrastar, o que mantém as
+âncoras certas quando o traçado vai junto.
+
+**Lista** (B-63). Sem tabela impressa: a lista do painel (mostrar, valor,
+cadeado) é o lugar de editar; o croqui mostra só as marcadas.
+
+## 77. Lote C: trena
+
+**Trena** (B-64) é um objeto novo do percurso (`measure`): duas pontas no
+terreno, desenhada como cota — linha fina, traço nas pontas, a medida
+escrita ao longo dela e sempre de pé. Fica no croqui e sai impressa: é
+referência para armar a pista. Ferramenta no trilho do Percurso e no menu
+Inserir, atalho M: aperta numa ponta e arrasta até a outra.
+
+Não puxa ângulo sozinha. Quando o armador quer a medida esquadrada:
+- **Shift ao desenhar** leva a segunda ponta exatamente para a
+  perpendicular ou a paralela da cerca mais próxima da primeira — a que
+  estiver mais perto do gesto;
+- no painel, **Perpendicular à borda** e **Paralela à borda** giram em
+  torno da primeira ponta, sem mudar o comprimento; o painel diz a quantos
+  graus da cerca ela está.
+
+Comprimento e ângulo se digitam a partir da primeira ponta. Sem
+mudança de versão do arquivo: um tipo a mais só é ignorado por versão
+antiga.
+
+## 78. Lote D: guia do centro da folha e texto editado no desenho
+
+- **Guia do centro** (B-69): arrastando, quando o centro da seleção passa
+  pelo meio da folha (a 4 px de tela), acende uma linha tracejada coral
+  naquele eixo — vertical, horizontal ou as duas. Só indica, não puxa;
+  só na tela.
+- **Texto no lugar** (B-68): duplo clique num texto abre uma caixa no
+  próprio desenho, no mesmo corpo e alinhamento. Enter confirma,
+  Shift+Enter quebra a linha, Esc desiste, clicar fora confirma. O texto
+  passa a ter várias linhas (1,2 corpo entre elas), também no campo do
+  painel, que vira caixa de várias linhas.

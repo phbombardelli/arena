@@ -38,15 +38,14 @@ export function InfoBoxLayer({ box, onPointerDown }: Props) {
           <text fontSize={s} fontFamily="Helvetica, Arial, sans-serif" fill="#6c757d">
             {c.label}
           </text>
-          {/* O valor alinha à direita da célula: números em coluna se leem
-              muito melhor assim, e o croqui é lido de relance. */}
+          {/* O valor vem logo depois do título, alinhado com os outros
+              valores da mesma coluna (B-70). */}
           <text
-            x={round(c.widthMm - s * 0.4)}
+            x={round(c.valueXMm)}
             fontSize={s}
             fontFamily="Helvetica, Arial, sans-serif"
             fontWeight={700}
             fill="#23282d"
-            textAnchor="end"
           >
             {c.value}
           </text>

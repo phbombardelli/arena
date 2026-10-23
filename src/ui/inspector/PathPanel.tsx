@@ -17,8 +17,9 @@ import {
   legStraightDistance,
   pathLength,
 } from '@core/model/path';
-import type { CoursePath, DashPreset, DistanceMode, Obstacle } from '@core/model/types';
-import { obstacleDistancesAlong } from '@core/assist/obstacleDistances';
+import type { CoursePath, DashPreset, DistanceMode, Obstacle, TimingLine } from '@core/model/types';
+import { courseDistancesAlong } from '@core/assist/obstacleDistances';
+import { canSetDistance, lockDistance, setCourseDistance } from '@core/commands/distanceOps';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { NumberField } from './NumberField';
@@ -28,9 +29,10 @@ export function PathPanel({ path }: { path: CoursePath }) {
   const { activeNode, setActiveNode } = useEditorStore();
   const travado = path.locked;
   const total = pathLength(path);
-  const pares = obstacleDistancesAlong(
+  const pares = courseDistancesAlong(
     path,
     doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'),
+    doc.objects.filter((o): o is TimingLine => o.kind === 'timing'),
   );
   const marcadas = pares.filter((p) => path.obstacleDistances?.[p.key]).length;
 
@@ -65,13 +67,18 @@ export function PathPanel({ path }: { path: CoursePath }) {
           value={path.distanceMode}
           disabled={travado}
           onChange={(e) =>
-            apply('Modo das distâncias', (d) =>
-              setDistanceMode(d, path.id, e.target.value as DistanceMode),
-            )
+            apply('Modo das distâncias', (d) => {
+              const modo = e.target.value as DistanceMode;
+              setDistanceMode(d, path.id, modo);
+              // De vara a vara sem nenhuma marcada: marca todas de uma vez.
+              if (modo === 'trecho' && marcadas === 0 && pares.length > 0) {
+                setObstacleDistances(d, path.id, pares.map((p) => p.key), true);
+              }
+            })
           }
         >
           <option value="total">Uma, o total</option>
-          <option value="trecho">Uma por trecho</option>
+          <option value="trecho">De vara a vara</option>
           <option value="nenhum">Nenhuma</option>
         </select>
       </label>
@@ -92,19 +99,22 @@ export function PathPanel({ path }: { path: CoursePath }) {
         />
       )}
 
-      <h3>Distâncias entre obstáculos</h3>
+      <h3>Distâncias de vara a vara</h3>
       {pares.length === 0 ? (
         <p className="note">
-          O traçado ainda não passa por dois obstáculos numerados em sequência.
+          O traçado ainda não passa por dois obstáculos numerados em sequência (nem pela partida ou chegada).
         </p>
       ) : (
         <>
           <ul className="pair-list">
-            {pares.map((p) => (
-              <li key={p.key}>
-                <label className="check">
+            {pares.map((p) => {
+              const trava = path.lockedDistances?.[p.key];
+              const editavel = !travado && trava === undefined && canSetDistance(doc, path, p);
+              return (
+                <li key={p.key} className="pair-row">
                   <input
                     type="checkbox"
+                    title="Mostrar no croqui"
                     checked={Boolean(path.obstacleDistances?.[p.key])}
                     disabled={travado}
                     onChange={(e) =>
@@ -113,13 +123,50 @@ export function PathPanel({ path }: { path: CoursePath }) {
                       )
                     }
                   />
-                  <span className="pair-name">
-                    {p.fromLabel} → {p.toLabel}
+                  <span
+                    className="pair-edit"
+                    title={
+                      editavel
+                        ? 'Digite a medida: o obstáculo de destino anda sobre o traçado até bater'
+                        : trava !== undefined
+                          ? 'Distância travada'
+                          : 'Só no traçado do assistente, preso aos obstáculos'
+                    }
+                  >
+                    <NumberField
+                      label={`${p.fromLabel} → ${p.toLabel}`}
+                      value={Math.round(p.meters * 100) / 100}
+                      unit="m"
+                      decimals={2}
+                      step={0.1}
+                      min={0.5}
+                      disabled={!editavel}
+                      onCommit={(v) =>
+                        apply('Distância', (d) => {
+                          setCourseDistance(d, path.id, p.key, v);
+                        })
+                      }
+                    />
                   </span>
-                  <span className="pair-value">{formatDistance(p.meters)} m</span>
-                </label>
-              </li>
-            ))}
+                  <button
+                    className={`mini${trava !== undefined ? ' active' : ''}`}
+                    disabled={travado}
+                    title={
+                      trava !== undefined
+                        ? `Travada em ${formatDistance(trava)} m — clique para destravar`
+                        : 'Travar: ao mover os obstáculos, esta medida se mantém'
+                    }
+                    onClick={() =>
+                      apply(trava !== undefined ? 'Destravar distância' : 'Travar distância', (d) =>
+                        lockDistance(d, path.id, p.key, trava !== undefined ? null : p.meters),
+                      )
+                    }
+                  >
+                    {trava !== undefined ? '🔒' : '🔓'}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
           <div className="row-buttons">
             <button
@@ -145,7 +192,9 @@ export function PathPanel({ path }: { path: CoursePath }) {
           </div>
           <p className="note dim">
             Medidas sobre o traçado, de vara a vara. Marque as que devem aparecer no
-            croqui; o rótulo fica no meio do trecho, ao lado da linha.
+            croqui. No traçado do assistente, digite a medida para o obstáculo
+            andar até ela; o cadeado a mantém ao mover os obstáculos. Alt + setas
+            desliza o obstáculo sobre o traçado.
           </p>
         </>
       )}

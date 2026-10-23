@@ -16,6 +16,8 @@ export interface LaidOutCell {
   widthMm: number;
   label: string;
   value: string;
+  /** Onde o valor começa, a partir do canto da célula (logo após o título). */
+  valueXMm: number;
 }
 
 export interface BoxLayout {
@@ -39,10 +41,23 @@ export function infoBoxLayout(box: InfoBox): BoxLayout {
   // imprimem a faixa de cabeçalho, com cada bloco de assunto junto.
   const porColuna = Math.ceil(ativos.length / colunas) || 1;
 
+  // O valor começa logo depois do título mais longo DA SUA COLUNA (B-70):
+  // alinhado à direita da célula, ele ficava longe do título e, com mais de
+  // uma coluna, parecia pertencer à coluna vizinha. A largura do título é
+  // estimada pela média de letra da Helvetica (0,56 em).
+  const s = box.style.sizeMm;
+  const inicioDoValor = new Map<number, number>();
+  ativos.forEach((campo, i) => {
+    const col = Math.floor(i / porColuna);
+    const largura = campo.label.length * s * 0.56 + s * 0.8;
+    inicioDoValor.set(col, Math.max(inicioDoValor.get(col) ?? 0, largura));
+  });
+
   const cells = ativos.map((campo, i) => ({
     xMm: pad + Math.floor(i / porColuna) * larguraColuna,
     yMm: pad + (i % porColuna) * alturaLinha,
     widthMm: larguraColuna,
+    valueXMm: inicioDoValor.get(Math.floor(i / porColuna)) ?? 0,
     label: campo.label,
     value: campo.value,
   }));

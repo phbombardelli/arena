@@ -28,6 +28,7 @@ const KNOWN_KINDS: readonly ObjectKind[] = [
   'obstacle',
   'path',
   'text',
+  'measure',
   'infobox',
   'heighttable',
   'image',
@@ -188,6 +189,9 @@ function checkGeometry(obj: Record<string, unknown>, index: number): void {
       if (!(obj.nodes as unknown[]).every((n) => isRecord(n) && isPoint(n.pos))) {
         fail('a posição de um nó');
       }
+      break;
+    case 'measure':
+      if (!isPoint(obj.a) || !isPoint(obj.b)) fail('a posição das pontas');
       break;
     case 'infobox':
     case 'heighttable':

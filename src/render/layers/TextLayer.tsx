@@ -24,6 +24,8 @@ export function TextLayer({ label, printScale, originMm, onPointerDown }: Props)
   const k = mmPerMeter(printScale);
   const x = originMm.x + label.pos.x * k;
   const y = originMm.y + label.pos.y * k;
+  // Shift+Enter quebra a linha (B-68): cada linha desce 1,2 corpo.
+  const linhas = label.text.split('\n');
 
   return (
     <text
@@ -41,7 +43,13 @@ export function TextLayer({ label, printScale, originMm, onPointerDown }: Props)
       onPointerDown={onPointerDown}
       style={{ cursor: 'move', userSelect: 'none' }}
     >
-      {label.text}
+      {linhas.length === 1
+        ? label.text
+        : linhas.map((linha, i) => (
+            <tspan key={i} x={round(x)} dy={i === 0 ? 0 : round(label.sizeMm * 1.2)}>
+              {linha || ' '}
+            </tspan>
+          ))}
     </text>
   );
 }

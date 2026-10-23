@@ -1,4 +1,4 @@
-import type { Arena, CourseDocument, ObjectId, Obstacle, SceneObject } from '@core/model/types';
+import type { Arena, CourseDocument, ObjectId, Obstacle, SceneObject, TimingLine } from '@core/model/types';
 import { isLayerVisible } from '@core/model/document';
 import { boundsIn, objectScope } from '@core/model/transform';
 import type { ObjectScope } from '@core/model/types';
@@ -11,6 +11,7 @@ import { ImageLayer } from './layers/ImageLayer';
 import { ObstacleLayer } from './layers/ObstacleLayer';
 import { OrnamentLayer } from './layers/OrnamentLayer';
 import { TextLayer } from './layers/TextLayer';
+import { MeasureLayer } from './layers/MeasureLayer';
 import { InfoBoxLayer } from './layers/InfoBoxLayer';
 import { HeightTableLayer } from './layers/HeightTableLayer';
 import { ScaleLegend } from './layers/ScaleLegend';
@@ -112,6 +113,7 @@ export function RenderDocument(opts: RenderOptions) {
                 key={obj.id}
                 path={obj}
                 obstacles={doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle')}
+                timings={doc.objects.filter((o): o is TimingLine => o.kind === 'timing')}
                 distanceAt={rotulos.distances.get(obj.id)}
                 printScale={doc.page.printScale}
                 originMm={doc.originMm}
@@ -134,6 +136,16 @@ export function RenderDocument(opts: RenderOptions) {
               <OrnamentLayer
                 key={obj.id}
                 ornament={obj}
+                printScale={doc.page.printScale}
+                originMm={doc.originMm}
+                onPointerDown={onPointerDown}
+              />
+            );
+          case 'measure':
+            return (
+              <MeasureLayer
+                key={obj.id}
+                measure={obj}
                 printScale={doc.page.printScale}
                 originMm={doc.originMm}
                 onPointerDown={onPointerDown}

@@ -208,8 +208,16 @@ export interface PathNode {
   /** Alças relativas ao nó, em metros. `null` = segmento reto desse lado. */
   handleIn: Vec2 | null;
   handleOut: Vec2 | null;
-  /** Vínculo opcional a um obstáculo: mover o obstáculo arrasta o nó. */
-  anchor: { objectId: ObjectId; ref: 'takeoff' | 'landing' | 'center' } | null;
+  /**
+   * Vínculo opcional a um obstáculo: mover ou girar o obstáculo arrasta o
+   * nó junto (decisão 76). `at` guarda onde o obstáculo estava da última
+   * vez — a diferença é o quanto o nó tem de andar.
+   */
+  anchor: {
+    objectId: ObjectId;
+    ref: 'takeoff' | 'landing' | 'center';
+    at?: { pos: Vec2; rotation: number };
+  } | null;
 }
 
 export type DashPreset = 'solid' | 'dashed' | 'dotted' | 'dashdot';
@@ -247,6 +255,12 @@ export interface CoursePath extends BaseObject {
    */
   obstacleDistances: Record<string, boolean>;
   /**
+   * Distâncias travadas (B-62), na mesma chave, com o valor em metros.
+   * Depois de qualquer edição o programa repõe cada uma movendo o
+   * obstáculo de destino sobre o traçado (decisão 76).
+   */
+  lockedDistances?: Record<string, number>;
+  /**
    * Traçado gerado pelos assistentes (automático ou por trechos). Rodar o
    * assistente de novo SUBSTITUI esse traçado em vez de empilhar outro por
    * cima (B-04). Ausente = desenhado à mão, que nunca é substituído.
@@ -265,6 +279,19 @@ export interface TextLabel extends BaseObject {
   rotation: number;
   color: string;
   bold: boolean;
+}
+
+/**
+ * Trena (B-64): uma medida entre dois pontos do terreno, desenhada como
+ * cota e impressa — referência para armar a pista. O texto é de papel.
+ */
+export interface MeasureLine extends BaseObject {
+  kind: 'measure';
+  a: Vec2;
+  b: Vec2;
+  sizeMm: Millimeters;
+  decimals: number;
+  color: string;
 }
 
 export interface InfoBoxField {
@@ -405,6 +432,7 @@ export type SceneObject =
   | TimingLine
   | CoursePath
   | TextLabel
+  | MeasureLine
   | InfoBox
   | HeightTable
   | BackgroundImage

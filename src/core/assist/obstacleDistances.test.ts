@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createObstacle } from '@core/library/obstacles';
 import { createPath, createPathNode } from '@core/model/path';
-import { distanceKey, obstacleDistancesAlong } from './obstacleDistances';
+import { createTimingLine } from '@core/library/timing';
+import { courseDistancesAlong, distanceKey, obstacleDistancesAlong } from './obstacleDistances';
 
 const salto = (numero: string, y: number, tipo: 'vertical' | 'oxer' = 'vertical') =>
   createObstacle(tipo, { x: 20, y }, numero);
@@ -38,5 +39,24 @@ describe('distância entre obstáculos ao longo do traçado (decisão 54)', () =
 
   it('obstáculo por onde o traçado não passa fica de fora', () => {
     expect(obstacleDistancesAlong(reta, [salto('1', 50), createObstacle('vertical', { x: 60, y: 30 }, '2')])).toEqual([]);
+  });
+});
+
+describe('distâncias do percurso, da partida à chegada (decisão 76)', () => {
+  const reta = createPath([createPathNode({ x: 20, y: 70 }), createPathNode({ x: 20, y: 0 })]);
+
+  it('partida → 1 → 2 → chegada, cada uma de vara a vara', () => {
+    const partida = createTimingLine('start', { x: 20, y: 65 });
+    const chegada = createTimingLine('finish', { x: 20, y: 5 });
+    const ds = courseDistancesAlong(reta, [salto('1', 50), salto('2', 21)], [partida, chegada]);
+    expect(ds.map((d) => `${d.fromLabel}>${d.toLabel}`)).toEqual(['Partida>1', '1>2', '2>Chegada']);
+    expect(ds[0]!.meters).toBeCloseTo(15, 2);
+    expect(ds[1]!.meters).toBeCloseTo(29, 2);
+    expect(ds[2]!.meters).toBeCloseTo(16, 2);
+    expect(ds[0]!.fromId).toBe(partida.id);
+  });
+
+  it('sem cruzadas, só os obstáculos', () => {
+    expect(courseDistancesAlong(reta, [salto('1', 50), salto('2', 21)], [])).toHaveLength(1);
   });
 });

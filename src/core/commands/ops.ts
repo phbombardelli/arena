@@ -1,6 +1,7 @@
 import type { Vec2 } from '@core/geometry/vec';
 import { normalizeAngle } from '@core/geometry/vec';
 import { deepClone } from '@core/model/clone';
+import { settleMovedAnchors } from './pathAnchors';
 import { newId } from '@core/model/ids';
 import type { CourseDocument, LayerId, ObjectId, SceneObject } from '@core/model/types';
 import {
@@ -26,6 +27,7 @@ const selected = (doc: CourseDocument, ids: ObjectId[]): SceneObject[] =>
 /** Move a seleção. `deltaM` em metros. */
 export function moveObjects(doc: CourseDocument, ids: ObjectId[], deltaM: Vec2): void {
   for (const obj of selected(doc, ids)) translate(obj, deltaM, doc.page.printScale);
+  settleMovedAnchors(doc, ids);
 }
 
 export function setObjectPosition(
@@ -53,6 +55,7 @@ export function rotateObjects(doc: CourseDocument, ids: ObjectId[], deltaDeg: nu
   if (!bounds) return;
   const pivot = boundsCenter(bounds);
   for (const obj of objs) rotateAround(obj, pivot, deltaDeg, doc.page.printScale);
+  settleMovedAnchors(doc, ids);
 }
 
 export function setObjectRotation(doc: CourseDocument, id: ObjectId, degrees: number): void {

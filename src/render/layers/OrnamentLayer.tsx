@@ -27,7 +27,13 @@ export function OrnamentLayer({ ornament, printScale, originMm, onPointerDown }:
       ? (() => {
           const a = (ornament.rotation * Math.PI) / 180;
           const lado = ornament.type === 'entrada' ? -1 : 1;
-          const d = s + 1.2 + text.small * 1.6;
+          // Afastamento pelo tamanho do próprio texto na direção da seta: com
+          // a seta deitada, ENTRADA é comprido e encostava na cauda (B-66).
+          const texto = GATE_LABEL[ornament.type];
+          const meiaLargura = (texto.length * text.small * 0.74) / 2;
+          const meiaAltura = (text.small * 0.75) / 2;
+          const alcance = Math.abs(Math.cos(a)) * meiaLargura + Math.abs(Math.sin(a)) * meiaAltura;
+          const d = s + 1.8 + alcance;
           return {
             x: x + Math.cos(a) * d * lado,
             y: y + Math.sin(a) * d * lado,

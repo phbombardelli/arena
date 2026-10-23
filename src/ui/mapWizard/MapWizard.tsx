@@ -197,7 +197,37 @@ function MapWizard({ image }: { image: ImportedImage }) {
   // inteiro; o deslocamento é em pixels do canvas.
   const [vista, setVista] = useState({ z: 1, ox: 0, oy: 0 });
   const arrastoVista = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
-  useEffect(() => setVista({ z: 1, ox: 0, oy: 0 }), [trabalho]);
+  // Girar refaz a imagem de trabalho (outro tamanho de canvas), mas NÃO
+  // desfaz o zoom (B-72): o mesmo ponto do print continua no centro da
+  // prévia. Só um print novo volta a mostrar tudo.
+  const anterior = useRef<{ original: typeof original; w: number; h: number; escala: number; angulo: number } | null>(null);
+  useEffect(() => {
+    if (!trabalho || !original) return;
+    const w = Math.round(trabalho.px.width * escala);
+    const h = Math.round(trabalho.px.height * escala);
+    const antes = anterior.current;
+    anterior.current = { original, w, h, escala, angulo };
+    if (!antes || antes.original !== original) {
+      setVista({ z: 1, ox: 0, oy: 0 });
+      return;
+    }
+    setVista((v) => {
+      if (v.z <= 1) return v;
+      // Centro da vista antiga, no print girado antigo (a partir do centro)…
+      const dx = ((antes.w / 2 + v.ox) / v.z - antes.w / 2) / antes.escala;
+      const dy = ((antes.h / 2 + v.oy) / v.z - antes.h / 2) / antes.escala;
+      // …girado pela diferença de ângulo e levado ao canvas novo.
+      const da = ((angulo - antes.angulo) * Math.PI) / 180;
+      const nx = (dx * Math.cos(da) - dy * Math.sin(da)) * escala + w / 2;
+      const ny = (dx * Math.sin(da) + dy * Math.cos(da)) * escala + h / 2;
+      return {
+        z: v.z,
+        ox: Math.min(Math.max(0, nx * v.z - w / 2), w * (v.z - 1)),
+        oy: Math.min(Math.max(0, ny * v.z - h / 2), h * (v.z - 1)),
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trabalho]);
   // Com zoom, desenha o print em resolução cheia (a análise segue na cópia
   // reduzida): prints de tela retina passam de 1400 px e ficariam borrados.
   const nitida = vista.z > 1.3 && !!original && original.f < 1;

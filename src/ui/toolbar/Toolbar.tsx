@@ -127,6 +127,7 @@ export function Toolbar() {
   const inserir: MenuEntry[] = [
     { label: 'Obstáculo', shortcut: 'O', onSelect: noPercurso(() => setTool('obstacle')) },
     { label: 'Texto', shortcut: 'X', onSelect: noPercurso(() => setTool('text')) },
+    { label: 'Trena', shortcut: 'M', onSelect: noPercurso(() => setTool('measure')) },
     'separator',
     { label: 'Partida', onSelect: noPercurso(() => insertTimingLine('start')) },
     { label: 'Chegada', onSelect: noPercurso(() => insertTimingLine('finish')) },

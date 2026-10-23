@@ -1,19 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { insertArenaVertex } from '@core/commands/arenaOps';
 import { insertNode } from '@core/commands/pathOps';
 import { allObstacles } from '@core/commands/obstacleOps';
-import { addObject } from '@core/commands/ops';
+import { addObject, deleteObjects, moveObjects } from '@core/commands/ops';
+import { slideAlongPath } from '@core/commands/distanceOps';
 import { toMillimeterPrecision } from '@core/geometry/snap';
 import { distance, type Vec2 } from '@core/geometry/vec';
 import { createObstacle, nextObstacleNumber } from '@core/library/obstacles';
 import { createOrnament, gateRotation } from '@core/library/ornaments';
 import { ovalPoints } from '@core/assist/decor';
 import { createTextLabel } from '@core/library/annotations';
+import { constrainToFence, createMeasure, measureLength } from '@core/library/measures';
 import { createPath, createPathNode, smoothedNodes } from '@core/model/path';
 import { createPolygonArena, createRectangleArena } from '@core/model/arena';
 import { createPolygonStructure, createRectangleStructure } from '@core/library/structures';
 import { pageRectMm } from '@core/model/document';
-import { getRotation, translate } from '@core/model/transform';
+import { getRotation } from '@core/model/transform';
 import { mmPerMeter } from '@core/scale/units';
 import {
   fitToRect,
@@ -55,6 +57,9 @@ import { CalibrationOverlay } from './CalibrationOverlay';
 import { RULER_SIZE, Rulers } from './Rulers';
 import { GuidedOverlay } from './GuidedOverlay';
 import { InterferenceOverlay } from './InterferenceOverlay';
+import { LiveDistanceOverlay } from './LiveDistanceOverlay';
+import { CenterGuideOverlay } from './CenterGuideOverlay';
+import { InlineTextEditor } from './InlineTextEditor';
 import { SelectionOverlay } from './SelectionOverlay';
 import { useObjectGestures } from './useObjectGestures';
 
@@ -97,6 +102,10 @@ export function Canvas() {
   const panState = useRef<{ pointerId: number; last: Vec2 } | null>(null);
   /** Ponto onde o último nó do traçado foi fixado, para o arrasto curvar. */
   const pathDragFrom = useRef<Vec2 | null>(null);
+  /** Trena sendo desenhada: o arrasto leva a segunda ponta. */
+  const measureDraft = useRef<{ id: string; a: Vec2 } | null>(null);
+  /** Texto sendo editado no próprio desenho (B-68). */
+  const [editingText, setEditingText] = useState<string | null>(null);
   const spaceDown = useRef(false);
 
   const localPoint = useCallback((e: { clientX: number; clientY: number }): Vec2 => {
@@ -282,6 +291,15 @@ export function Canvas() {
         return;
       }
 
+      if (tool === 'measure') {
+        // Trena: aperta numa ponta, arrasta até a outra (B-64).
+        const a = snapped(toModel(e));
+        const trena = createMeasure(a);
+        useDocumentStore.getState().apply('Trena', (d) => addObject(d, trena), 'gesto-trena');
+        measureDraft.current = { id: trena.id, a };
+        return;
+      }
+
       if (tool === 'text') {
         const texto = createTextLabel(snapped(toModel(e)));
         useDocumentStore.getState().apply('Inserir texto', (d) => addObject(d, texto));
@@ -336,6 +354,23 @@ export function Canvas() {
 
       gestures.onPointerMove(e);
 
+      const trena = measureDraft.current;
+      if (trena) {
+        const raw = toModel(e);
+        // Shift: perpendicular ou paralela à cerca mais próxima, exata.
+        const b = e.shiftKey
+          ? constrainToFence(measureFrame(useDocumentStore.getState().doc).outline, trena.a, raw)
+          : snapped(raw);
+        useDocumentStore.getState().apply(
+          'Trena',
+          (d) => {
+            const m = d.objects.find((o) => o.id === trena.id);
+            if (m?.kind === 'measure') m.b = b;
+          },
+          'gesto-trena',
+        );
+      }
+
       // Durante a calibração o cursor não é alinhado ao grid: a mira tem
       // de cair exatamente sobre a referência da imagem.
       const raw = toModel(e);
@@ -353,9 +388,22 @@ export function Canvas() {
       if (panState.current?.pointerId === e.pointerId) panState.current = null;
       pathDragFrom.current = null;
       if (activeTool() === 'arena-rect') finishRectangle();
+      const trena = measureDraft.current;
+      if (trena) {
+        measureDraft.current = null;
+        const st = useDocumentStore.getState();
+        const m = st.doc.objects.find((o) => o.id === trena.id);
+        // Clique sem arrastar não deixa trena de comprimento zero.
+        if (m?.kind === 'measure' && measureLength(m) < 0.2) {
+          st.apply('Trena', (d) => deleteObjects(d, [trena.id]), 'gesto-trena');
+        } else {
+          setSelection([trena.id]);
+          setTool('select');
+        }
+      }
       gestures.onPointerUp();
     },
-    [gestures, finishRectangle],
+    [gestures, finishRectangle, setSelection, setTool],
   );
 
   /* ------------------------------------------------------------ teclado */
@@ -450,17 +498,26 @@ export function Canvas() {
         e.preventDefault();
         // Setas: 10 cm por toque; com Shift, 1 m.
         const step = e.shiftKey ? 1 : 0.1;
+        // Alt + setas: o obstáculo preso ao traçado anda sobre ele (B-65) —
+        // para cima/direita no sentido do percurso.
+        if (e.altKey) {
+          const sentido = e.key === 'ArrowUp' || e.key === 'ArrowRight' ? 1 : -1;
+          st.apply(
+            'Mover sobre o traçado',
+            (draft) => {
+              for (const id of sel) slideAlongPath(draft, id, sentido * step);
+            },
+            'teclado-deslizar',
+          );
+          return;
+        }
         const d: Vec2 = {
           x: e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0,
           y: e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0,
         };
         st.apply(
           'Mover',
-          (draft) => {
-            for (const obj of draft.objects) {
-              if (sel.includes(obj.id) && !obj.locked) translate(obj, d, draft.page.printScale);
-            }
-          },
+          (draft) => moveObjects(draft, sel, d),
           'teclado-mover',
         );
       } else if (e.key === '0' && ctrl) {
@@ -474,10 +531,12 @@ export function Canvas() {
         ed.setTool('select');
       } else if (key === 'h') {
         ed.setTool('pan');
-      } else if (key === 'o' || key === 't' || key === 'x') {
+      } else if (key === 'o' || key === 't' || key === 'x' || key === 'm') {
         // Ferramentas do percurso: vindo do modo Pista, troca de modo antes.
         if (ed.mode !== 'percurso') ed.setMode('percurso');
-        useEditorStore.getState().setTool(key === 'o' ? 'obstacle' : key === 't' ? 'path' : 'text');
+        useEditorStore
+          .getState()
+          .setTool(key === 'o' ? 'obstacle' : key === 't' ? 'path' : key === 'm' ? 'measure' : 'text');
       } else if (e.key === '?') {
         ed.setDialog('atalhos');
       } else if (e.key === 'Escape') {
@@ -549,6 +608,17 @@ export function Canvas() {
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
           onPointerLeave={() => setCursor(null)}
+          onDoubleClick={(e) => {
+            if (activeTool() !== 'select') return;
+            const alvo = (e.target as Element).closest?.('[data-kind="text"]');
+            const id = alvo?.getAttribute('data-object');
+            const obj = id ? useDocumentStore.getState().doc.objects.find((o) => o.id === id) : null;
+            if (obj?.kind === 'text' && !obj.locked) {
+              e.stopPropagation();
+              setSelection([obj.id]);
+              setEditingText(obj.id);
+            }
+          }}
         >
           <RenderDocument
             mode="screen"
@@ -567,6 +637,11 @@ export function Canvas() {
           <GuidedOverlay zoom={viewport.zoom} />
 
           <InterferenceOverlay zoom={viewport.zoom} />
+          <LiveDistanceOverlay zoom={viewport.zoom} />
+          <CenterGuideOverlay zoom={viewport.zoom} />
+          {editingText && (
+            <InlineTextEditor key={editingText} doc={doc} id={editingText} onDone={() => setEditingText(null)} />
+          )}
 
           <SelectionOverlay
             doc={doc}

@@ -17,6 +17,7 @@ import { CombinationPanel } from './CombinationPanel';
 import { HeightTablePanel } from './HeightTablePanel';
 import { InfoBoxPanel } from './InfoBoxPanel';
 import { TextPanel } from './TextPanel';
+import { MeasurePanel } from './MeasurePanel';
 import { TimingPanel } from './TimingPanel';
 import { LogoPanel } from './LogoPanel';
 import { NumberField } from './NumberField';
@@ -26,6 +27,7 @@ const KIND_LABEL: Record<SceneObject['kind'], string> = {
   obstacle: 'Obstáculo',
   path: 'Traçado',
   text: 'Texto',
+  measure: 'Trena',
   infobox: 'Quadro técnico',
   heighttable: 'Tabela de alturas',
   image: 'Imagem de fundo',
@@ -108,6 +110,7 @@ export function ObjectPanel() {
           {single.kind === 'timing' && <TimingPanel line={single} />}
           {single.kind === 'path' && <PathPanel path={single} />}
           {single.kind === 'text' && <TextPanel label={single} />}
+          {single.kind === 'measure' && <MeasurePanel measure={single} />}
           {single.kind === 'infobox' && <InfoBoxPanel box={single} />}
           {single.kind === 'heighttable' && <HeightTablePanel table={single} />}
           {single.kind === 'logo' && <LogoPanel logo={single} />}

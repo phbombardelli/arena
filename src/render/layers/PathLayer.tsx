@@ -5,8 +5,8 @@ import {
   pathLength,
 } from '@core/model/path';
 import type { Vec2 } from '@core/geometry/vec';
-import type { CoursePath, Obstacle } from '@core/model/types';
-import { obstacleDistancesAlong, pathSampler } from '@core/assist/obstacleDistances';
+import type { CoursePath, Obstacle, TimingLine } from '@core/model/types';
+import { courseDistancesAlong, pathSampler } from '@core/assist/obstacleDistances';
 import {
   LABEL_FONT_MM,
   ON_LINE_GAP_MM,
@@ -25,6 +25,8 @@ interface Props {
   originMm: Vec2;
   /** Obstáculos do croqui: para as distâncias entre eles (decisão 54). */
   obstacles?: Obstacle[];
+  /** Partida e chegada, para as distâncias que começam ou terminam nelas. */
+  timings?: TimingLine[];
   /** Posição e giro escolhidos pelo leiaute de rótulos (decisões 55 e 56). */
   distanceAt?: Map<string, OnLineLabel>;
   onPointerDown?: (e: React.PointerEvent) => void;
@@ -37,7 +39,7 @@ interface Props {
  * O número mostrado é o comprimento do traçado desenhado, medido sobre a
  * curva — não a distância em linha reta entre os nós (§19).
  */
-export function PathLayer({ path, printScale, originMm, obstacles = [], distanceAt, onPointerDown }: Props) {
+export function PathLayer({ path, printScale, originMm, obstacles = [], timings = [], distanceAt, onPointerDown }: Props) {
   const k = mmPerMeter(printScale);
   const toPaper = (p: Vec2): Vec2 => ({ x: originMm.x + p.x * k, y: originMm.y + p.y * k });
   // Toda distância do traçado é escrita SOBRE a linha, paralela a ela, como
@@ -56,9 +58,12 @@ export function PathLayer({ path, printScale, originMm, obstacles = [], distance
     return s;
   };
 
-  const escolhidas = Object.values(path.obstacleDistances ?? {}).some(Boolean)
-    ? obstacleDistancesAlong(path, obstacles).filter((d) => path.obstacleDistances[d.key])
-    : [];
+  // Todas as distâncias mostradas são de vara a vara, na ordem do percurso
+  // (decisão 76); o checkbox de cada uma decide se ela entra no croqui.
+  const pares = courseDistancesAlong(path, obstacles, timings);
+  const escolhidas = pares.filter((d) => path.obstacleDistances?.[d.key]);
+  // Comprimento de nó a nó só para traçado que não liga dois obstáculos.
+  const trechosSoltos = path.distanceMode === 'trecho' && pares.length === 0;
 
   return (
     <g data-object={path.id} data-kind="path">
@@ -96,7 +101,7 @@ export function PathLayer({ path, printScale, originMm, obstacles = [], distance
         ) : null;
       })()}
 
-      {path.distanceMode === 'trecho' && path.legs.map((leg, i) => {
+      {trechosSoltos && path.legs.map((leg, i) => {
         if (!leg.label.visible) return null;
         const lbl = distanceAt?.get(legKey(i)) ?? sobreALinha(inicioDoTrecho(i) + legLength(path, i) / 2);
         if (!lbl) return null;

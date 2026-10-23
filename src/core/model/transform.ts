@@ -60,6 +60,8 @@ export function getPosition(obj: SceneObject, printScale: PrintScale): Vec2 {
       return obj.origin;
     case 'path':
       return obj.nodes[0]?.pos ?? { x: 0, y: 0 };
+    case 'measure':
+      return obj.a;
     case 'infobox':
     case 'heighttable':
     case 'logo':
@@ -83,6 +85,10 @@ export function translate(obj: SceneObject, deltaM: Vec2, printScale: PrintScale
       return;
     case 'path':
       for (const node of obj.nodes) node.pos = add(node.pos, deltaM);
+      return;
+    case 'measure':
+      obj.a = add(obj.a, deltaM);
+      obj.b = add(obj.b, deltaM);
       return;
     case 'infobox':
     case 'heighttable':
@@ -154,6 +160,11 @@ export function rotateAround(
     }
     return;
   }
+  if (obj.kind === 'measure') {
+    obj.a = rotate(obj.a, deltaDeg, pivotM);
+    obj.b = rotate(obj.b, deltaDeg, pivotM);
+    return;
+  }
   // Quadro, tabela e logo ficam na folha: não giram com o desenho.
   if (isPaperAnchored(obj)) return;
   const pos = getPosition(obj, printScale);
@@ -204,17 +215,26 @@ export function getBounds(
         max: { x: obj.pos.x + h, y: obj.pos.y + h },
       };
     }
+    case 'measure': {
+      // Folga para o texto e para o clique numa trena deitada.
+      const f = paperToMeters(obj.sizeMm * 1.6, printScale);
+      return {
+        min: { x: Math.min(obj.a.x, obj.b.x) - f, y: Math.min(obj.a.y, obj.b.y) - f },
+        max: { x: Math.max(obj.a.x, obj.b.x) + f, y: Math.max(obj.a.y, obj.b.y) + f },
+      };
+    }
     case 'path':
       // Pela poligonal, não pelos nós: uma curva pode sair bem além deles.
       return boundsOf(flattenPath(obj, 0.05));
     case 'text': {
       // Aproximação: 0,55 de largura média por caractere no corpo do texto.
       const h = paperToMeters(obj.sizeMm, printScale);
-      const w = h * 0.55 * Math.max(1, obj.text.length);
+      const linhas = obj.text.split('\n');
+      const w = h * 0.55 * Math.max(1, ...linhas.map((l) => l.length));
       const dx = obj.align === 'middle' ? -w / 2 : obj.align === 'end' ? -w : 0;
       return {
         min: { x: obj.pos.x + dx, y: obj.pos.y - h },
-        max: { x: obj.pos.x + dx + w, y: obj.pos.y + h * 0.25 },
+        max: { x: obj.pos.x + dx + w, y: obj.pos.y + h * 0.25 + (linhas.length - 1) * h * 1.2 },
       };
     }
     case 'image': {

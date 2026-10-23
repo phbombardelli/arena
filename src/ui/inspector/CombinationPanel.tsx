@@ -10,7 +10,8 @@ import {
   setFreeGap,
 } from '@core/commands/alignOps';
 import { obstacleLabel } from '@core/library/obstacles';
-import type { Obstacle } from '@core/model/types';
+import { canSetDistance, courseDistances, setCourseDistance } from '@core/commands/distanceOps';
+import type { CoursePath, Obstacle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
 
@@ -36,6 +37,18 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
   // um na sua direção, e o vão se mede entre os centros (decisão 71).
   const [quebrada, setQuebrada] = useState(false);
   const vaos = quebrada ? freeGaps(ordenados) : currentGaps(ordenados);
+  // Curva ou quebrada com o traçado do assistente passando pelos dois: a
+  // medida é a do traçado, e quem anda é o de destino, sobre ele (B-60).
+  const peloTracado = (i: number) => {
+    if (!quebrada) return null;
+    const chave = `${ordenados[i]?.id}>${ordenados[i + 1]?.id}`;
+    for (const p of doc.objects) {
+      if (p.kind !== 'path') continue;
+      const d = courseDistances(doc, p).find((x) => x.key === chave);
+      if (d && canSetDistance(doc, p, d)) return { path: p as CoursePath, d };
+    }
+    return null;
+  };
   const jaComposto =
     ordenados.length >= 2 && ordenados.every((o, i) => i === 0 || sameCombination(ordenados[i - 1]!, o));
   const numeroProposto = (() => {
@@ -57,7 +70,14 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
    * tem. Guardar um rascunho aqui dentro criaria duas verdades, e a do
    * painel ficaria velha assim que alguém arrastasse um obstáculo.
    */
-  const ajusta = (indice: number, metros: number) =>
+  const ajusta = (indice: number, metros: number) => {
+    const t = peloTracado(indice);
+    if (t) {
+      apply('Distância da combinação', (d) => {
+        setCourseDistance(d, t.path.id, t.d.key, metros);
+      });
+      return;
+    }
     apply('Distância da combinação', (d) =>
       quebrada
         ? setFreeGap(d, ids, indice, metros)
@@ -67,6 +87,7 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
             vaos.map((v, i) => (i === indice ? metros : v)),
           ),
     );
+  };
 
   const nome = (o: Obstacle, i: number) => obstacleLabel(o) || `elemento ${i + 1}`;
 
@@ -100,12 +121,13 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
 
       {ordenados.slice(1).map((o, i) => {
         const composto = sameCombination(ordenados[i]!, o);
+        const t = peloTracado(i);
         return (
           <NumberField
             key={o.id}
             label={`${nome(ordenados[i]!, i)} - ${nome(o, i + 1)}`}
             unit="m"
-            value={vaos[i] ?? 0}
+            value={t ? Math.round(t.d.meters * 100) / 100 : (vaos[i] ?? 0)}
             decimals={2}
             step={0.1}
             min={composto ? COMBINATION_GAP.min : undefined}
