@@ -1,11 +1,8 @@
 import {
   removeNode,
-  setDistanceMode,
   setTotalLabel,
   sharpenPath,
   smoothPath,
-  setAllLegLabels,
-  setLegLabel,
   setNodeType,
   setObstacleDistances,
   setPathStyle,
@@ -17,7 +14,8 @@ import {
   legStraightDistance,
   pathLength,
 } from '@core/model/path';
-import type { CoursePath, DashPreset, DistanceMode, Obstacle, TimingLine } from '@core/model/types';
+import type { CoursePath, DashPreset, Obstacle, TimingLine } from '@core/model/types';
+import { distanceFontMm } from '@core/assist/labelLayout';
 import { courseDistancesAlong } from '@core/assist/obstacleDistances';
 import { canSetDistance, lockDistance, setCourseDistance } from '@core/commands/distanceOps';
 import { useDocumentStore } from '@store/documentStore';
@@ -60,46 +58,7 @@ export function PathPanel({ path }: { path: CoursePath }) {
         </button>
       </div>
 
-      <h3>Distâncias</h3>
-      <label className="field">
-        <span>Mostrar</span>
-        <select
-          value={path.distanceMode}
-          disabled={travado}
-          onChange={(e) =>
-            apply('Modo das distâncias', (d) => {
-              const modo = e.target.value as DistanceMode;
-              setDistanceMode(d, path.id, modo);
-              // De vara a vara sem nenhuma marcada: marca todas de uma vez.
-              if (modo === 'trecho' && marcadas === 0 && pares.length > 0) {
-                setObstacleDistances(d, path.id, pares.map((p) => p.key), true);
-              }
-            })
-          }
-        >
-          <option value="total">Uma, o total</option>
-          <option value="trecho">De vara a vara</option>
-          <option value="nenhum">Nenhuma</option>
-        </select>
-      </label>
-      {path.distanceMode === 'total' && (
-        <NumberField
-          label="Casas"
-          value={path.totalLabel.decimals}
-          decimals={0}
-          step={1}
-          min={0}
-          max={3}
-          disabled={travado}
-          onCommit={(v) =>
-            apply('Casas decimais', (d) =>
-              setTotalLabel(d, path.id, { decimals: Math.round(v) }),
-            )
-          }
-        />
-      )}
-
-      <h3>Distâncias de vara a vara</h3>
+      <h3>Distância entre esforços</h3>
       {pares.length === 0 ? (
         <p className="note">
           O traçado ainda não passa por dois obstáculos numerados em sequência (nem pela partida ou chegada).
@@ -190,6 +149,37 @@ export function PathPanel({ path }: { path: CoursePath }) {
               Nenhuma
             </button>
           </div>
+          <NumberField
+            label="Tamanho das letras"
+            unit="mm"
+            value={distanceFontMm(path)}
+            decimals={1}
+            step={0.2}
+            min={1}
+            max={10}
+            disabled={travado}
+            onCommit={(v) =>
+              apply('Tamanho das distâncias', (d) => {
+                const p = d.objects.find((o) => o.id === path.id);
+                if (p?.kind === 'path') p.distanceSizeMm = v;
+              })
+            }
+          />
+          <label className="field">
+            <span>Cor das letras</span>
+            <input
+              type="color"
+              value={path.totalLabel.color}
+              disabled={travado}
+              onChange={(e) =>
+                apply(
+                  'Cor das distâncias',
+                  (d) => setTotalLabel(d, path.id, { color: e.target.value }),
+                  `cor-dist-${path.id}`,
+                )
+              }
+            />
+          </label>
           <p className="note dim">
             Medidas sobre o traçado, de vara a vara. Marque as que devem aparecer no
             croqui. No traçado do assistente, digite a medida para o obstáculo
@@ -221,18 +211,6 @@ export function PathPanel({ path }: { path: CoursePath }) {
               )}
               <button
                 className="mini"
-                title={leg.label.visible ? 'Esconder a distância' : 'Mostrar a distância'}
-                disabled={travado}
-                onClick={() =>
-                  apply('Rótulo do trecho', (d) =>
-                    setLegLabel(d, path.id, i, { visible: !leg.label.visible }),
-                  )
-                }
-              >
-                {leg.label.visible ? '👁' : '–'}
-              </button>
-              <button
-                className="mini"
                 title="Endireitar este trecho"
                 disabled={travado}
                 onClick={() => apply('Endireitar trecho', (d) => straightenLeg(d, path.id, i))}
@@ -243,23 +221,6 @@ export function PathPanel({ path }: { path: CoursePath }) {
           );
         })}
       </div>
-
-      {path.distanceMode === 'trecho' && (
-        <div className="row-buttons">
-          <button
-            disabled={travado}
-            onClick={() => apply('Mostrar distâncias', (d) => setAllLegLabels(d, path.id, true))}
-          >
-            Mostrar todas
-          </button>
-          <button
-            disabled={travado}
-            onClick={() => apply('Esconder distâncias', (d) => setAllLegLabels(d, path.id, false))}
-          >
-            Esconder todas
-          </button>
-        </div>
-      )}
 
       <h3>Nós</h3>
       <label className="field">

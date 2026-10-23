@@ -3,7 +3,7 @@
  "schemaVersion": 11,
  "id": "tpln0zu5h",
  "name": "Parque Olímpico - Pista Ten Lagreca",
- "savedAt": "2026-10-22T17:58:43.723Z",
+ "savedAt": "2026-10-23T14:00:00.000Z",
  "objects": [
   {
    "id": "arenamvngx7",
@@ -33,31 +33,14 @@
     "fill": "none",
     "stroke": "#1a1a1a"
    },
-   "shape": "polygon",
+   "shape": "rectangle",
    "origin": {
-    "x": 0,
-    "y": 0
+    "x": 0.05,
+    "y": -0.068
    },
-   "widthM": 0,
-   "heightM": 0,
-   "points": [
-    {
-     "x": 107.109,
-     "y": 80.867
-    },
-    {
-     "x": 0.421,
-     "y": 80.805
-    },
-    {
-     "x": 0,
-     "y": 0.055
-    },
-    {
-     "x": 106.669,
-     "y": 0
-    }
-   ],
+   "widthM": 107,
+   "heightM": 81,
+   "points": [],
    "group": "grpmzy68s"
   },
   {
@@ -162,8 +145,8 @@
  ],
  "assets": {},
  "summary": {
-  "widthM": 0,
-  "heightM": 0,
+  "widthM": 107,
+  "heightM": 81,
   "objectCount": 4
  }
 }

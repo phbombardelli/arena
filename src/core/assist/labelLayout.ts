@@ -83,6 +83,10 @@ function rotatedTextBox(lbl: OnLineLabel, texto: string, fontMm: number, k: numb
 /** Corpos de letra usados no desenho, em mm de papel (tokens de texto). */
 export const LABEL_FONT_MM = { number: 3.5, heights: 2.2, timing: 2.8, distance: 2.2 } as const;
 
+/** Corpo das distâncias de um traçado: o escolhido no painel, ou o padrão. */
+export const distanceFontMm = (p: { distanceSizeMm?: number }): number =>
+  p.distanceSizeMm ?? LABEL_FONT_MM.distance;
+
 interface Box {
   min: Vec2;
   max: Vec2;
@@ -381,10 +385,12 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
   for (const p of tracados) {
     if (p.kind !== 'path') continue;
     const marcadas = p.obstacleDistances ?? {};
-    const temTotal = p.distanceMode === 'total' && p.totalLabel.visible && p.nodes.length > 1;
+    // O croqui mostra só as distâncias entre esforços marcadas no painel;
+    // o total fica no painel (o modo de antes não conta mais).
+    const temTotal = false;
     const pares = courseDistancesAlong(p, obstaculos, cruzadas);
     // De nó a nó só quando o traçado não liga dois obstáculos (decisão 76).
-    const temTrechos = p.distanceMode === 'trecho' && pares.length === 0;
+    const temTrechos = false;
     if (!temTotal && !temTrechos && !Object.values(marcadas).some(Boolean)) continue;
     const amostra = pathSampler(p);
     if (!amostra) continue;
@@ -396,7 +402,8 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
           return a ? a.pts.slice(1).map((pt, i) => [a.pts[i]!, pt] as Segment) : [];
         }),
     );
-    const altura = (LABEL_FONT_MM.distance * 1.05) / k;
+    const corpo = distanceFontMm(p);
+    const altura = (corpo * 1.05) / k;
     const mapa = new Map<string, OnLineLabel>();
     // Procura, entre sFrom e sTo, o ponto do traçado onde o número não cobre nada.
     const colocar = (chave: string, sDe: number, sAte: number, texto: string): void => {
@@ -407,7 +414,7 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
         const { p: ponto, normal } = amostra.pointAt(s);
         const tangente = { x: normal.y, y: -normal.x };
         const lbl = onLinePlacement(ponto, tangente, altura, ON_LINE_GAP_MM / k);
-        const box = rotatedTextBox(lbl, texto, LABEL_FONT_MM.distance, k);
+        const box = rotatedTextBox(lbl, texto, corpo, k);
         const b = inflate(box, folga * 0.5);
         let c = i * 0.8;
         corpos.forEach((poly) => {

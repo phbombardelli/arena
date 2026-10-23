@@ -16,6 +16,8 @@ import { color, stroke } from '@render/style/tokens';
 
 const BAR_MM = 1.1;
 const STANDARD_M = 0.35;
+/** Meio lado do X do cavalete, em metros: um suporte de ~0,6 m. */
+const CAVALETE_X_M = 0.3;
 /** Fração da vara ocupada por cada ponta, no estilo "pontas". */
 const TIP_FRACTION = 0.16;
 
@@ -35,6 +37,27 @@ export function ObstacleShape({ obstacle, k }: Props) {
       case 'vertical':
       case 'plano':
         return <Bar halfW={halfW} y={0} k={k} bar={bar} wings={obstacle.wings} thin={obstacle.type === 'plano'} />;
+
+      case 'cavalete':
+        // Vara no chão com o suporte em X em cada ponta, visto de cima.
+        return (
+          <>
+            <Bar halfW={halfW} y={0} k={k} bar={bar} wings={obstacle.wings} thin />
+            {[-halfW, halfW].map((x) => {
+              const h = CAVALETE_X_M * k;
+              return (
+                <path
+                  key={x}
+                  d={`M${x - h} ${-h}L${x + h} ${h}M${x - h} ${h}L${x + h} ${-h}`}
+                  stroke={color.ink}
+                  strokeWidth={stroke.regular}
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              );
+            })}
+          </>
+        );
 
       case 'oxer':
         return (

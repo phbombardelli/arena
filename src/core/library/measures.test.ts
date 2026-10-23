@@ -3,7 +3,8 @@ import { produce } from 'immer';
 import { addObject } from '@core/commands/ops';
 import { createRectangleArena } from '@core/model/arena';
 import { createDocument } from '@core/model/document';
-import { getBounds, translate } from '@core/model/transform';
+import { getBounds, scaleMode, scaleObject, translate } from '@core/model/transform';
+import { createRectangleStructure } from '@core/library/structures';
 import type { CourseDocument, MeasureLine } from '@core/model/types';
 import { validateDocument } from '@core/persistence/validate';
 import {
@@ -70,5 +71,23 @@ describe('trena (B-64)', () => {
     expect(getBounds(m, 500).max.x).toBeGreaterThan(7);
     const doc = comTrena(m);
     expect(validateDocument(JSON.parse(JSON.stringify(doc))).document.objects.some((o) => o.kind === 'measure')).toBe(true);
+  });
+});
+
+describe('redimensionar pela caixa (decisão 80)', () => {
+  it('trena e construção esticam a partir do canto oposto', () => {
+    const m = createMeasure({ x: 0, y: 0 }, { x: 10, y: 0 });
+    scaleObject(m, { x: 0, y: 0 }, 2, 1, 500);
+    expect(m.b).toEqual({ x: 20, y: 0 });
+    expect(scaleMode(m)).toBe('livre');
+    const obra = createRectangleStructure({ x: 10, y: 10 }, 4, 2, 'edificacao');
+    scaleObject(obra, { x: 10, y: 10 }, 1.5, 3, 500);
+    expect(obra.widthM).toBeCloseTo(6, 9);
+    expect(obra.heightM).toBeCloseTo(6, 9);
+    expect(obra.origin).toEqual({ x: 10, y: 10 });
+  });
+
+  it('a pista principal não entra (tem alças próprias)', () => {
+    expect(scaleMode(createRectangleArena({ x: 0, y: 0 }, 60, 40))).toBeNull();
   });
 });

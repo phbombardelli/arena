@@ -14,6 +14,8 @@ interface Props {
   onRotateHandleDown: (e: React.PointerEvent) => void;
   /** Some quando nada na seleção tem rotação própria (o caso da pista). */
   showRotate: boolean;
+  /** Seleção que se redimensiona: os cantos viram alças (decisão 80). */
+  onCornerDown?: (e: React.PointerEvent, corner: 0 | 1 | 2 | 3) => void;
   children?: React.ReactNode;
 }
 
@@ -31,6 +33,7 @@ export function SelectionOverlay({
   marquee,
   onRotateHandleDown,
   showRotate,
+  onCornerDown,
   children,
 }: Props) {
   const k = mmPerMeter(doc.page.printScale);
@@ -73,6 +76,7 @@ export function SelectionOverlay({
           mm={mm}
           showRotate={showRotate}
           onRotateHandleDown={onRotateHandleDown}
+          onCornerDown={onCornerDown}
         />
       )}
 
@@ -100,12 +104,14 @@ function SelectionFrame({
   mm,
   showRotate,
   onRotateHandleDown,
+  onCornerDown,
 }: {
   min: Vec2;
   max: Vec2;
   mm: (px: number) => number;
   showRotate: boolean;
   onRotateHandleDown: (e: React.PointerEvent) => void;
+  onCornerDown?: (e: React.PointerEvent, corner: 0 | 1 | 2 | 3) => void;
 }) {
   const pad = mm(3);
   const x = min.x - pad;
@@ -142,6 +148,9 @@ function SelectionFrame({
           fill="#ffffff"
           stroke={color.selection}
           strokeWidth={mm(1)}
+          pointerEvents={onCornerDown ? 'all' : undefined}
+          style={onCornerDown ? { cursor: i === 0 || i === 2 ? 'nwse-resize' : 'nesw-resize' } : undefined}
+          onPointerDown={onCornerDown ? (e) => onCornerDown(e, i as 0 | 1 | 2 | 3) : undefined}
         />
       ))}
       {showRotate && (

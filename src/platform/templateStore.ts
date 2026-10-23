@@ -39,8 +39,9 @@ export interface TemplateSummary {
 /**
  * Pistas que vêm com o programa (B-49): arquivos `.pista` publicados em
  * `public/pistas/`, listados em `index.json`. Carregam uma vez, quando o
- * painel abre, e somam-se às guardadas neste navegador. Uma pista local
- * com o mesmo nome tem a preferência — é a versão que o usuário mexeu.
+ * painel abre, e somam-se às guardadas neste navegador. Com o mesmo nome
+ * nos dois lados, vale a gravada por último: a do programa atualizada
+ * substitui a cópia antiga, e a que o usuário mexeu depois continua dele.
  */
 let embutidas: ArenaTemplate[] = [];
 let carregando: Promise<void> | null = null;
@@ -109,16 +110,25 @@ const resumo = (t: ArenaTemplate, builtin: boolean): TemplateSummary => ({
 });
 
 export function listTemplates(): TemplateSummary[] {
-  const locais = ler();
-  const nomesLocais = new Set(locais.map((t) => t.name));
-  return [
-    ...locais.map((t) => resumo(t, false)),
-    ...embutidas.filter((t) => !nomesLocais.has(t.name)).map((t) => resumo(t, true)),
-  ].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  return visiveis()
+    .map(({ t, builtin }) => resumo(t, builtin))
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 }
 
 export const getTemplate = (id: string): ArenaTemplate | null =>
-  ler().find((t) => t.id === id) ?? embutidas.find((t) => t.id === id) ?? null;
+  visiveis().find(({ t }) => t.id === id)?.t ?? null;
+
+/** Uma por nome: entre a local e a do programa, a gravada por último. */
+function visiveis(): { t: ArenaTemplate; builtin: boolean }[] {
+  const porNome = new Map<string, { t: ArenaTemplate; builtin: boolean }>();
+  const poe = (t: ArenaTemplate, builtin: boolean) => {
+    const atual = porNome.get(t.name);
+    if (!atual || t.savedAt > atual.t.savedAt) porNome.set(t.name, { t, builtin });
+  };
+  for (const t of embutidas) poe(t, true);
+  for (const t of ler()) poe(t, false);
+  return [...porNome.values()];
+}
 
 /** Grava, substituindo o modelo de mesmo nome se já existir. */
 export function saveTemplate(template: ArenaTemplate): void {

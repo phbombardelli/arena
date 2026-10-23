@@ -59,16 +59,24 @@ export const OBSTACLES: readonly ObstacleDef[] = [
   },
   {
     type: 'plano',
-    label: 'Plano',
+    label: 'Vara no chão',
     faceWidthM: 4,
     spreadM: null,
     elements: 1,
-    hint: 'Obstáculo raso, de uma linha só.',
+    hint: 'Uma vara deitada no chão.',
+  },
+  {
+    type: 'cavalete',
+    label: 'Cavalete',
+    faceWidthM: 3,
+    spreadM: null,
+    elements: 1,
+    hint: 'Vara no chão apoiada num X em cada ponta.',
   },
 ] as const;
 
 /** Tipos desenhados com vara — os únicos em que o estilo da vara importa. */
-export const BAR_TYPES: readonly ObstacleType[] = ['vertical', 'oxer', 'triplice', 'plano'];
+export const BAR_TYPES: readonly ObstacleType[] = ['vertical', 'oxer', 'triplice', 'plano', 'cavalete'];
 
 export const hasBars = (type: ObstacleType): boolean => BAR_TYPES.includes(type);
 
@@ -103,7 +111,8 @@ export function createObstacle(type: ObstacleType, pos: Vec2, numero = ''): Obst
     letter: '',
     elements: emptyElements(def.elements),
     bar: { style: 'pontas', color: '#ffffff', accent: '#c62828', stripes: 6 },
-    wings: { style: 'paraflanco', widthM: 0.4, depthM: 0.9, color: '#2e7d32' },
+    // O cavalete se apoia no próprio X: não tem paraflanco.
+    wings: { style: type === 'cavalete' ? 'nenhum' : 'paraflanco', widthM: 0.4, depthM: 0.9, color: '#2e7d32' },
     liverpool: {
       enabled: false,
       // 3 x 0,50 m: mais estreito que a vara de 3,50 m, de modo que as

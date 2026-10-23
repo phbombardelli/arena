@@ -70,15 +70,24 @@ describe('digitar a distância (B-60)', () => {
     expect((doc.objects.find((o) => o.id === p.toId) as Obstacle).pos).toEqual({ x: 25, y: 40 });
   });
 
-  it('traçado à mão não deixa digitar', () => {
-    let doc = percurso();
-    doc = edit(doc, (d) => {
-      d.objects = d.objects.filter((o) => o.kind !== 'path');
-      addObject(d, createPath([createPathNode({ x: 25, y: 46 }), createPathNode({ x: 25, y: 20 })]));
+  it('traçado à mão: o destino desliza pela linha, que fica onde está', () => {
+    let doc = edit(createDocument(), (d) => {
+      d.objects.length = 0;
+      addObject(d, salto('1', 0, 0, 90));
+      addObject(d, salto('2', 40, 0, 90));
+      addObject(
+        d,
+        createPath([createPathNode({ x: -5, y: 0 }), createPathNode({ x: 20, y: 15 }), createPathNode({ x: 45, y: 0 })]),
+      );
     });
-    const ds = courseDistances(doc, tracado(doc));
-    const entreSaltos = ds.find((d) => d.fromLabel === '1');
-    if (entreSaltos) expect(canSetDistance(doc, tracado(doc), entreSaltos)).toBe(false);
+    const antes = JSON.stringify(tracado(doc).nodes);
+    const p = par(doc, '1', '2');
+    expect(canSetDistance(doc, tracado(doc), p)).toBe(true);
+    doc = edit(doc, (d) => {
+      setCourseDistance(d, tracado(d).id, p.key, p.meters - 3);
+    });
+    expect(par(doc, '1', '2').meters).toBeCloseTo(p.meters - 3, 2);
+    expect(JSON.stringify(tracado(doc).nodes)).toBe(antes);
   });
 });
 

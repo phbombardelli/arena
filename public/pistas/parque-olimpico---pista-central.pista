@@ -3,7 +3,7 @@
  "schemaVersion": 11,
  "id": "tpllorbop",
  "name": "Parque Olímpico - Pista Central",
- "savedAt": "2026-10-22T17:36:43.855Z",
+ "savedAt": "2026-10-23T14:00:00.000Z",
  "objects": [
   {
    "id": "arenalle6ek",
@@ -33,31 +33,14 @@
     "fill": "none",
     "stroke": "#1a1a1a"
    },
-   "shape": "polygon",
+   "shape": "rectangle",
    "origin": {
-    "x": 0,
-    "y": 0
+    "x": -0.209,
+    "y": 0.372
    },
-   "widthM": 0,
-   "heightM": 0,
-   "points": [
-    {
-     "x": 88.405,
-     "y": 0.717
-    },
-    {
-     "x": 88.678,
-     "y": 66.54
-    },
-    {
-     "x": 0.08,
-     "y": 66.23
-    },
-    {
-     "x": 0,
-     "y": 0
-    }
-   ]
+   "widthM": 89,
+   "heightM": 66,
+   "points": []
   },
   {
    "id": "ornlma4u9",
@@ -98,8 +81,8 @@
  ],
  "assets": {},
  "summary": {
-  "widthM": 0,
-  "heightM": 0,
+  "widthM": 89,
+  "heightM": 66,
   "objectCount": 3
  }
 }

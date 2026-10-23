@@ -10,9 +10,13 @@ import {
   boundsCenter,
   boundsContains,
   objectScope,
+  scaleBounds,
+  scaleInDoc,
+  scaleMode,
   unionBounds,
 } from '@core/model/transform';
-import type { ObjectId } from '@core/model/types';
+import { deepClone } from '@core/model/clone';
+import type { ObjectId, SceneObject } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 
@@ -27,6 +31,16 @@ type Gesture =
   | { kind: 'marquee'; startM: Vec2 }
   | { kind: 'vertex'; arenaId: ObjectId; index: number }
   | { kind: 'resize'; arenaId: ObjectId; corner: 0 | 1 | 2 | 3 }
+  | {
+      kind: 'scale';
+      id: ObjectId;
+      /** Como estava ao começar: cada passo escala a partir dele, sem acumular erro. */
+      original: SceneObject;
+      ancora: Vec2;
+      startM: Vec2;
+      span: Vec2;
+      uniform: boolean;
+    }
   | { kind: 'path-node'; pathId: ObjectId; index: number }
   | { kind: 'path-handle'; pathId: ObjectId; index: number; which: 'in' | 'out'; origin: Vec2 }
   | { kind: 'path-bend'; pathId: ObjectId; leg: number; startM: Vec2; half: Vec2 };
@@ -114,6 +128,26 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
           'Curvar traçado',
           (doc) => moveHandle(doc, pathId, index, which, rel),
           'gesto-alca',
+        );
+        return;
+      }
+
+      if (current.kind === 'scale') {
+        const { id, original, ancora, startM, span, uniform } = current;
+        const fator = (v: number, d: number) => (Math.abs(v) < 1e-9 ? 1 : Math.max(0.05, (v + d) / v));
+        let sx = fator(span.x, p.x - startM.x);
+        let sy = fator(span.y, p.y - startM.y);
+        if (uniform) sx = sy = Math.abs(span.x) >= Math.abs(span.y) ? sx : sy;
+        store.apply(
+          'Redimensionar',
+          (doc) => {
+            const i = doc.objects.findIndex((o) => o.id === id);
+            if (i < 0) return;
+            const copia = deepClone(original);
+            scaleInDoc(doc, copia, ancora, sx, sy);
+            doc.objects[i] = copia;
+          },
+          'gesto-escala',
         );
         return;
       }
@@ -235,6 +269,32 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
     [toModel],
   );
 
+  /** Canto da caixa de seleção: estica o objeto a partir do canto oposto. */
+  const beginScale = useCallback(
+    (e: React.PointerEvent, id: ObjectId, corner: 0 | 1 | 2 | 3) => {
+      const { doc } = useDocumentStore.getState();
+      const obj = doc.objects.find((o) => o.id === id);
+      const modo = obj ? scaleMode(obj) : null;
+      if (!obj || !modo) return;
+      e.stopPropagation();
+      const b = scaleBounds(doc, obj);
+      const cantos: Vec2[] = [b.min, { x: b.max.x, y: b.min.y }, b.max, { x: b.min.x, y: b.max.y }];
+      const pego = cantos[corner]!;
+      const ancora = cantos[(corner + 2) % 4]!;
+      gesture.current = {
+        kind: 'scale',
+        id,
+        original: deepClone(obj),
+        ancora,
+        startM: toModel(e),
+        span: { x: pego.x - ancora.x, y: pego.y - ancora.y },
+        uniform: modo === 'proporcional',
+      };
+      capture(e.target as Element, e.pointerId);
+    },
+    [toModel],
+  );
+
   const beginPathNodeDrag = useCallback(
     (e: React.PointerEvent, pathId: ObjectId, index: number) => {
       gesture.current = { kind: 'path-node', pathId, index };
@@ -345,6 +405,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
     beginMarquee,
     beginVertexDrag,
     beginResize,
+    beginScale,
     beginPathNodeDrag,
     beginPathHandleDrag,
     beginLegBend,

@@ -3,7 +3,7 @@
  "schemaVersion": 11,
  "id": "tplk97fx0",
  "name": "AMAN - Pista Cel Jacques",
- "savedAt": "2026-10-22T14:09:56.140Z",
+ "savedAt": "2026-10-23T14:00:00.000Z",
  "objects": [
   {
    "id": "arenak2i5q8",
@@ -33,31 +33,14 @@
     "fill": "none",
     "stroke": "#1a1a1a"
    },
-   "shape": "polygon",
+   "shape": "rectangle",
    "origin": {
-    "x": -1.031,
-    "y": 0.701
+    "x": -0.638,
+    "y": 1.086
    },
-   "widthM": 0,
-   "heightM": 0,
-   "points": [
-    {
-     "x": 77.341,
-     "y": 1.15
-    },
-    {
-     "x": 77.645,
-     "y": 59.96
-    },
-    {
-     "x": -0.762,
-     "y": 60.193
-    },
-    {
-     "x": -0.777,
-     "y": 1.042
-    }
-   ],
+   "widthM": 78,
+   "heightM": 59,
+   "points": [],
    "group": "grpk7m7j7"
   },
   {
@@ -164,8 +147,8 @@
  ],
  "assets": {},
  "summary": {
-  "widthM": 0,
-  "heightM": 0,
+  "widthM": 78,
+  "heightM": 59,
   "objectCount": 4
  }
 }

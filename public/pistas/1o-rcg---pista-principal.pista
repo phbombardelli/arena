@@ -3,7 +3,7 @@
  "schemaVersion": 11,
  "id": "tpln4l5kt",
  "name": "1º RCG - Pista Principal",
- "savedAt": "2026-10-22T17:59:16.339Z",
+ "savedAt": "2026-10-23T14:00:00.000Z",
  "objects": [
   {
    "id": "aren2nx5j",
@@ -33,31 +33,14 @@
     "fill": "none",
     "stroke": "#1a1a1a"
    },
-   "shape": "polygon",
+   "shape": "rectangle",
    "origin": {
-    "x": -13.088,
-    "y": -0.085
+    "x": -12.715,
+    "y": 0.01
    },
-   "widthM": 0,
-   "heightM": 0,
-   "points": [
-    {
-     "x": 116.476,
-     "y": 87.095
-    },
-    {
-     "x": -13.088,
-     "y": 86.656
-    },
-    {
-     "x": -12.484,
-     "y": -0.085
-    },
-    {
-     "x": 116.236,
-     "y": 0.375
-    }
-   ],
+   "widthM": 129,
+   "heightM": 87,
+   "points": [],
    "group": "grpn14fdo"
   },
   {
@@ -124,8 +107,8 @@
  ],
  "assets": {},
  "summary": {
-  "widthM": 0,
-  "heightM": 0,
+  "widthM": 129,
+  "heightM": 87,
   "objectCount": 2
  }
 }

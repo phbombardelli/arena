@@ -1637,3 +1637,42 @@ com o mesmo nome tem a preferência. Sem rede, fica só o repositório local.
 Vão sem imagem de fundo: o banco é público e não redistribui print do
 Google Maps. Para acrescentar uma pista ao banco, exporte-a (↓) e ponha o
 arquivo na pasta, com o nome no `index.json`.
+
+## 80. Composto ou linha, cavalete, distâncias entre esforços, redimensionar
+
+**Composto ou linha.** O painel de vários obstáculos tem duas escolhas no
+topo, trocáveis a qualquer momento:
+- **Composto** dá o mesmo número e as letras A, B, C (2 ou 3 elementos);
+  números seguidos que viram composto liberam os de depois (5, 6, 7 →
+  5A, 5B, 6).
+- **Linha** desfaz as letras e renumera ao contrário (5A, 5B, 6 → 5, 6,
+  7), e oferece **Reta** ou **Curva**. "Alinhar em reta" põe todos
+  exatamente no eixo do primeiro; "Alinhar na curva" deixa cada um onde
+  está e o gira de frente para a curva suave que passa pelos centros,
+  com no máximo 25° em relação à reta até o vizinho.
+
+**Cavalete** é um tipo novo de obstáculo: vara no chão com um X em cada
+ponta (o suporte), 3 m, sem paraflanco. O antigo "Plano" passa a se
+chamar **Vara no chão** (o tipo guardado continua `plano`).
+
+**Distância entre esforços.** O painel do traçado não tem mais o
+"Mostrar": mostra o total e a lista das distâncias entre esforços, de
+vara a vara; o croqui traz só as marcadas. Tamanho e cor das letras são
+um para todas. Digitar a distância funciona em qualquer traçado: no
+preso, o destino anda sobre a reta do salto; no solto (à mão, ou feito
+antes da âncora), o cruzamento desliza pela linha desenhada, que fica
+onde está — era por isso que o campo parecia não editar.
+
+**Redimensionar pela caixa.** Os cantos da caixa de seleção esticam a
+trena, as construções, as ilhas (fixas e decorativas) e a água, a partir
+do canto oposto; a imagem de fundo, o quadro técnico e o logo, mantendo
+a proporção. A pista principal continua com as próprias alças.
+
+**Cores.** A trena ganha cor no painel; o texto já tinha.
+
+**Pistas do banco em retângulo exato.** 1º RCG Principal (129 × 87),
+AMAN Cel Jacques (78 × 59), Parque Olímpico Central (89 × 66), Ten
+Lagreca (107 × 81) e Oeste (86 × 64) viraram retângulos de cantos retos
+e medidas inteiras, mantendo o centro; Dragões da Independência já era
+(106 × 42). Com o mesmo nome no navegador e no programa, vale agora a
+versão gravada por último — assim a corrigida substitui a cópia antiga.

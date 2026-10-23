@@ -1,23 +1,16 @@
-import {
-  formatDistance,
-  legLength,
-  pathD,
-  pathLength,
-} from '@core/model/path';
+import { formatDistance, pathD } from '@core/model/path';
 import type { Vec2 } from '@core/geometry/vec';
 import type { CoursePath, Obstacle, TimingLine } from '@core/model/types';
-import { courseDistancesAlong, pathSampler } from '@core/assist/obstacleDistances';
+import { courseDistancesAlong } from '@core/assist/obstacleDistances';
 import {
-  LABEL_FONT_MM,
+  distanceFontMm,
   ON_LINE_GAP_MM,
-  TOTAL_KEY,
-  legKey,
   onLinePlacement,
   type OnLineLabel,
 } from '@core/assist/labelLayout';
 import { mmPerMeter } from '@core/scale/units';
 import { HIT_BAND_PX } from './ArenaLayer';
-import { dashPattern, font, text } from '@render/style/tokens';
+import { dashPattern, font } from '@render/style/tokens';
 
 interface Props {
   path: CoursePath;
@@ -45,25 +38,13 @@ export function PathLayer({ path, printScale, originMm, obstacles = [], timings 
   // Toda distância do traçado é escrita SOBRE a linha, paralela a ela, como
   // uma cota (decisão 56). O leiaute escolhe o lugar ao longo do trecho
   // para não cobrir nada; sem leiaute, fica no meio.
-  const amostra = path.distanceMode !== 'nenhum' ? pathSampler(path) : null;
-  const altura = (LABEL_FONT_MM.distance * 1.05) / k;
-  const sobreALinha = (s: number): OnLineLabel | null => {
-    if (!amostra) return null;
-    const { p, normal } = amostra.pointAt(s);
-    return onLinePlacement(p, { x: normal.y, y: -normal.x }, altura, ON_LINE_GAP_MM / k);
-  };
-  const inicioDoTrecho = (i: number): number => {
-    let s = 0;
-    for (let j = 0; j < i; j += 1) s += legLength(path, j);
-    return s;
-  };
+  const corpo = distanceFontMm(path);
+  const altura = (corpo * 1.05) / k;
 
   // Todas as distâncias mostradas são de vara a vara, na ordem do percurso
   // (decisão 76); o checkbox de cada uma decide se ela entra no croqui.
   const pares = courseDistancesAlong(path, obstacles, timings);
   const escolhidas = pares.filter((d) => path.obstacleDistances?.[d.key]);
-  // Comprimento de nó a nó só para traçado que não liga dois obstáculos.
-  const trechosSoltos = path.distanceMode === 'trecho' && pares.length === 0;
 
   return (
     <g data-object={path.id} data-kind="path">
@@ -89,33 +70,6 @@ export function PathLayer({ path, printScale, originMm, obstacles = [], timings 
         pointerEvents="none"
       />
 
-      {path.distanceMode === 'total' && path.totalLabel.visible && path.nodes.length > 1 && (() => {
-        const lbl = distanceAt?.get(TOTAL_KEY) ?? sobreALinha(pathLength(path) / 2);
-        return lbl ? (
-          <DistanceText
-            at={toPaper(lbl.pos)}
-            angle={lbl.angle}
-            value={formatDistance(pathLength(path), path.totalLabel.decimals)}
-            color={path.totalLabel.color}
-          />
-        ) : null;
-      })()}
-
-      {trechosSoltos && path.legs.map((leg, i) => {
-        if (!leg.label.visible) return null;
-        const lbl = distanceAt?.get(legKey(i)) ?? sobreALinha(inicioDoTrecho(i) + legLength(path, i) / 2);
-        if (!lbl) return null;
-        return (
-          <DistanceText
-            key={i}
-            at={toPaper(lbl.pos)}
-            angle={lbl.angle}
-            value={formatDistance(legLength(path, i), leg.label.decimals)}
-            color={leg.label.color}
-          />
-        );
-      })}
-
       {escolhidas.map((d) => {
         // Sem leiaute (traçado provisório), fica no meio do trecho.
         const lbl =
@@ -128,6 +82,7 @@ export function PathLayer({ path, printScale, originMm, obstacles = [], timings 
             angle={lbl.angle}
             value={`${formatDistance(d.meters, 2)} m`}
             color={path.totalLabel.color}
+            sizeMm={corpo}
           />
         );
       })}
@@ -140,12 +95,14 @@ function DistanceText({
   angle = 0,
   value,
   color,
+  sizeMm,
 }: {
   at: Vec2;
   /** Giro do texto, em graus: o da linha onde ele se apoia. */
   angle?: number;
   value: string;
   color: string;
+  sizeMm: number;
 }) {
   return (
     <text
@@ -153,7 +110,7 @@ function DistanceText({
       y={round(at.y)}
       transform={angle !== 0 ? `rotate(${round(angle)} ${round(at.x)} ${round(at.y)})` : undefined}
       fontFamily={font.family}
-      fontSize={text.small}
+      fontSize={sizeMm}
       fill={color}
       textAnchor="middle"
       dominantBaseline="middle"

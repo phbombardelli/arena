@@ -94,6 +94,24 @@ export function MeasurePanel({ measure }: { measure: MeasureLine }) {
         disabled={travado}
         onCommit={(v) => edita('Tamanho da trena', (m) => { m.sizeMm = v; })}
       />
+      <label className="field">
+        <span>Cor</span>
+        <input
+          type="color"
+          value={measure.color}
+          disabled={travado}
+          onChange={(e) =>
+            apply(
+              'Cor da trena',
+              (d) => {
+                const alvo = d.objects.find((o) => o.id === measure.id);
+                if (alvo?.kind === 'measure' && !alvo.locked) alvo.color = e.target.value;
+              },
+              `cor-trena-${measure.id}`,
+            )
+          }
+        />
+      </label>
       <p className="note dim">
         Ao desenhar, segure Shift para a trena sair perpendicular ou paralela à
         cerca mais próxima.

@@ -15,7 +15,7 @@ import { createPath, createPathNode, smoothedNodes } from '@core/model/path';
 import { createPolygonArena, createRectangleArena } from '@core/model/arena';
 import { createPolygonStructure, createRectangleStructure } from '@core/library/structures';
 import { pageRectMm } from '@core/model/document';
-import { getRotation } from '@core/model/transform';
+import { getRotation, scaleMode } from '@core/model/transform';
 import { mmPerMeter } from '@core/scale/units';
 import {
   fitToRect,
@@ -655,6 +655,14 @@ export function Canvas() {
               e.stopPropagation();
               gestures.beginRotate(e);
             }}
+            onCornerDown={
+              selectedObjects.length === 1 && scaleMode(selectedObjects[0]!)
+                ? (e, corner) => {
+                    if (e.button !== 0) return;
+                    gestures.beginScale(e, selectedObjects[0]!.id, corner);
+                  }
+                : undefined
+            }
           >
             {selectedArena && (
               <ArenaHandles

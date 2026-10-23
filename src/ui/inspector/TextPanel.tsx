@@ -72,7 +72,7 @@ export function TextPanel({ label }: { label: TextLabel }) {
           type="color"
           value={label.color}
           disabled={travado}
-          onChange={(e) => edita('Cor do texto', (t) => { t.color = e.target.value; })}
+          onChange={(e) => edita('Cor do texto', (t) => { t.color = e.target.value; }, `cor-txt-${label.id}`)}
         />
       </label>
 

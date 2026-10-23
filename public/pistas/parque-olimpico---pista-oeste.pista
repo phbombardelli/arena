@@ -3,7 +3,7 @@
  "schemaVersion": 11,
  "id": "tplltll64",
  "name": "Parque Olímpico - Pista Oeste",
- "savedAt": "2026-10-22T17:37:15.347Z",
+ "savedAt": "2026-10-23T14:00:00.000Z",
  "objects": [
   {
    "id": "arelqm0ag",
@@ -36,10 +36,10 @@
    "shape": "rectangle",
    "origin": {
     "x": 0.453,
-    "y": 0.156
+    "y": 0.202
    },
    "widthM": 86,
-   "heightM": 64.092,
+   "heightM": 64,
    "points": [],
    "group": "grplp4uir"
   },
@@ -85,7 +85,7 @@
  "assets": {},
  "summary": {
   "widthM": 86,
-  "heightM": 64.092,
+  "heightM": 64,
   "objectCount": 3
  }
 }

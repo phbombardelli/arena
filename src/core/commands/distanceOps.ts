@@ -13,8 +13,10 @@ import { syncPathAnchors } from './pathAnchors';
  * vara). A curva muda de comprimento com o movimento, então repete até a
  * medida bater.
  *
- * Só vale para traçado preso aos obstáculos — o do assistente. No traçado
- * à mão o obstáculo andaria e a linha ficaria para trás.
+ * No traçado preso aos obstáculos (o do assistente), o destino anda sobre
+ * a reta do próprio salto e leva os nós junto. No traçado solto (à mão),
+ * anda sobre a linha desenhada: o ponto onde a linha o cruza desliza pela
+ * curva, e a linha fica onde está.
  */
 
 const TOLERANCIA_M = 0.002;
@@ -35,9 +37,11 @@ export function canSetDistance(doc: CourseDocument, path: CoursePath, d: Obstacl
   const cruzada = timingEnd(doc, d);
   if (cruzada) return !cruzada.locked;
   const destino = doc.objects.find((o) => o.id === d.toId);
-  if (!destino || destino.kind !== 'obstacle' || destino.locked) return false;
-  return path.nodes.some((n) => n.anchor?.objectId === destino.id);
+  return Boolean(destino && destino.kind === 'obstacle' && !destino.locked && !path.locked);
 }
+
+const presoAo = (path: CoursePath, id: ObjectId): boolean =>
+  path.nodes.some((n) => n.anchor?.objectId === id);
 
 /** A ponta que é partida ou chegada, se houver: é ela que anda. */
 function timingEnd(doc: CourseDocument, d: ObstacleDistance): TimingLine | null {
@@ -66,8 +70,16 @@ export function setCourseDistance(doc: CourseDocument, pathId: ObjectId, key: st
       const destino = doc.objects.find((o): o is Obstacle => o.id === d.toId && o.kind === 'obstacle')!;
       const amostra = pathSampler(path);
       if (!amostra) return false;
-      const frente = normalize(sub(amostra.pointAt(d.sTo + 0.05).p, amostra.pointAt(d.sTo - 0.05).p));
-      destino.pos = add(destino.pos, scale(frente, falta));
+      if (presoAo(path, destino.id)) {
+        const frente = normalize(sub(amostra.pointAt(d.sTo + 0.05).p, amostra.pointAt(d.sTo - 0.05).p));
+        destino.pos = add(destino.pos, scale(frente, falta));
+      } else {
+        // Solto: o cruzamento desliza pela curva, mantendo o afastamento
+        // que o obstáculo já tinha da linha.
+        const total = amostra.acumulado[amostra.acumulado.length - 1]!;
+        const novo = Math.max(0, Math.min(total, d.sTo + falta));
+        destino.pos = add(destino.pos, sub(amostra.pointAt(novo).p, amostra.pointAt(d.sTo).p));
+      }
     }
     syncTimingLines(doc);
     syncPathAnchors(doc);

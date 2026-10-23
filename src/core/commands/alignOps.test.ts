@@ -5,7 +5,7 @@ import { createDocument } from '@core/model/document';
 import { distance } from '@core/geometry/vec';
 import type { CourseDocument, Obstacle, ObstacleType } from '@core/model/types';
 import { addObject } from './ops';
-import { alignCombination, COMBINATION_GAP, confirmCombination, currentGaps, freeGaps, orderAlongLine, setFreeGap } from './alignOps';
+import { alignCombination, alignCurve, COMBINATION_GAP, confirmCombination, currentGaps, freeGaps, isStraightLine, orderAlongLine, setFreeGap, splitCombination } from './alignOps';
 
 const salto = (
   tipo: ObstacleType,
@@ -223,7 +223,9 @@ describe('confirmar composto (decisão 71)', () => {
     const d = produce(doc, (x) => confirmCombination(x, ids));
     const letras = obstaculos(d).filter((o) => o.number === '4').map((o) => `${o.pos.y}${o.letter}`);
     expect(new Set(letras)).toEqual(new Set(['10A', '20B']));
-    expect(acha(d, '6').letter).toBe('');
+    // O 6 desce para 5: a numeração continua sem buraco (decisão 80).
+    expect(acha(d, '5').letter).toBe('');
+    expect(obstaculos(d).some((o) => o.number === '6')).toBe(false);
   });
 
   it('sem número, ganham o seguinte ao maior do croqui', () => {
@@ -249,5 +251,44 @@ describe('linha curva ou quebrada (decisão 71)', () => {
     // Ninguém foi girado.
     expect(acha(d, '2').rotation).toBe(30);
     expect(acha(d, '3').rotation).toBe(60);
+  });
+});
+
+describe('composto ou linha (decisão 80)', () => {
+  const montar = () => {
+    const nums = ['1', '2', '3', '4'];
+    const obs = nums.map((n, i) => createObstacle('vertical', { x: i * 10, y: 0 }, n));
+    const doc = produce(createDocument(), (d) => {
+      d.objects.length = 0;
+      for (const o of obs) addObject(d, o);
+    });
+    return { doc, obs };
+  };
+  const rotulos = (doc: CourseDocument) =>
+    doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle').map((o) => `${o.number}${o.letter}`);
+
+  it('2 e 3 viram composto; o 4 desce para 3; desfazer volta tudo', () => {
+    const { doc, obs } = montar();
+    const composto = produce(doc, (d) => confirmCombination(d, [obs[1]!.id, obs[2]!.id]));
+    expect(rotulos(composto)).toEqual(['1', '2A', '2B', '3']);
+    const linha = produce(composto, (d) => splitCombination(d, [obs[1]!.id, obs[2]!.id]));
+    expect(rotulos(linha)).toEqual(['1', '2', '3', '4']);
+  });
+
+  it('alinhar na curva gira cada um para a curva, dentro do limite', () => {
+    const a = createObstacle('vertical', { x: 0, y: 0 }, '1');
+    const b = createObstacle('vertical', { x: 10, y: -4 }, '2');
+    const c = createObstacle('vertical', { x: 20, y: 0 }, '3');
+    const doc = produce(createDocument(), (d) => {
+      d.objects.length = 0;
+      for (const o of [a, b, c]) addObject(d, o);
+    });
+    const feito = produce(doc, (d) => alignCurve(d, [a.id, b.id, c.id]));
+    const [na, nb, nc] = feito.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
+    // O do meio fica de frente para a direção geral (leste); as pontas, abertas.
+    expect(nb!.rotation).toBeCloseTo(90, 6);
+    expect(na!.rotation).not.toBeCloseTo(nc!.rotation, 1);
+    expect(na!.pos).toEqual(a.pos);
+    expect(isStraightLine([na!, nb!, nc!])).toBe(false);
   });
 });

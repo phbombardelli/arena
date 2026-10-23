@@ -112,7 +112,7 @@ export interface Arena extends BaseObject {
 
 /* ----------------------------------------------------------- obstáculos */
 
-export type ObstacleType = 'vertical' | 'oxer' | 'triplice' | 'muro' | 'plano';
+export type ObstacleType = 'vertical' | 'oxer' | 'triplice' | 'muro' | 'plano' | 'cavalete';
 
 export interface ObstacleElement {
   /** Altura em metros. `null` = não informada. */
@@ -260,6 +260,8 @@ export interface CoursePath extends BaseObject {
    * obstáculo de destino sobre o traçado (decisão 76).
    */
   lockedDistances?: Record<string, number>;
+  /** Corpo das letras das distâncias entre esforços, igual para todas (mm). */
+  distanceSizeMm?: number;
   /**
    * Traçado gerado pelos assistentes (automático ou por trechos). Rodar o
    * assistente de novo SUBSTITUI esse traçado em vez de empilhar outro por

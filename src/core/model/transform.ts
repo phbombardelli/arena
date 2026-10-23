@@ -373,3 +373,87 @@ export function boundsIn(doc: CourseDocument, obj: SceneObject): Bounds {
   const dy = doc.originMm.y / k;
   return { min: { x: b.min.x - dx, y: b.min.y - dy }, max: { x: b.max.x - dx, y: b.max.y - dy } };
 }
+
+/* ------------------------------------------------------- redimensionar */
+
+/**
+ * Quem se redimensiona pelos cantos da caixa de seleção (decisão 80), e
+ * como: `livre` estica cada eixo; `proporcional` mantém o formato (imagem,
+ * quadro técnico, logo). A pista principal tem as próprias alças.
+ */
+export function scaleMode(obj: SceneObject): 'livre' | 'proporcional' | null {
+  if (obj.locked) return null;
+  switch (obj.kind) {
+    case 'measure':
+      return 'livre';
+    case 'arena':
+      return obj.structure ? 'livre' : null;
+    case 'image':
+    case 'infobox':
+    case 'logo':
+      return 'proporcional';
+    default:
+      return null;
+  }
+}
+
+/**
+ * A caixa que o redimensionar usa: a de seleção, menos na trena, em que é
+ * a das duas pontas — sem a folga do texto, a ponta oposta fica parada.
+ */
+export function scaleBounds(doc: CourseDocument, obj: SceneObject): Bounds {
+  if (obj.kind === 'measure') return boundsOf([obj.a, obj.b]);
+  return boundsIn(doc, obj);
+}
+
+/** Escala o objeto a partir de `ancora` (metros). `sx`, `sy` > 0. */
+export function scaleObject(obj: SceneObject, ancora: Vec2, sx: number, sy: number, printScale: PrintScale): void {
+  const em = (p: Vec2): Vec2 => ({ x: ancora.x + (p.x - ancora.x) * sx, y: ancora.y + (p.y - ancora.y) * sy });
+  switch (obj.kind) {
+    case 'measure':
+      obj.a = em(obj.a);
+      obj.b = em(obj.b);
+      return;
+    case 'arena':
+      if (obj.shape === 'rectangle') {
+        obj.origin = em(obj.origin);
+        obj.widthM *= sx;
+        obj.heightM *= sy;
+      } else {
+        obj.points = obj.points.map(em);
+        obj.origin = em(obj.origin);
+      }
+      return;
+    case 'image':
+      obj.origin = em(obj.origin);
+      obj.metersPerPixel *= sx;
+      if (obj.calibration) {
+        obj.calibration = { ...obj.calibration, pointA: em(obj.calibration.pointA), pointB: em(obj.calibration.pointB) };
+      }
+      return;
+    case 'infobox':
+      setPosition(obj, em(getPosition(obj, printScale)), printScale);
+      obj.widthMm *= sx;
+      obj.style = { ...obj.style, sizeMm: obj.style.sizeMm * sx };
+      return;
+    case 'logo':
+      setPosition(obj, em(getPosition(obj, printScale)), printScale);
+      obj.widthMm *= sx;
+      return;
+    default:
+  }
+}
+
+/**
+ * Escala no documento, com a âncora no sistema da caixa de seleção
+ * (`boundsIn`): para quadro e logo, que moram na folha, desconta-se de
+ * volta a origem do desenho.
+ */
+export function scaleInDoc(doc: CourseDocument, obj: SceneObject, ancora: Vec2, sx: number, sy: number): void {
+  let a = ancora;
+  if (isPaperAnchored(obj)) {
+    const k = 1000 / doc.page.printScale;
+    a = { x: ancora.x + doc.originMm.x / k, y: ancora.y + doc.originMm.y / k };
+  }
+  scaleObject(obj, a, sx, sy, doc.page.printScale);
+}
