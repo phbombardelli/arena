@@ -1,0 +1,531 @@
+{
+ "format": "percurso-pista",
+ "schemaVersion": 11,
+ "id": "tpljyk5z5",
+ "name": "AMAN - Pista Cap Alcides de Azevedo",
+ "savedAt": "2026-10-22T14:03:26.534Z",
+ "objects": [
+  {
+   "id": "arejg766i",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": true,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.5,
+    "fill": "none",
+    "stroke": "#1a1a1a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": 58.081,
+    "y": 8.254
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": -9.919,
+     "y": -14.746
+    },
+    {
+     "x": -12.919,
+     "y": 68.754
+    },
+    {
+     "x": 89.581,
+     "y": 68.254
+    },
+    {
+     "x": 88.581,
+     "y": -14.246
+    }
+   ],
+   "group": "grpjxon49"
+  },
+  {
+   "id": "arejknlks",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 4,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "#ececec",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "rectangle",
+   "origin": {
+    "x": 8.911,
+    "y": -32.194
+   },
+   "widthM": 56.5,
+   "heightM": 8,
+   "points": [],
+   "structure": {
+    "type": "arquibancada",
+    "label": "Arquibancada"
+   },
+   "group": "grpjxon49"
+  },
+  {
+   "id": "ornjlfbyq",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "type": "entrada",
+   "pos": {
+    "x": -13.793,
+    "y": -12.572
+   },
+   "rotation": 2,
+   "sizeM": 3,
+   "color": "#2e7d32",
+   "showLabel": true,
+   "group": "grpjxon49"
+  },
+  {
+   "id": "ornjmi6of",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "type": "saida",
+   "pos": {
+    "x": -17.771,
+    "y": 66.215
+   },
+   "rotation": -178,
+   "sizeM": 3,
+   "color": "#d32020",
+   "showLabel": true,
+   "group": "grpjxon49"
+  },
+  {
+   "id": "arenajtqeas",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 5,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "none",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": 0.076,
+    "y": -0.001
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 16.229,
+     "y": 20.354
+    },
+    {
+     "x": 15.068,
+     "y": 22.328
+    },
+    {
+     "x": 14.368,
+     "y": 24.798
+    },
+    {
+     "x": 14.494,
+     "y": 27.803
+    },
+    {
+     "x": 14.421,
+     "y": 34.16
+    },
+    {
+     "x": 15.852,
+     "y": 36.451
+    },
+    {
+     "x": 17.422,
+     "y": 37.619
+    },
+    {
+     "x": 18.421,
+     "y": 37.98
+    },
+    {
+     "x": 20.81,
+     "y": 37.212
+    },
+    {
+     "x": 21.912,
+     "y": 35.711
+    },
+    {
+     "x": 22.199,
+     "y": 34.674
+    },
+    {
+     "x": 22.15,
+     "y": 25.422
+    },
+    {
+     "x": 22.035,
+     "y": 24.132
+    },
+    {
+     "x": 21.565,
+     "y": 22.62
+    },
+    {
+     "x": 20.921,
+     "y": 21.313
+    },
+    {
+     "x": 19.929,
+     "y": 20.25
+    },
+    {
+     "x": 18.707,
+     "y": 19.803
+    },
+    {
+     "x": 17.677,
+     "y": 19.703
+    },
+    {
+     "x": 17.239,
+     "y": 19.67
+    }
+   ],
+   "structure": {
+    "type": "ilha",
+    "label": "Ilha",
+    "labelRotation": 0,
+    "labelSizeMm": 3
+   },
+   "group": "grpjxon49"
+  },
+  {
+   "id": "arenajufvg6",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 6,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "none",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": 0,
+    "y": 0
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 48.851,
+     "y": 20.414
+    },
+    {
+     "x": 50.177,
+     "y": 20.748
+    },
+    {
+     "x": 50.939,
+     "y": 21.417
+    },
+    {
+     "x": 51.975,
+     "y": 22.812
+    },
+    {
+     "x": 52.162,
+     "y": 23.952
+    },
+    {
+     "x": 51.974,
+     "y": 25.56
+    },
+    {
+     "x": 51.285,
+     "y": 26.722
+    },
+    {
+     "x": 50.217,
+     "y": 27.557
+    },
+    {
+     "x": 48.562,
+     "y": 27.555
+    },
+    {
+     "x": 46.921,
+     "y": 27.41
+    },
+    {
+     "x": 45.73,
+     "y": 26.758
+    },
+    {
+     "x": 45.292,
+     "y": 25.15
+    },
+    {
+     "x": 45.217,
+     "y": 24.284
+    },
+    {
+     "x": 45.217,
+     "y": 22.675
+    },
+    {
+     "x": 45.519,
+     "y": 21.883
+    },
+    {
+     "x": 46.298,
+     "y": 21.202
+    },
+    {
+     "x": 47.184,
+     "y": 20.613
+    }
+   ],
+   "structure": {
+    "type": "ilha",
+    "label": "Ilha",
+    "labelRotation": 0,
+    "labelSizeMm": 3
+   },
+   "group": "grpjxon49"
+  },
+  {
+   "id": "arenajvdy83",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 7,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "none",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": 0,
+    "y": 0
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 49.028,
+     "y": 31.916
+    },
+    {
+     "x": 50.446,
+     "y": 32.652
+    },
+    {
+     "x": 51.229,
+     "y": 33.266
+    },
+    {
+     "x": 51.853,
+     "y": 34.293
+    },
+    {
+     "x": 51.541,
+     "y": 35.676
+    },
+    {
+     "x": 50.559,
+     "y": 36.875
+    },
+    {
+     "x": 48.837,
+     "y": 37.144
+    },
+    {
+     "x": 47.142,
+     "y": 36.769
+    },
+    {
+     "x": 45.482,
+     "y": 36.145
+    },
+    {
+     "x": 44.997,
+     "y": 35.442
+    },
+    {
+     "x": 44.923,
+     "y": 33.522
+    },
+    {
+     "x": 45.993,
+     "y": 32.524
+    },
+    {
+     "x": 47.035,
+     "y": 32.024
+    },
+    {
+     "x": 47.811,
+     "y": 31.772
+    }
+   ],
+   "structure": {
+    "type": "ilha",
+    "label": "Ilha",
+    "labelRotation": 0,
+    "labelSizeMm": 3
+   },
+   "group": "grpjxon49"
+  },
+  {
+   "id": "arenajwoitl",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 8,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "#c4c4c4",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "rectangle",
+   "origin": {
+    "x": 11.216,
+    "y": 68.746
+   },
+   "widthM": 16.93,
+   "heightM": 5.27,
+   "points": [],
+   "structure": {
+    "type": "edificacao",
+    "label": "Júri",
+    "labelOffsetM": {
+     "x": 0,
+     "y": 1
+    }
+   },
+   "group": "grpjxon49"
+  }
+ ],
+ "assets": {},
+ "summary": {
+  "widthM": 0,
+  "heightM": 0,
+  "objectCount": 8
+ }
+}

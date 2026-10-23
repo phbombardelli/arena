@@ -1,0 +1,171 @@
+{
+ "format": "percurso-pista",
+ "schemaVersion": 11,
+ "id": "tplk97fx0",
+ "name": "AMAN - Pista Cel Jacques",
+ "savedAt": "2026-10-22T14:09:56.140Z",
+ "objects": [
+  {
+   "id": "arenak2i5q8",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": true,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.5,
+    "fill": "none",
+    "stroke": "#1a1a1a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": -1.031,
+    "y": 0.701
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 77.341,
+     "y": 1.15
+    },
+    {
+     "x": 77.645,
+     "y": 59.96
+    },
+    {
+     "x": -0.762,
+     "y": 60.193
+    },
+    {
+     "x": -0.777,
+     "y": 1.042
+    }
+   ],
+   "group": "grpk7m7j7"
+  },
+  {
+   "id": "arenak3dy8u",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "#efefef",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": -1.031,
+    "y": 0.701
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 15.782,
+     "y": -2.249
+    },
+    {
+     "x": 24.747,
+     "y": -2.332
+    },
+    {
+     "x": 24.775,
+     "y": 0.74
+    },
+    {
+     "x": 15.81,
+     "y": 0.823
+    }
+   ],
+   "structure": {
+    "type": "outra",
+    "label": "Júri",
+    "labelOffsetM": {
+     "x": 1,
+     "y": 0
+    }
+   },
+   "group": "grpk7m7j7"
+  },
+  {
+   "id": "ornk44p4f",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "type": "entrada",
+   "pos": {
+    "x": -3.398,
+    "y": 7.366
+   },
+   "rotation": 0.472,
+   "sizeM": 3,
+   "color": "#2e7d32",
+   "showLabel": true,
+   "group": "grpk7m7j7"
+  },
+  {
+   "id": "ornk5d37y",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "type": "saida",
+   "pos": {
+    "x": 71.836,
+    "y": 62.372
+   },
+   "rotation": 89.472,
+   "sizeM": 3,
+   "color": "#d32020",
+   "showLabel": true,
+   "group": "grpk7m7j7"
+  }
+ ],
+ "assets": {},
+ "summary": {
+  "widthM": 0,
+  "heightM": 0,
+  "objectCount": 4
+ }
+}

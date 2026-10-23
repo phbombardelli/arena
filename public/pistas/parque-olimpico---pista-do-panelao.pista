@@ -1,0 +1,217 @@
+{
+ "format": "percurso-pista",
+ "schemaVersion": 11,
+ "id": "tplmj16c5",
+ "name": "Parque Olímpico - Pista do Panelão",
+ "savedAt": "2026-10-22T17:42:32.572Z",
+ "objects": [
+  {
+   "id": "arenamea8lx",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": true,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.5,
+    "fill": "none",
+    "stroke": "#1a1a1a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": 0,
+    "y": 0
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 3.186,
+     "y": 20.718
+    },
+    {
+     "x": 20.15,
+     "y": 11.739
+    },
+    {
+     "x": 32.926,
+     "y": 4.427
+    },
+    {
+     "x": 37.136,
+     "y": 2.731
+    },
+    {
+     "x": 45.272,
+     "y": 0
+    },
+    {
+     "x": 54.824,
+     "y": 0.885
+    },
+    {
+     "x": 63.862,
+     "y": 2.465
+    },
+    {
+     "x": 70.95,
+     "y": 4.615
+    },
+    {
+     "x": 74.761,
+     "y": 7.629
+    },
+    {
+     "x": 78.243,
+     "y": 12.697
+    },
+    {
+     "x": 78.827,
+     "y": 18.606
+    },
+    {
+     "x": 78.726,
+     "y": 25.79
+    },
+    {
+     "x": 79.694,
+     "y": 33.798
+    },
+    {
+     "x": 82.071,
+     "y": 41.575
+    },
+    {
+     "x": 84.899,
+     "y": 49.424
+    },
+    {
+     "x": 83.351,
+     "y": 55.316
+    },
+    {
+     "x": 81.339,
+     "y": 60.816
+    },
+    {
+     "x": 78.022,
+     "y": 65.669
+    },
+    {
+     "x": 71.317,
+     "y": 67.658
+    },
+    {
+     "x": 64.4,
+     "y": 69.099
+    },
+    {
+     "x": 57.864,
+     "y": 69.284
+    },
+    {
+     "x": 49.219,
+     "y": 68.203
+    },
+    {
+     "x": 38.1,
+     "y": 64.675
+    },
+    {
+     "x": 29.387,
+     "y": 60.739
+    },
+    {
+     "x": 18.935,
+     "y": 56.207
+    },
+    {
+     "x": 11.645,
+     "y": 52.787
+    },
+    {
+     "x": 6.015,
+     "y": 48.371
+    },
+    {
+     "x": 4.632,
+     "y": 43.08
+    },
+    {
+     "x": 5.509,
+     "y": 38.685
+    },
+    {
+     "x": 4.95,
+     "y": 33.338
+    },
+    {
+     "x": 3.191,
+     "y": 28.951
+    },
+    {
+     "x": 0,
+     "y": 24.993
+    }
+   ]
+  },
+  {
+   "id": "ornmh49cz",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "type": "entrada",
+   "pos": {
+    "x": -0.183,
+    "y": 20.983
+   },
+   "rotation": 30,
+   "sizeM": 3,
+   "color": "#2e7d32",
+   "showLabel": true
+  },
+  {
+   "id": "ornmi1ibv",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "type": "saida",
+   "pos": {
+    "x": -1.675,
+    "y": 22.636
+   },
+   "rotation": 210,
+   "sizeM": 3,
+   "color": "#d32020",
+   "showLabel": true
+  }
+ ],
+ "assets": {},
+ "summary": {
+  "widthM": 0,
+  "heightM": 0,
+  "objectCount": 3
+ }
+}

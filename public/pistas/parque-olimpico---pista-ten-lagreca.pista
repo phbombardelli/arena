@@ -1,0 +1,169 @@
+{
+ "format": "percurso-pista",
+ "schemaVersion": 11,
+ "id": "tpln0zu5h",
+ "name": "Parque Olímpico - Pista Ten Lagreca",
+ "savedAt": "2026-10-22T17:58:43.723Z",
+ "objects": [
+  {
+   "id": "arenamvngx7",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": true,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.5,
+    "fill": "none",
+    "stroke": "#1a1a1a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": 0,
+    "y": 0
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 107.109,
+     "y": 80.867
+    },
+    {
+     "x": 0.421,
+     "y": 80.805
+    },
+    {
+     "x": 0,
+     "y": 0.055
+    },
+    {
+     "x": 106.669,
+     "y": 0
+    }
+   ],
+   "group": "grpmzy68s"
+  },
+  {
+   "id": "arenamwwrrw",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "#efefef",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": 0,
+    "y": 0
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 110.257,
+     "y": 34.061
+    },
+    {
+     "x": 119.713,
+     "y": 34.061
+    },
+    {
+     "x": 119.713,
+     "y": 46.319
+    },
+    {
+     "x": 110.257,
+     "y": 46.319
+    }
+   ],
+   "structure": {
+    "type": "outra",
+    "label": "Júri",
+    "labelRotation": 0,
+    "labelSizeMm": 5
+   },
+   "group": "grpmzy68s"
+  },
+  {
+   "id": "ornmxq64c",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "type": "entrada",
+   "pos": {
+    "x": 108.612,
+    "y": 16.324
+   },
+   "rotation": 180,
+   "sizeM": 3,
+   "color": "#2e7d32",
+   "showLabel": true,
+   "group": "grpmzy68s"
+  },
+  {
+   "id": "ornmyrd0b",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "type": "saida",
+   "pos": {
+    "x": 109.358,
+    "y": 66.903
+   },
+   "rotation": 0,
+   "sizeM": 3,
+   "color": "#d32020",
+   "showLabel": true,
+   "group": "grpmzy68s"
+  }
+ ],
+ "assets": {},
+ "summary": {
+  "widthM": 0,
+  "heightM": 0,
+  "objectCount": 4
+ }
+}

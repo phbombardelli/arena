@@ -1,0 +1,188 @@
+{
+ "format": "percurso-pista",
+ "schemaVersion": 10,
+ "id": "tplcf7pw",
+ "name": "AMAN - Pista Antônio João",
+ "savedAt": "2026-10-21T17:21:11.707Z",
+ "objects": [
+  {
+   "id": "arena5opi4",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": true,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.5,
+    "fill": "none",
+    "stroke": "#1a1a1a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": 1.147,
+    "y": 10.558
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 1.298,
+     "y": 12.973
+    },
+    {
+     "x": 86.896,
+     "y": 10.558
+    },
+    {
+     "x": 86.326,
+     "y": 41.412
+    },
+    {
+     "x": 85.403,
+     "y": 44.272
+    },
+    {
+     "x": 83.564,
+     "y": 46.235
+    },
+    {
+     "x": 81.623,
+     "y": 47.612
+    },
+    {
+     "x": 79.416,
+     "y": 48.736
+    },
+    {
+     "x": 76.924,
+     "y": 48.851
+    },
+    {
+     "x": 1.147,
+     "y": 47.811
+    }
+   ],
+   "group": "grpbly6t"
+  },
+  {
+   "id": "arena6mjtr",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "#efefef",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": 1.147,
+    "y": 10.558
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 46.904,
+     "y": 11.393
+    },
+    {
+     "x": 46.965,
+     "y": 8.581
+    },
+    {
+     "x": 52.744,
+     "y": 8.181
+    },
+    {
+     "x": 52.881,
+     "y": 11.224
+    }
+   ],
+   "structure": {
+    "type": "outra",
+    "label": "Júri",
+    "labelSizeMm": 4
+   },
+   "group": "grpbly6t"
+  },
+  {
+   "id": "orn8e2zj",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "type": "entrada",
+   "pos": {
+    "x": -3.238,
+    "y": 14.609
+   },
+   "rotation": 0,
+   "sizeM": 3,
+   "color": "#2e7d32",
+   "showLabel": true,
+   "group": "grpbly6t"
+  },
+  {
+   "id": "orn9fb3s",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "type": "saida",
+   "pos": {
+    "x": -3.805,
+    "y": 17.625
+   },
+   "rotation": -180,
+   "sizeM": 3,
+   "color": "#d32020",
+   "showLabel": true,
+   "group": "grpbly6t"
+  }
+ ],
+ "assets": {},
+ "summary": {
+  "widthM": 0,
+  "heightM": 0,
+  "objectCount": 4
+ }
+}

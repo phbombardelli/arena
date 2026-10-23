@@ -1,0 +1,91 @@
+{
+ "format": "percurso-pista",
+ "schemaVersion": 11,
+ "id": "tplltll64",
+ "name": "Parque Olímpico - Pista Oeste",
+ "savedAt": "2026-10-22T17:37:15.347Z",
+ "objects": [
+  {
+   "id": "arelqm0ag",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "corner": {
+    "style": "square",
+    "radiusM": 4
+   },
+   "perimeterRuler": {
+    "visible": true,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.5,
+    "fill": "none",
+    "stroke": "#1a1a1a"
+   },
+   "shape": "rectangle",
+   "origin": {
+    "x": 0.453,
+    "y": 0.156
+   },
+   "widthM": 86,
+   "heightM": 64.092,
+   "points": [],
+   "group": "grplp4uir"
+  },
+  {
+   "id": "ornlr32b5",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "type": "entrada",
+   "pos": {
+    "x": -2.201,
+    "y": 4.91
+   },
+   "rotation": 0,
+   "sizeM": 3,
+   "color": "#2e7d32",
+   "showLabel": true,
+   "group": "grplp4uir"
+  },
+  {
+   "id": "ornlszya8",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "type": "saida",
+   "pos": {
+    "x": 88.814,
+    "y": 22.009
+   },
+   "rotation": 0,
+   "sizeM": 3,
+   "color": "#d32020",
+   "showLabel": true,
+   "group": "grplp4uir"
+  }
+ ],
+ "assets": {},
+ "summary": {
+  "widthM": 86,
+  "heightM": 64.092,
+  "objectCount": 3
+ }
+}

@@ -1,0 +1,131 @@
+{
+ "format": "percurso-pista",
+ "schemaVersion": 11,
+ "id": "tpln4l5kt",
+ "name": "1º RCG - Pista Principal",
+ "savedAt": "2026-10-22T17:59:16.339Z",
+ "objects": [
+  {
+   "id": "aren2nx5j",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": true,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.5,
+    "fill": "none",
+    "stroke": "#1a1a1a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": -13.088,
+    "y": -0.085
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 116.476,
+     "y": 87.095
+    },
+    {
+     "x": -13.088,
+     "y": 86.656
+    },
+    {
+     "x": -12.484,
+     "y": -0.085
+    },
+    {
+     "x": 116.236,
+     "y": 0.375
+    }
+   ],
+   "group": "grpn14fdo"
+  },
+  {
+   "id": "aren31rg1",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "none",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": -13.118,
+    "y": 0.398
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": 61.722,
+     "y": -0.983
+    },
+    {
+     "x": 61.662,
+     "y": -7.265
+    },
+    {
+     "x": 68.649,
+     "y": -7.331
+    },
+    {
+     "x": 68.708,
+     "y": -1.049
+    }
+   ],
+   "structure": {
+    "type": "edificacao",
+    "label": "Júri",
+    "labelSizeMm": 4,
+    "labelRotation": 0
+   },
+   "group": "grpn14fdo"
+  }
+ ],
+ "assets": {},
+ "summary": {
+  "widthM": 0,
+  "heightM": 0,
+  "objectCount": 2
+ }
+}

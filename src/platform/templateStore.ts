@@ -30,6 +30,47 @@ export interface TemplateSummary {
   objectCount: number;
   /** Tamanho aproximado em kB, para o usuário entender o custo. */
   sizeKB: number;
+  /** Vem com o programa (banco de pistas): todos veem, ninguém apaga. */
+  builtin: boolean;
+}
+
+/* ------------------------------------------- banco de pistas embutido */
+
+/**
+ * Pistas que vêm com o programa (B-49): arquivos `.pista` publicados em
+ * `public/pistas/`, listados em `index.json`. Carregam uma vez, quando o
+ * painel abre, e somam-se às guardadas neste navegador. Uma pista local
+ * com o mesmo nome tem a preferência — é a versão que o usuário mexeu.
+ */
+let embutidas: ArenaTemplate[] = [];
+let carregando: Promise<void> | null = null;
+
+export function loadBuiltinTemplates(): Promise<void> {
+  carregando ??= (async () => {
+    try {
+      const indice = await fetch('pistas/index.json', { cache: 'no-cache' });
+      if (!indice.ok) return;
+      const nomes: unknown = await indice.json();
+      if (!Array.isArray(nomes)) return;
+      const lidas = await Promise.all(
+        nomes
+          .filter((n): n is string => typeof n === 'string')
+          .map(async (n) => {
+            try {
+              const r = await fetch(`pistas/${encodeURIComponent(n)}`);
+              const v: unknown = r.ok ? await r.json() : null;
+              return isArenaTemplate(v) ? v : null;
+            } catch {
+              return null;
+            }
+          }),
+      );
+      embutidas = lidas.filter((t): t is ArenaTemplate => t !== null);
+    } catch {
+      // Sem internet ou sem banco publicado: fica só o repositório local.
+    }
+  })();
+  return carregando;
 }
 
 function ler(): ArenaTemplate[] {
@@ -56,22 +97,28 @@ function gravar(lista: ArenaTemplate[]): void {
   }
 }
 
+const resumo = (t: ArenaTemplate, builtin: boolean): TemplateSummary => ({
+  id: t.id,
+  name: t.name,
+  savedAt: t.savedAt,
+  widthM: t.summary?.widthM ?? 0,
+  heightM: t.summary?.heightM ?? 0,
+  objectCount: t.summary?.objectCount ?? t.objects.length,
+  sizeKB: Math.round(JSON.stringify(t).length / 1024),
+  builtin,
+});
+
 export function listTemplates(): TemplateSummary[] {
-  return ler()
-    .map((t) => ({
-      id: t.id,
-      name: t.name,
-      savedAt: t.savedAt,
-      widthM: t.summary?.widthM ?? 0,
-      heightM: t.summary?.heightM ?? 0,
-      objectCount: t.summary?.objectCount ?? t.objects.length,
-      sizeKB: Math.round(JSON.stringify(t).length / 1024),
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  const locais = ler();
+  const nomesLocais = new Set(locais.map((t) => t.name));
+  return [
+    ...locais.map((t) => resumo(t, false)),
+    ...embutidas.filter((t) => !nomesLocais.has(t.name)).map((t) => resumo(t, true)),
+  ].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 }
 
 export const getTemplate = (id: string): ArenaTemplate | null =>
-  ler().find((t) => t.id === id) ?? null;
+  ler().find((t) => t.id === id) ?? embutidas.find((t) => t.id === id) ?? null;
 
 /** Grava, substituindo o modelo de mesmo nome se já existir. */
 export function saveTemplate(template: ArenaTemplate): void {

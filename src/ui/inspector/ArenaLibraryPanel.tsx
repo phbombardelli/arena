@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { applyTemplate, arenaScopeObjects, buildTemplate } from '@core/library/arenaTemplate';
 import { SCHEMA_VERSION } from '@core/model/types';
 import {
@@ -7,6 +7,7 @@ import {
   getTemplate,
   importTemplateFile,
   listTemplates,
+  loadBuiltinTemplates,
   saveTemplate,
   TemplateStoreError,
 } from '@platform/templateStore';
@@ -24,6 +25,17 @@ export function ArenaLibraryPanel() {
   const [nome, setNome] = useState('');
 
   const recarregar = () => setModelos(listTemplates());
+
+  // O banco de pistas do programa chega pela rede, uma vez.
+  useEffect(() => {
+    let vivo = true;
+    void loadBuiltinTemplates().then(() => {
+      if (vivo) setModelos(listTemplates());
+    });
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   const guardar = () => {
     const escolhido = nome.trim() || doc.meta.venue || 'Pista sem nome';
@@ -103,6 +115,7 @@ export function ArenaLibraryPanel() {
                 onClick={() => aplicar(m.id, m.name)}
               >
                 {m.name}
+                {m.builtin && <em> · do programa</em>}
                 {m.widthM > 0 && (
                   <em>
                     {' '}
@@ -120,6 +133,7 @@ export function ArenaLibraryPanel() {
               >
                 ↓
               </button>
+              {!m.builtin && (
               <button
                 className="mini"
                 title="Remover do repositório"
@@ -132,6 +146,7 @@ export function ArenaLibraryPanel() {
               >
                 ×
               </button>
+              )}
             </li>
           ))}
         </ul>
@@ -143,8 +158,8 @@ export function ArenaLibraryPanel() {
         </button>
       </div>
       <p className="note dim">
-        O repositório fica neste navegador. Para levar a outro computador,
-        exporte em arquivo.
+        As pistas "do programa" vêm com o Percurso, para todos. As suas ficam
+        neste navegador; para levar a outro computador, exporte em arquivo.
       </p>
     </section>
   );

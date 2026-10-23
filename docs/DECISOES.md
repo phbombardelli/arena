@@ -1624,3 +1624,16 @@ antiga.
   Shift+Enter quebra a linha, Esc desiste, clicar fora confirma. O texto
   passa a ter várias linhas (1,2 corpo entre elas), também no campo do
   painel, que vira caixa de várias linhas.
+
+## 79. Banco de pistas embutido
+
+As pistas guardadas pelo autor passam a vir com o programa, para todos:
+arquivos `.pista` em `public/pistas/`, listados em `index.json`,
+publicados junto com o site. O painel Modelos de pista os carrega uma vez
+pela rede e os mostra ao lado das pistas do navegador, marcados "do
+programa" — dá para aplicar e exportar, não para apagar. Uma pista local
+com o mesmo nome tem a preferência. Sem rede, fica só o repositório local.
+
+Vão sem imagem de fundo: o banco é público e não redistribui print do
+Google Maps. Para acrescentar uma pista ao banco, exporte-a (↓) e ponha o
+arquivo na pasta, com o nome no `index.json`.

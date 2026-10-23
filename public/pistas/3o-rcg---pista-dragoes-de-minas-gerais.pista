@@ -1,0 +1,261 @@
+{
+ "format": "percurso-pista",
+ "schemaVersion": 11,
+ "id": "tplj783zq",
+ "name": "3º RCG - Pista Dragões de Minas Gerais",
+ "savedAt": "2026-10-22T13:34:37.527Z",
+ "objects": [
+  {
+   "id": "areiwrper",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": true,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.5,
+    "fill": "none",
+    "stroke": "#1a1a1a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": -24.934,
+    "y": -2.474
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": -24.934,
+     "y": 20.984
+    },
+    {
+     "x": -23.76,
+     "y": 5.16
+    },
+    {
+     "x": 34.761,
+     "y": -0.465
+    },
+    {
+     "x": 84.625,
+     "y": -2.474
+    },
+    {
+     "x": 83.515,
+     "y": 50.242
+    },
+    {
+     "x": -15.968,
+     "y": 50.676
+    },
+    {
+     "x": -18.56,
+     "y": 50.012
+    },
+    {
+     "x": -21.368,
+     "y": 48.501
+    },
+    {
+     "x": -23.755,
+     "y": 46.397
+    },
+    {
+     "x": -24.743,
+     "y": 43.078
+    }
+   ],
+   "group": "grpj1v1oh"
+  },
+  {
+   "id": "areixatzl",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "#efefef",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": -24.905,
+    "y": -2.535
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": -12.541,
+     "y": 51.619
+    },
+    {
+     "x": 54.213,
+     "y": 51.619
+    },
+    {
+     "x": 54.213,
+     "y": 57.543
+    },
+    {
+     "x": -12.541,
+     "y": 57.543
+    }
+   ],
+   "structure": {
+    "type": "outra",
+    "label": "Arquibancada",
+    "labelSizeMm": 5,
+    "labelOffsetM": {
+     "x": 0,
+     "y": 0.5
+    }
+   },
+   "group": "grpj1v1oh"
+  },
+  {
+   "id": "areiy8lwc",
+   "kind": "arena",
+   "layer": "arena",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 2,
+   "corner": {
+    "style": "square",
+    "radiusM": 0
+   },
+   "perimeterRuler": {
+    "visible": false,
+    "stepM": 5,
+    "labelEveryM": 5,
+    "sides": {
+     "top": true,
+     "right": true,
+     "bottom": true,
+     "left": true
+    }
+   },
+   "style": {
+    "strokeMm": 0.25,
+    "fill": "none",
+    "stroke": "#3a3a3a"
+   },
+   "shape": "polygon",
+   "origin": {
+    "x": -25.016,
+    "y": -2.474
+   },
+   "widthM": 0,
+   "heightM": 0,
+   "points": [
+    {
+     "x": -29.178,
+     "y": 24.405
+    },
+    {
+     "x": -25.337,
+     "y": 24.405
+    },
+    {
+     "x": -25.337,
+     "y": 30.51
+    },
+    {
+     "x": -29.178,
+     "y": 30.51
+    }
+   ],
+   "structure": {
+    "type": "outra",
+    "label": "Júri",
+    "labelRotation": 0,
+    "labelSizeMm": 3,
+    "labelOffsetM": {
+     "x": 0,
+     "y": 2
+    }
+   },
+   "group": "grpj1v1oh"
+  },
+  {
+   "id": "orniztl4q",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 0,
+   "type": "entrada",
+   "pos": {
+    "x": -27.222,
+    "y": 15.62
+   },
+   "rotation": 4,
+   "sizeM": 3,
+   "color": "#2e7d32",
+   "showLabel": true,
+   "group": "grpj1v1oh"
+  },
+  {
+   "id": "ornj0l67k",
+   "kind": "ornament",
+   "layer": "ornaments",
+   "locked": false,
+   "visible": true,
+   "scope": "pista",
+   "z": 1,
+   "type": "saida",
+   "pos": {
+    "x": 86.529,
+    "y": 46.345
+   },
+   "rotation": 1,
+   "sizeM": 3,
+   "color": "#d32020",
+   "showLabel": true,
+   "group": "grpj1v1oh"
+  }
+ ],
+ "assets": {},
+ "summary": {
+  "widthM": 0,
+  "heightM": 0,
+  "objectCount": 5
+ }
+}
