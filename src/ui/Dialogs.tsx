@@ -3,6 +3,7 @@ import { useEditorStore } from '@store/editorStore';
 import { Dialog } from '@ui/common/Popover';
 import { NewCourseDialogBody, OpenCourseDialogBody, PistasDialogBody } from '@ui/files/FileDialogs';
 import { SheetSettings } from '@ui/inspector/SheetSettings';
+import { AdminPanelBody, CloudConsentBody } from '@ui/cloud/CloudUI';
 
 const ATALHOS: [string, string][] = [
   ['Ferramentas', ''],
@@ -80,6 +81,20 @@ export function Dialogs() {
     return (
       <Dialog title="Nova ginástica" onClose={fecha}>
         <NewCourseDialogBody kind="ginastica" />
+      </Dialog>
+    );
+  }
+  if (dialog === 'nuvem') {
+    return (
+      <Dialog title="Backup na nuvem" onClose={fecha}>
+        <CloudConsentBody />
+      </Dialog>
+    );
+  }
+  if (dialog === 'admin') {
+    return (
+      <Dialog title="Painel de admin" onClose={fecha}>
+        <AdminPanelBody />
       </Dialog>
     );
   }

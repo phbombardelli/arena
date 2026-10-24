@@ -4,6 +4,7 @@ import {
   type ArenaTemplate,
 } from '@core/library/arenaTemplate';
 import { idbAll, idbDelete, idbPut } from './idb';
+import { notifyLocalChange } from './localChanges';
 
 /**
  * "Minhas pistas" (B-77, decisão 88).
@@ -161,9 +162,28 @@ export async function saveTemplate(template: ArenaTemplate): Promise<void> {
     );
   }
   locais = [...locais.filter((t) => t.name !== template.name), template];
+  for (const t of mesmoNome) notifyLocalChange({ tipo: 'pista', id: t.id, apagado: true });
+  notifyLocalChange({ tipo: 'pista', id: template.id, apagado: false });
 }
 
 export async function deleteTemplate(id: string): Promise<void> {
+  await idbDelete('pistas', id);
+  locais = locais.filter((t) => t.id !== id);
+  notifyLocalChange({ tipo: 'pista', id, apagado: true });
+}
+
+/* ------------------------------------------------ para a sincronização */
+
+/** As pistas deste aparelho, só as do usuário (sem as do programa). */
+export const localTemplates = (): ArenaTemplate[] => locais;
+
+/** Grava uma pista vinda da nuvem, sem avisar mudança (não volta para lá). */
+export async function putTemplateFromCloud(t: ArenaTemplate): Promise<void> {
+  await idbPut('pistas', t);
+  locais = [...locais.filter((x) => x.id !== t.id), t];
+}
+
+export async function removeTemplateFromCloud(id: string): Promise<void> {
   await idbDelete('pistas', id);
   locais = locais.filter((t) => t.id !== id);
 }

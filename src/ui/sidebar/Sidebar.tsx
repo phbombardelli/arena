@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { OBSTACLES, obstacleTypesFor } from '@core/library/obstacles';
-import { DEFAULT_CAVALETES, DEFAULT_RELOGIO, defaultPeDeGalinha } from '@core/library/exercises';
+import { DEFAULT_CAVALETES, DEFAULT_LEQUE, DEFAULT_RELOGIO, defaultPeDeGalinha } from '@core/library/exercises';
 import { useDocumentStore } from '@store/documentStore';
 import { ORNAMENTS } from '@core/library/ornaments';
 import { STRUCTURES } from '@core/library/structures';
@@ -16,6 +16,7 @@ import {
   IconBarrierBlock,
   IconArrowsSplit,
   IconBooks,
+  IconChartArcs,
   IconClockHour3,
   IconGripHorizontal,
   IconTrafficCone,
@@ -90,7 +91,14 @@ export function Sidebar() {
   const abreExercicio = (kind: ExerciseKind, completo = true) =>
     useEditorStore.getState().setExerciseEditor({
       kind,
-      params: kind === 'cavaletes' ? DEFAULT_CAVALETES : kind === 'relogio' ? DEFAULT_RELOGIO : defaultPeDeGalinha(completo),
+      params:
+        kind === 'cavaletes'
+          ? DEFAULT_CAVALETES
+          : kind === 'relogio'
+            ? DEFAULT_RELOGIO
+            : kind === 'leque'
+              ? DEFAULT_LEQUE
+              : defaultPeDeGalinha(completo),
       editingId: null,
     });
 
@@ -157,6 +165,7 @@ export function Sidebar() {
             ]}
           />
           <RailButton icon={<IconClockHour3 {...ICONE} />} label="Relógio" onClick={() => abreExercicio('relogio')} />
+          <RailButton icon={<IconChartArcs {...ICONE} />} label="Leque de varas" onClick={() => abreExercicio('leque')} />
 
           <RailGroup title="Medir e anotar" />
           <RailButton icon={<IconRulerMeasure {...ICONE} />} label="Trena" shortcut="M" active={tool === 'measure'} onClick={() => usa('measure')} />

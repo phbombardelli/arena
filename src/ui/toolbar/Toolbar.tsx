@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { exportDocumentPdf } from '@platform/exportPdf';
 import { printDocument } from '@platform/print';
 import { installApp, usePwa } from '@platform/pwa';
+import { AccountButton } from '@ui/cloud/CloudUI';
 import {
   saveCourse,
   saveDocumentAs,
@@ -259,6 +260,9 @@ export function Toolbar() {
           {fileName ?? 'Sem título'}
           {dirty ? ' •' : ''}
         </span>
+      </div>
+      <div className="toolbar-group">
+        <AccountButton />
       </div>
     </header>
   );

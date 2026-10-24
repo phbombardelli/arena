@@ -1893,3 +1893,48 @@ centro. Sem lances de galope.
 - **Relógio**: 4 elementos a 0°, 90°, 180° e 270°, no sentido do raio,
   diâmetro medido pelo centro das varas, sentido horário, anti-horário ou
   duplo, tipo à escolha, sem numeração; cota do diâmetro ao lado do eixo.
+
+## 90. Endereço Arena, login com Google e backup na nuvem (B-80, B-36, B-78, B-79)
+
+**Endereço** (B-80): o repositório virou `phbombardelli/arena` e o site,
+`phbombardelli.github.io/arena/`. Um repositório novo, `percurso`, só
+redireciona o endereço antigo — mantendo o resto do caminho — e traz um
+service worker de limpeza: o app instalado no endereço antigo, que
+guardava a versão velha, apaga o cache, se desinstala e vai para o novo.
+Os dados do navegador (Minhas pistas, Meus percursos) ficam: a origem
+`phbombardelli.github.io` não mudou.
+
+**Nuvem num projeto Firebase só do Arena** (`arena-croquis`, separado do
+SAPH: cotas e custos independentes), no plano gratuito. Tudo no Firestore
+(São Paulo): `usuarios/{uid}` → `arquivos/{id}` (metadados, data, lápide
+de apagado) → `partes/{n}` (o conteúdo em fatias de ~700 mil caracteres:
+cada documento cabe 1 MB e imagem de fundo passa disso). Sem Storage.
+
+**Login** (B-36): opcional, com Google, pelo botão da nuvem no canto da
+barra. Na primeira vez, um aceite diz que o administrador pode acessar os
+arquivos guardados na nuvem. O Firebase só é baixado por quem entra.
+
+**Sincronização** (B-78): local primeiro. Cada pista ou percurso salvo
+sobe na hora; ao entrar, ao voltar a conexão e em "Sincronizar agora",
+os dois lados se acertam (`planSync`): só de um lado vai para o outro, o
+mais novo vale, apagado vira lápide, e editado em dois aparelhos guarda o
+mais antigo como "(cópia deste aparelho)" / "(cópia da nuvem)".
+
+**Permissões no servidor** (`firestore.rules`): cada usuário lê e grava
+só o que é dele; o admin (`pedrohbombardelli@gmail.com`, e-mail
+verificado) lê tudo e não altera nada dos outros.
+
+**Painel de admin** (B-79): usuários (último acesso) e os arquivos de
+cada um; abrir para ver (salvar guarda uma cópia do admin) e baixar.
+Promover uma pista ao banco do programa é baixar o .pista e pô-lo em
+`public/pistas`.
+
+## 91. Leque de varas
+
+Quinto exercício de ginástica ("in-and-outs on a bended line"): varas no
+sentido do raio de um arco, simétricas em torno do alto. O usuário
+escolhe a quantidade, o **espaçamento pelo centro das varas, medido sobre
+o arco**, o raio (que diz quanto o leque abre), o sentido e o tipo
+(padrão: vara no chão, 6 varas, 3 m, raio 9 m). Uma cota em arco por
+intervalo, por dentro do arco, onde as setas não alcançam. As cotas dos
+exercícios passam a ter sempre duas casas ("3,00 m", "23,50 m").

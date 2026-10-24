@@ -7,10 +7,12 @@ import type { CoursePath, Obstacle } from '@core/model/types';
 import {
   defaultPeDeGalinha,
   DEFAULT_CAVALETES,
+  DEFAULT_LEQUE,
   DEFAULT_RELOGIO,
   exercisePlacement,
   generateCavaletes,
   generatePeDeGalinha,
+  generateLeque,
   generateRelogio,
   placeExercise,
   updateExercise,
@@ -90,5 +92,20 @@ describe('ginástica (B-37)', () => {
     expect(obs).toHaveLength(6);
     expect(new Set(obs.map((o) => o.group)).size).toBe(1);
     expect(exercisePlacement(doc, 'exe1')!.giro).toBeCloseTo(40, 9);
+  });
+
+  it('leque: varas no raio, a 3 m uma da outra pelo centro, medidos sobre o arco', () => {
+    const g = generateLeque({ ...DEFAULT_LEQUE, count: 6, spacingM: 3, radiusM: 9 });
+    expect(g.obstacles).toHaveLength(6);
+    for (const o of g.obstacles) expect(distance(o.pos, { x: 0, y: 0 })).toBeCloseTo(9, 9);
+    // Arco entre duas vizinhas = raio × ângulo entre elas.
+    const ang = (o: Obstacle) => Math.atan2(o.pos.y, o.pos.x);
+    expect(9 * Math.abs(ang(g.obstacles[1]!) - ang(g.obstacles[0]!))).toBeCloseTo(3, 9);
+    // Simétrico em torno do alto.
+    expect(g.obstacles[0]!.pos.x).toBeCloseTo(-g.obstacles[5]!.pos.x, 9);
+    // Uma cota por intervalo, com o valor digitado.
+    const cotas = g.extras.filter((e): e is CoursePath => e.kind === 'path');
+    expect(cotas).toHaveLength(5);
+    expect(cotas[0]!.label?.text).toBe('3,00 m');
   });
 });

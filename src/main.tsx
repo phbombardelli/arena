@@ -3,11 +3,13 @@ import { createRoot } from 'react-dom/client';
 import { App } from '@ui/App';
 import { setupPwa } from '@platform/pwa';
 import { initTemplateStore } from '@platform/templateStore';
+import { setupCloud } from '@platform/cloud';
 import '@fontsource-variable/manrope';
 import './styles.css';
 
 setupPwa();
 void initTemplateStore();
+setupCloud();
 
 // Ponte de verificação automatizada: só existe em desenvolvimento.
 if (import.meta.env.DEV) {

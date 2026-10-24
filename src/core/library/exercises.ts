@@ -47,6 +47,17 @@ export interface RelogioParams {
   cotas: boolean;
 }
 
+/** Leque de varas (in-and-outs numa linha curva): varas no raio de um arco. */
+export interface LequeParams {
+  count: number;
+  /** Entre as varas, pelo centro, medido sobre o arco. */
+  spacingM: number;
+  radiusM: number;
+  sentido: 'horario' | 'antihorario' | 'duplo' | 'sem';
+  type: ObstacleType;
+  cotas: boolean;
+}
+
 export interface Saida {
   on: boolean;
   type: ObstacleType;
@@ -69,11 +80,13 @@ export interface PeDeGalinhaParams {
   numerar: boolean;
 }
 
-export type ExerciseParams = CavaletesParams | RelogioParams | PeDeGalinhaParams;
+export type ExerciseParams = CavaletesParams | RelogioParams | PeDeGalinhaParams | LequeParams;
 
 export const DEFAULT_CAVALETES: CavaletesParams = { count: 4, spacingM: 1.4, type: 'cavalete', cotas: true, numerar: false };
 
 export const DEFAULT_RELOGIO: RelogioParams = { diameterM: 20, sentido: 'horario', type: 'plano', cotas: true };
+
+export const DEFAULT_LEQUE: LequeParams = { count: 6, spacingM: 3, radiusM: 9, sentido: 'horario', type: 'plano', cotas: true };
 
 /** Os números do exemplo do usuário (pé de galinha completo). */
 export function defaultPeDeGalinha(completo: boolean): PeDeGalinhaParams {
@@ -158,6 +171,47 @@ export function generateRelogio(p: RelogioParams): Generated {
   return { obstacles, extras };
 }
 
+/**
+ * Leque de varas: as varas no sentido do raio de um arco, simétricas em
+ * torno do alto, a `spacingM` uma da outra pelo centro, medidos sobre o
+ * arco. Cada intervalo ganha a sua cota em arco.
+ */
+export function generateLeque(p: LequeParams): Generated {
+  const n = Math.max(2, Math.round(p.count));
+  const r = Math.max(1, p.radiusM);
+  const passo = p.spacingM / r / DEG;
+  const angulos = Array.from({ length: n }, (_, i) => -90 + (i - (n - 1) / 2) * passo);
+  const obstacles = angulos.map((a) => {
+    const heading = p.sentido === 'antihorario' ? a - 90 : a + 90;
+    const sentido: Sentido = p.sentido === 'duplo' ? 'duplo' : p.sentido === 'sem' ? 'sem' : 'ida';
+    return elemento(p.type, scale(fromAngle(a), r), heading, sentido);
+  });
+  const extras: (MeasureLine | CoursePath)[] = [];
+  if (p.cotas) {
+    // A cota corre por dentro do arco: por fora ficam as setas, na tangente.
+    const rc = r - 1.5;
+    for (let i = 1; i < n; i += 1) extras.push(arcoCotado(rc, angulos[i - 1]!, angulos[i]!, formatoMetros(p.spacingM)));
+  }
+  return { obstacles, extras };
+}
+
+/** Linha em arco de círculo (centro na origem) com um rótulo no meio. */
+function arcoCotado(raio: number, de: number, ate: number, texto: string): CoursePath {
+  const varre = (ate - de) * DEG;
+  const alca = (4 / 3) * Math.tan(varre / 4) * raio;
+  const ponto = (a: number) => scale(fromAngle(a), raio);
+  const tangente = (a: number) => fromAngle(a + 90);
+  const path = createPath([
+    { pos: ponto(de), type: 'smooth', handleIn: null, handleOut: scale(tangente(de), alca), anchor: null },
+    { pos: ponto(ate), type: 'smooth', handleIn: scale(tangente(ate), -alca), handleOut: null, anchor: null },
+  ]);
+  path.style = { dash: 'solid', strokeMm: 0.2, color: '#2D5BA8' };
+  path.distanceMode = 'nenhum';
+  path.label = { text: texto, s: (raio * Math.abs(varre)) / 2 };
+  path.totalLabel = { ...path.totalLabel, color: '#2D5BA8' };
+  return path;
+}
+
 /** Ponto e direção a `s` metros sobre o arco que sai de `inicio` para leste e gira `angulo` em `L` metros. */
 function noArco(inicio: Vec2, L: number, anguloDeg: number, s: number): { p: Vec2; heading: number } {
   const th = anguloDeg * DEG;
@@ -205,7 +259,7 @@ function linhaDaSaida(centro: Vec2, saidaDe: Vec2, s: Saida, destino: Vec2): Cou
   return path;
 }
 
-const formatoMetros = (m: number) => `${m.toFixed(m % 1 === 0 ? 0 : 2).replace('.', ',')} m`;
+const formatoMetros = (m: number) => `${m.toFixed(2).replace('.', ',')} m`;
 
 export function generatePeDeGalinha(p: PeDeGalinhaParams): Generated {
   const cadeia: { type: ObstacleType; distM: number; sentido?: Sentido }[] = [];
@@ -250,6 +304,7 @@ export function generatePeDeGalinha(p: PeDeGalinhaParams): Generated {
 export function generateExercise(kind: ExerciseKind, params: ExerciseParams): Generated {
   if (kind === 'cavaletes') return generateCavaletes(params as CavaletesParams);
   if (kind === 'relogio') return generateRelogio(params as RelogioParams);
+  if (kind === 'leque') return generateLeque(params as LequeParams);
   return generatePeDeGalinha(params as PeDeGalinhaParams);
 }
 

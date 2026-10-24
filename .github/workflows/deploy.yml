@@ -1,4 +1,4 @@
-# Publica o Percurso no GitHub Pages a cada envio para a main.
+# Publica o Arena no GitHub Pages a cada envio para a main.
 #
 # O programa continua sendo local e offline: o que vai para o Pages é o
 # mesmo dist/ que abre por file:// sem servidor nenhum. A hospedagem é só

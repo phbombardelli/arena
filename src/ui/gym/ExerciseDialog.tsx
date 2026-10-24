@@ -7,6 +7,7 @@ import {
   updateExercise,
   type CavaletesParams,
   type ExerciseParams,
+  type LequeParams,
   type PeDeGalinhaParams,
   type RelogioParams,
   type Saida,
@@ -33,6 +34,7 @@ const TITULOS: Record<ExerciseKind, string> = {
   cavaletes: 'Cavaletes',
   relogio: 'Relógio',
   'pe-de-galinha': 'Pé de galinha',
+  leque: 'Leque de varas',
 };
 
 const PREVIA_ESCALA = 250;
@@ -75,6 +77,7 @@ function Configurador({ kind, params: iniciais, editingId }: { kind: ExerciseKin
         <div className="gym-form">
           {kind === 'cavaletes' && <FormCavaletes p={params as CavaletesParams} set={setParams} />}
           {kind === 'relogio' && <FormRelogio p={params as RelogioParams} set={setParams} />}
+          {kind === 'leque' && <FormLeque p={params as LequeParams} set={setParams} />}
           {pg && <FormPeDeGalinha p={pg} set={setParams} />}
         </div>
         <Previa kind={kind} params={params} set={setParams} />
@@ -289,6 +292,31 @@ function FormRelogio({ p, set }: { p: RelogioParams; set: (p: RelogioParams) => 
         <Tipo value={p.type} opcoes={OBSTACLES as typeof TIPOS_SALTO} onChange={(t) => set({ ...p, type: t })} />
       </label>
       <Check label="Mostrar o diâmetro" value={p.cotas} onChange={(v) => set({ ...p, cotas: v })} />
+    </>
+  );
+}
+
+function FormLeque({ p, set }: { p: LequeParams; set: (p: LequeParams) => void }) {
+  return (
+    <>
+      <NumberField label="Quantidade" value={p.count} decimals={0} step={1} min={2} max={16} onCommit={(v) => set({ ...p, count: Math.round(v) })} />
+      <Metros label="Espaçamento (pelo centro)" value={p.spacingM} onChange={(v) => set({ ...p, spacingM: v })} />
+      <Metros label="Raio do arco" value={p.radiusM} min={2} onChange={(v) => set({ ...p, radiusM: v })} />
+      <label className="field">
+        <span>Sentido</span>
+        <select value={p.sentido} onChange={(e) => set({ ...p, sentido: e.target.value as LequeParams['sentido'] })}>
+          <option value="horario">Horário</option>
+          <option value="antihorario">Anti-horário</option>
+          <option value="duplo">Duplo</option>
+          <option value="sem">Sem seta</option>
+        </select>
+      </label>
+      <label className="field">
+        <span>Tipo</span>
+        <Tipo value={p.type} opcoes={OBSTACLES as typeof TIPOS_SALTO} onChange={(t) => set({ ...p, type: t })} />
+      </label>
+      <Check label="Mostrar as cotas" value={p.cotas} onChange={(v) => set({ ...p, cotas: v })} />
+      <p className="note">Raio menor abre mais o leque; o espaçamento é medido sobre o arco, no centro das varas.</p>
     </>
   );
 }

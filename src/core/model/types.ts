@@ -75,7 +75,7 @@ export interface ExerciseTag {
   anchor?: { pos: Vec2; rotation: number };
 }
 
-export type ExerciseKind = 'cavaletes' | 'relogio' | 'pe-de-galinha';
+export type ExerciseKind = 'cavaletes' | 'relogio' | 'pe-de-galinha' | 'leque';
 
 /* ---------------------------------------------------------------- pista */
 

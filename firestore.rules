@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// Nuvem do Arena (B-78, decisão 90). Cada usuário só lê e grava o que é
+// dele; o administrador lê tudo (para suporte e para o painel de admin),
+// mas não altera arquivo de ninguém. A regra vale no servidor: nada no
+// app consegue contorná-la.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function logado() {
+      return request.auth != null;
+    }
+    function admin() {
+      return logado()
+        && request.auth.token.email == 'pedrohbombardelli@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+    function dono(uid) {
+      return logado() && request.auth.uid == uid;
+    }
+
+    match /usuarios/{uid} {
+      allow read: if dono(uid) || admin();
+      allow write: if dono(uid);
+
+      // Pista ou percurso: metadados aqui, o conteúdo em partes (o
+      // Firestore limita cada documento a 1 MB; imagem de fundo passa disso).
+      match /arquivos/{arquivo} {
+        allow read: if dono(uid) || admin();
+        allow write: if dono(uid);
+
+        match /partes/{parte} {
+          allow read: if dono(uid) || admin();
+          allow write: if dono(uid)
+            && request.resource.data.texto is string
+            && request.resource.data.texto.size() <= 800000;
+        }
+      }
+    }
+  }
+}

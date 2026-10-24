@@ -2,6 +2,7 @@ import { newId } from '@core/model/ids';
 import type { CourseDocument } from '@core/model/types';
 import { serialize } from '@core/persistence/serialize';
 import { idbAll, idbDelete, idbGet, idbPut } from './idb';
+import { notifyLocalChange } from './localChanges';
 
 /**
  * "Meus percursos" (B-77, decisão 88): os percursos guardados no próprio
@@ -34,7 +35,17 @@ export async function listCourses(): Promise<CourseSummary[]> {
 
 export const getCourse = (id: string): Promise<CourseEntry | undefined> => idbGet<CourseEntry>('percursos', id);
 
-export const deleteCourse = (id: string): Promise<void> => idbDelete('percursos', id);
+export async function deleteCourse(id: string): Promise<void> {
+  await idbDelete('percursos', id);
+  notifyLocalChange({ tipo: 'percurso', id, apagado: true });
+}
+
+/** Todos os registros, com o conteúdo — para a sincronização. */
+export const allCourseEntries = (): Promise<CourseEntry[]> => idbAll<CourseEntry>('percursos');
+
+/** Grava um registro vindo da nuvem, sem avisar mudança. */
+export const putCourseFromCloud = (e: CourseEntry): Promise<void> => idbPut('percursos', e);
+export const removeCourseFromCloud = (id: string): Promise<void> => idbDelete('percursos', id);
 
 /** Grava (ou atualiza, com `id`) o percurso aberto. Devolve o registro. */
 export async function saveCourse(doc: CourseDocument, name: string, id: string | null): Promise<CourseEntry> {
@@ -48,5 +59,6 @@ export async function saveCourse(doc: CourseDocument, name: string, id: string |
     text: serialize(doc),
   };
   await idbPut('percursos', entry);
+  notifyLocalChange({ tipo: 'percurso', id: entry.id, apagado: false });
   return entry;
 }

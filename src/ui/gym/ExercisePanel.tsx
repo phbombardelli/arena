@@ -3,7 +3,7 @@ import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { LinkRow } from '@ui/inspector/LinkRow';
 
-const NOMES = { cavaletes: 'Cavaletes', relogio: 'Relógio', 'pe-de-galinha': 'Pé de galinha' } as const;
+const NOMES = { cavaletes: 'Cavaletes', relogio: 'Relógio', 'pe-de-galinha': 'Pé de galinha', leque: 'Leque de varas' } as const;
 
 /**
  * Exercício de ginástica selecionado (B-37): reabrir o configurador com os
