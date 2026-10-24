@@ -179,7 +179,7 @@ export function Toolbar() {
   return (
     <header className="toolbar">
       <div className="toolbar-group">
-        <span className="brand">Arena</span>
+        <img className="brand" src="brand/arena-logo.png" alt="Arena" />
         <Menu label="Arquivo" entries={arquivo} />
         <Menu label="Editar" entries={editar} />
         <Menu label="Inserir" entries={inserir} />

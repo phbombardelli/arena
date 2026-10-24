@@ -2,22 +2,48 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { OBSTACLES } from '@core/library/obstacles';
 import { ORNAMENTS } from '@core/library/ornaments';
 import { STRUCTURES } from '@core/library/structures';
-import { importBackgroundImage } from '@ui/actions/imageActions';
+import { importBackgroundImage, startMapWizard } from '@ui/actions/imageActions';
 import { traceCourse } from '@ui/actions/rideActions';
 import { insertHeightTable, insertInfoBox } from '@ui/actions/annotationActions';
 import { startGuidedRide } from '@ui/actions/guidedActions';
 import { insertLogo } from '@ui/actions/logoActions';
 import { insertTimingLine } from '@ui/actions/timingActions';
 import { useEditorStore, type Tool } from '@store/editorStore';
+import type { OrnamentType } from '@core/model/types';
+import {
+  IconBarrierBlock,
+  IconBooks,
+  IconBuilding,
+  IconDoorEnter,
+  IconFlag,
+  IconHandStop,
+  IconMap2,
+  IconPencil,
+  IconPhoto,
+  IconPlant,
+  IconPointer,
+  IconRipple,
+  IconRulerMeasure,
+  IconSquare,
+  IconTable,
+  IconTree,
+  IconTypography,
+  IconWand,
+} from '@tabler/icons-react';
+
+/** Ícones do trilho: um conjunto só, de traço fino (decisão 87). */
+const ICONE = { size: 19, stroke: 1.6 } as const;
+/** Entrada e saída têm botão próprio na Pista: vão em toda pista. */
+const PORTOES: OrnamentType[] = ['entrada', 'saida'];
 
 /**
- * Barra de ferramentas da esquerda.
+ * Barra de ferramentas da esquerda (decisão 87).
  *
- * Só ferramentas de desenhar, cada uma com um atalho de uma tecla. O que
- * tem variantes — tipo de obstáculo, modo do traçado, o que vai na folha —
- * abre ao lado, em vez de empurrar a barra para baixo. Partida e chegada
- * têm botão próprio (B-51), mas continuam só quando pedidas: nada é
- * colocado sozinho.
+ * Em grupos, na ordem em que o trabalho acontece. No Percurso: Prova,
+ * Traçado, Medir e anotar, Folha. Na Pista: Local, Cenário. O que tem
+ * variantes abre ao lado, em vez de empurrar a barra para baixo. Mover a
+ * vista fica no pé. Nada é colocado sozinho: partida e chegada só quando
+ * pedidas.
  */
 export function Sidebar() {
   const {
@@ -32,6 +58,7 @@ export function Sidebar() {
     setPathSmooth,
     structureType,
     setStructureType,
+    setDialog,
   } = useEditorStore();
 
   const usa = (alvo: Tool) => setTool(alvo);
@@ -56,14 +83,13 @@ export function Sidebar() {
 
   return (
     <nav className="rail" aria-label="Ferramentas">
-      <RailButton icon="⬉" label="Selecionar" shortcut="V" active={tool === 'select'} onClick={() => usa('select')} />
-      <RailButton icon="✋" label="Mover vista" shortcut="H" active={tool === 'pan'} onClick={() => usa('pan')} />
-      <hr />
+      <RailButton icon={<IconPointer {...ICONE} />} label="Selecionar" shortcut="V" active={tool === 'select'} onClick={() => usa('select')} />
 
       {mode === 'percurso' ? (
         <>
+          <RailGroup title="Prova" />
           <RailFlyout
-            icon="▬"
+            icon={<IconBarrierBlock {...ICONE} />}
             label="Obstáculo"
             shortcut="O"
             detail={nomeObstaculo}
@@ -81,55 +107,17 @@ export function Sidebar() {
             footer="Clique na pista para inserir. Shift mantém a ferramenta."
           />
           <RailFlyout
-            icon="✎"
-            label="Traçado"
-            shortcut="T"
-            active={tool === 'path'}
-            onActivate={() => usa('path')}
+            icon={<IconFlag {...ICONE} />}
+            label="Partida e chegada"
             items={[
-              {
-                label: 'À mão, curvo',
-                hint: 'clique a clique; os cliques viram curva',
-                active: tool === 'path' && pathSmooth,
-                onSelect: () => {
-                  setPathSmooth(true);
-                  usa('path');
-                },
-              },
-              {
-                label: 'À mão, reto',
-                hint: 'clique a clique, em segmentos retos',
-                active: tool === 'path' && !pathSmooth,
-                onSelect: () => {
-                  setPathSmooth(false);
-                  usa('path');
-                },
-              },
-              'separator',
-              {
-                label: 'Por trechos',
-                hint: 'você escolhe a forma de cada volta',
-                onSelect: startGuidedRide,
-              },
-              {
-                label: 'Automático',
-                hint: 'traça tudo pela numeração',
-                onSelect: () => traceCourse(),
-              },
+              { label: 'Partida', hint: 'no eixo do primeiro obstáculo', onSelect: () => insertTimingLine('start') },
+              { label: 'Chegada', hint: 'no eixo do último obstáculo', onSelect: () => insertTimingLine('finish') },
             ]}
-            footer="Por trechos e Automático seguem a numeração dos obstáculos."
-          />
-          <RailButton icon="T" label="Texto" shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
-          <RailButton
-            icon="↔"
-            label="Trena"
-            shortcut="M"
-            active={tool === 'measure'}
-            onClick={() => usa('measure')}
+            footer="Seguem a numeração; a distância se ajusta no painel da linha."
           />
           <RailFlyout
-            icon="✿"
-            label="Ornamento"
+            icon={<IconPlant {...ICONE} />}
+            label="Ornamentos"
             active={
               (tool === 'ornament' && ornamentType === 'vaso') ||
               ((tool === 'arena-rect' || tool === 'arena-polygon') && structureType === 'ilha')
@@ -160,30 +148,76 @@ export function Sidebar() {
             ]}
             footer="Móveis da prova: o assistente contorna, e o traçado por cima vira aviso."
           />
+
+          <RailGroup title="Traçado" />
           <RailFlyout
-            icon="⚑"
-            label="Partida e chegada"
+            icon={<IconPencil {...ICONE} />}
+            label="Desenhar"
+            shortcut="T"
+            active={tool === 'path'}
+            onActivate={() => usa('path')}
             items={[
-              { label: 'Partida', hint: 'no eixo do primeiro obstáculo', onSelect: () => insertTimingLine('start') },
-              { label: 'Chegada', hint: 'no eixo do último obstáculo', onSelect: () => insertTimingLine('finish') },
+              {
+                label: 'À mão, curvo',
+                hint: 'clique a clique; os cliques viram curva',
+                active: tool === 'path' && pathSmooth,
+                onSelect: () => {
+                  setPathSmooth(true);
+                  usa('path');
+                },
+              },
+              {
+                label: 'À mão, reto',
+                hint: 'clique a clique, em segmentos retos',
+                active: tool === 'path' && !pathSmooth,
+                onSelect: () => {
+                  setPathSmooth(false);
+                  usa('path');
+                },
+              },
             ]}
-            footer="Seguem a numeração; a distância se ajusta no painel da linha."
           />
-          <hr />
           <RailFlyout
-            icon="▤"
-            label="Informações técnicas"
+            icon={<IconWand {...ICONE} />}
+            label="Assistente"
+            items={[
+              { label: 'Por trechos', hint: 'você escolhe a forma de cada volta', onSelect: startGuidedRide },
+              { label: 'Automático', hint: 'traça tudo pela numeração', onSelect: () => traceCourse() },
+            ]}
+            footer="Seguem a numeração dos obstáculos, da partida à chegada."
+          />
+
+          <RailGroup title="Medir e anotar" />
+          <RailButton icon={<IconRulerMeasure {...ICONE} />} label="Trena" shortcut="M" active={tool === 'measure'} onClick={() => usa('measure')} />
+          <RailButton icon={<IconTypography {...ICONE} />} label="Texto" shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
+
+          <RailGroup title="Folha" />
+          <RailFlyout
+            icon={<IconTable {...ICONE} />}
+            label="Quadros técnicos"
             items={[
               { label: 'Quadro técnico', hint: 'prova, tabela, altura, velocidade…', onSelect: insertInfoBox },
               { label: 'Tabela de alturas', hint: 'lê as alturas dos obstáculos', onSelect: insertHeightTable },
-              { label: 'Logo ou imagem', hint: 'PNG, JPG ou WEBP, posicionado na folha', onSelect: () => void insertLogo() },
             ]}
+          />
+          <RailButton
+            icon={<IconPhoto {...ICONE} />}
+            label="Logo ou imagem"
+            onClick={() => void insertLogo()}
+            title="PNG, JPG ou WEBP, posicionado na folha"
           />
         </>
       ) : (
         <>
+          <RailGroup title="Local" />
+          <RailButton
+            icon={<IconMap2 {...ICONE} />}
+            label="Pista pelo mapa"
+            onClick={() => void startMapWizard()}
+            title="Cole ou abra um print do Google Maps com uma medida marcada"
+          />
           <RailFlyout
-            icon="▭"
+            icon={<IconSquare {...ICONE} />}
             label="Contorno"
             active={desenhandoContorno && structureType === null}
             onActivate={() => contornoDaPista('arena-rect')}
@@ -202,12 +236,26 @@ export function Sidebar() {
               },
             ]}
           />
+          <RailButton
+            icon={<IconPhoto {...ICONE} />}
+            label="Imagem de fundo"
+            onClick={() => void importBackgroundImage()}
+            title="Importa PNG, JPG ou WEBP como referência. O arquivo fica embutido no projeto."
+          />
+          <RailButton
+            icon={<IconBooks {...ICONE} />}
+            label="Modelos de pista"
+            onClick={() => setDialog('modelos')}
+            title="As pistas do programa e as que você guardou"
+          />
+
+          <RailGroup title="Cenário" />
           <RailFlyout
-            icon="▦"
+            icon={<IconBuilding {...ICONE} />}
             label="Construção"
-            detail={structureType ? nomeConstrucao : undefined}
-            active={desenhandoContorno && structureType !== null}
-            onActivate={() => construcao(structureType ?? 'arquibancada', formaConstrucao)}
+            detail={structureType && structureType !== 'rio' && structureType !== 'lago' ? nomeConstrucao : undefined}
+            active={desenhandoContorno && structureType !== null && structureType !== 'rio' && structureType !== 'lago'}
+            onActivate={() => construcao(structureType && structureType !== 'rio' && structureType !== 'lago' ? structureType : 'arquibancada', formaConstrucao)}
             items={[
               {
                 label: 'Retângulo',
@@ -238,7 +286,7 @@ export function Sidebar() {
             footer="Referência do local: arquibancada, área de concreto, prédios. Não limita o traçado."
           />
           <RailFlyout
-            icon="≋"
+            icon={<IconRipple {...ICONE} />}
             label="Água"
             active={(tool === 'arena-rect' || tool === 'arena-polygon') && (structureType === 'rio' || structureType === 'lago')}
             onActivate={() => construcao('rio', 'arena-rect')}
@@ -259,12 +307,29 @@ export function Sidebar() {
             footer="Obstáculo sobre massa d'água aparece nos avisos de interferência; sobre o rio, pode."
           />
           <RailFlyout
-            icon="🌳"
-            label="Ornamento"
-            detail={nomeOrnamento}
-            active={tool === 'ornament'}
-            onActivate={() => usa('ornament')}
-            items={ORNAMENTS.filter((o) => o.type !== 'vaso').map((o) => ({
+            icon={<IconDoorEnter {...ICONE} />}
+            label="Entrada e saída"
+            active={tool === 'ornament' && PORTOES.includes(ornamentType)}
+            items={PORTOES.map((t) => ({
+              label: ORNAMENTS.find((o) => o.type === t)!.label,
+              hint: 'nasce de frente para a cerca mais próxima',
+              active: tool === 'ornament' && ornamentType === t,
+              onSelect: () => {
+                setOrnamentType(t);
+                usa('ornament');
+              },
+            }))}
+          />
+          <RailFlyout
+            icon={<IconTree {...ICONE} />}
+            label="Ornamentos"
+            detail={tool === 'ornament' && !PORTOES.includes(ornamentType) ? nomeOrnamento : undefined}
+            active={tool === 'ornament' && !PORTOES.includes(ornamentType)}
+            onActivate={() => {
+              if (PORTOES.includes(ornamentType) || ornamentType === 'vaso') setOrnamentType('arvore');
+              usa('ornament');
+            }}
+            items={ORNAMENTS.filter((o) => o.type !== 'vaso' && !PORTOES.includes(o.type)).map((o) => ({
               label: o.label,
               active: tool === 'ornament' && ornamentType === o.type,
               onSelect: () => {
@@ -273,16 +338,21 @@ export function Sidebar() {
               },
             }))}
           />
-          <RailButton
-            icon="🖼"
-            label="Imagem"
-            onClick={() => void importBackgroundImage()}
-            title="Importa PNG, JPG ou WEBP como referência. O arquivo fica embutido no projeto."
-          />
         </>
       )}
+
+      {/* Mover a vista é recurso, não ferramenta de desenho: fica no pé,
+          e Espaço ou o botão do meio fazem o mesmo de qualquer lugar. */}
+      <div className="rail-foot">
+        <RailButton icon={<IconHandStop {...ICONE} />} label="Mover vista" shortcut="H" active={tool === 'pan'} onClick={() => usa('pan')} />
+      </div>
     </nav>
   );
+}
+
+/** Título de grupo do trilho (decisão 87). */
+function RailGroup({ title }: { title: string }) {
+  return <p className="rail-group">{title}</p>;
 }
 
 interface RailButtonProps {
@@ -333,6 +403,9 @@ interface RailFlyoutProps {
 function RailFlyout({ icon, label, shortcut, detail, active, onActivate, items, footer }: RailFlyoutProps) {
   const [aberto, setAberto] = useState(false);
   const raiz = useRef<HTMLDivElement | null>(null);
+  // O trilho rola em tela baixa, e a rolagem cortaria a lista ao lado: ela
+  // se posiciona pela janela, rente ao botão.
+  const [onde, setOnde] = useState<{ left: number; top: number } | null>(null);
 
   useEffect(() => {
     if (!aberto) return;
@@ -354,8 +427,10 @@ function RailFlyout({ icon, label, shortcut, detail, active, onActivate, items, 
     <div className="rail-flyout" ref={raiz}>
       <button
         className={active || aberto ? 'rail-button active' : 'rail-button'}
-        onClick={() => {
+        onClick={(e) => {
           onActivate?.();
+          const r = e.currentTarget.getBoundingClientRect();
+          setOnde({ left: r.right + 8, top: Math.min(r.top, window.innerHeight - 320) });
           setAberto((v) => !v);
         }}
         title={shortcut ? `${label} (${shortcut})` : label}
@@ -369,7 +444,7 @@ function RailFlyout({ icon, label, shortcut, detail, active, onActivate, items, 
         <span className="rail-more" aria-hidden="true">◢</span>
       </button>
       {aberto && (
-        <div className="flyout" role="menu">
+        <div className="flyout" role="menu" style={onde ? { position: 'fixed', left: onde.left, top: Math.max(8, onde.top) } : undefined}>
           <p className="flyout-title">{label}</p>
           {items.map((item, i) =>
             item === 'separator' ? (

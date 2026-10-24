@@ -1793,3 +1793,35 @@ cabeçalho, a mesma família do logotipo. Vêm como arquivos do app
 O croqui impresso e o PDF NÃO mudam: continuam em Helvetica/Arial e nas
 cores de sempre. O ícone do PWA foi recolorido em marinho e dourado
 enquanto não chega o ícone do logo em alta resolução.
+
+## 86. Logo no cabeçalho e barra de cima branca
+
+- **Logo** (B-74): a palavra ARENA saiu do canto da barra e entrou o logo
+  (cavalo e ARENA), recortado da prancha final do Gemini e com o fundo
+  tirado — cada pixel virou marinho ou dourado puro, com transparência
+  proporcional à distância do papel, para as bordas continuarem suaves.
+  `public/brand/arena-logo.png`, 28 px de altura na barra. A Montserrat
+  saiu do app: só servia para a palavra.
+- **Barra de cima** (B-75): branca, em vez do bege das réguas e do trilho,
+  com borda marcada e um filete dourado de 2 px embaixo. O contraste vem
+  do claro contra o bege, sem cor escura (a Marinho B foi descartada).
+
+## 87. Trilho da esquerda em grupos (B-76)
+
+O trilho passa a ter grupos com título, na ordem em que o trabalho
+acontece, e ícones de um conjunto só (Tabler, traço fino, em marinho) no
+lugar da mistura de símbolos e emojis.
+
+- **Percurso** — *Prova*: Obstáculo, Partida e chegada, Ornamentos (ilha
+  decorativa, ilha em contorno livre, vaso). *Traçado*: Desenhar (à mão,
+  curvo ou reto) separado do Assistente (por trechos, automático) — um é
+  ferramenta, o outro é ação. *Medir e anotar*: Trena, Texto. *Folha*:
+  Quadros técnicos (quadro técnico, tabela de alturas) e Logo ou imagem.
+- **Pista** — *Local*: Pista pelo mapa, Contorno, Imagem de fundo,
+  Modelos de pista (que estava escondido no menu). *Cenário*: Construção,
+  Água, Entrada e saída (botão próprio: vai em toda pista) e Ornamentos
+  (árvore, arbusto, cerca, cronômetro, seta).
+- **Mover vista** sai do topo e fica no pé do trilho; H, Espaço e o botão
+  do meio continuam valendo.
+- Em tela baixa o trilho rola, sem barra visível, e as listas que abrem
+  ao lado se posicionam pela janela para a rolagem não cortá-las.
