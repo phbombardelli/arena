@@ -6,7 +6,7 @@ import { addObject, deleteObjects, moveObjects } from '@core/commands/ops';
 import { slideAlongPath } from '@core/commands/distanceOps';
 import { toMillimeterPrecision } from '@core/geometry/snap';
 import { distance, type Vec2 } from '@core/geometry/vec';
-import { createObstacle, nextObstacleNumber } from '@core/library/obstacles';
+import { COURSE_TYPES, createObstacle, nextObstacleNumber } from '@core/library/obstacles';
 import { createOrnament, gateRotation } from '@core/library/ornaments';
 import { ovalPoints } from '@core/assist/decor';
 import { createTextLabel } from '@core/library/annotations';
@@ -31,12 +31,7 @@ import { color } from '@render/style/tokens';
 import { useDocumentStore } from '@store/documentStore';
 import { imageFromClipboard, pasteBackgroundImage } from '@ui/actions/imageActions';
 import { useEditorStore } from '@store/editorStore';
-import {
-  newDocument,
-  openDocument,
-  saveDocument,
-  saveDocumentAs,
-} from '@ui/actions/documentActions';
+import { saveCourse, saveDocumentAs } from '@ui/actions/documentActions';
 import {
   copySelection,
   deleteSelection,
@@ -269,11 +264,11 @@ export function Canvas() {
       if (tool === 'obstacle') {
         const ed = useEditorStore.getState();
         const st = useDocumentStore.getState();
-        const obstaculo = createObstacle(
-          ed.obstacleType,
-          snapped(toModel(e)),
-          nextObstacleNumber(allObstacles(st.doc)),
-        );
+        // No percurso de salto só entram os quatro tipos de salto; na
+        // ginástica, todos, e sem número automático (B-37).
+        const ginastica = st.doc.kind === 'ginastica';
+        const tipo = ginastica || COURSE_TYPES.includes(ed.obstacleType) ? ed.obstacleType : 'vertical';
+        const obstaculo = createObstacle(tipo, snapped(toModel(e)), ginastica ? '' : nextObstacleNumber(allObstacles(st.doc)));
         st.apply('Inserir obstáculo', (d) => addObject(d, obstaculo));
         setSelection([obstaculo.id]);
         if (!e.shiftKey) setTool('select');
@@ -455,13 +450,13 @@ export function Canvas() {
 
       if (ctrl && key === 's') {
         e.preventDefault();
-        void (e.shiftKey ? saveDocumentAs() : saveDocument());
+        void (e.shiftKey ? saveDocumentAs() : saveCourse());
       } else if (ctrl && key === 'o') {
         e.preventDefault();
-        void openDocument();
+        ed.setDialog('abrir');
       } else if (ctrl && key === 'n') {
         e.preventDefault();
-        newDocument();
+        ed.setDialog('novo');
       } else if (ctrl && key === 'z' && !e.shiftKey) {
         e.preventDefault();
         st.undo();
@@ -531,6 +526,8 @@ export function Canvas() {
         ed.setTool('select');
       } else if (key === 'h') {
         ed.setTool('pan');
+      } else if (key === 't' && st.doc.kind === 'ginastica') {
+        // Ginástica não tem traçado.
       } else if (key === 'o' || key === 't' || key === 'x' || key === 'm') {
         // Ferramentas do percurso: vindo do modo Pista, troca de modo antes.
         if (ed.mode !== 'percurso') ed.setMode('percurso');

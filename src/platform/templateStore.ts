@@ -3,21 +3,23 @@ import {
   TEMPLATE_EXTENSION,
   type ArenaTemplate,
 } from '@core/library/arenaTemplate';
+import { idbAll, idbDelete, idbPut } from './idb';
 
 /**
- * Repositório local de pistas.
+ * "Minhas pistas" (B-77, decisão 88).
  *
- * Fica no `localStorage`: é o único armazenamento persistente disponível
- * sem servidor, e o requisito é funcionar offline. Não substitui o arquivo
- * — o repositório é conveniência da máquina, e o `.pista` é o que se leva
- * para outro computador ou se guarda em backup.
+ * Moram no banco local do navegador (IndexedDB). Uma cópia fica em memória
+ * para a lista abrir na hora; gravar atualiza a cópia e o banco. Não
+ * substitui o arquivo: o `.pista` continua sendo o que se leva para outro
+ * computador.
  *
- * A cota do `localStorage` gira em torno de 5 MB, e uma imagem de satélite
- * embutida estoura isso sozinha. Por isso a gravação avisa em vez de
- * falhar em silêncio, e a exportação em arquivo continua sempre à mão.
+ * Antes moravam no localStorage, que cabia ~5 MB. Na primeira abertura
+ * depois da troca, o que estava lá é copiado para o banco — e o original
+ * fica onde estava, por segurança.
  */
 
-const CHAVE = 'percurso.pistas.v1';
+const CHAVE_ANTIGA = 'percurso.pistas.v1';
+const MIGRADO = 'percurso.pistas.migrado-idb';
 
 export class TemplateStoreError extends Error {}
 
@@ -34,14 +36,52 @@ export interface TemplateSummary {
   builtin: boolean;
 }
 
+let locais: ArenaTemplate[] = [];
+let iniciando: Promise<void> | null = null;
+
+/** Carrega "Minhas pistas" do banco (e migra as antigas). Uma vez só. */
+export function initTemplateStore(): Promise<void> {
+  iniciando ??= (async () => {
+    try {
+      let guardadas = (await idbAll<ArenaTemplate>('pistas')).filter(isArenaTemplate);
+      if (!window.localStorage.getItem(MIGRADO)) {
+        const antigas = lerAntigas();
+        const ids = new Set(guardadas.map((t) => t.id));
+        for (const t of antigas) if (!ids.has(t.id)) await idbPut('pistas', t);
+        window.localStorage.setItem(MIGRADO, '1');
+        if (antigas.length) guardadas = (await idbAll<ArenaTemplate>('pistas')).filter(isArenaTemplate);
+      }
+      locais = guardadas;
+    } catch (err) {
+      // Navegador sem IndexedDB (raro): fica com o que havia no localStorage.
+      console.warn('Banco local indisponível; usando o armazenamento antigo.', err);
+      locais = lerAntigas();
+    }
+  })();
+  return iniciando;
+}
+
+function lerAntigas(): ArenaTemplate[] {
+  try {
+    const cru = window.localStorage.getItem(CHAVE_ANTIGA);
+    if (!cru) return [];
+    const lista = JSON.parse(cru);
+    return Array.isArray(lista) ? lista.filter(isArenaTemplate) : [];
+  } catch {
+    // Repositório corrompido não pode impedir o programa de abrir.
+    return [];
+  }
+}
+
+const ler = (): ArenaTemplate[] => locais;
+
 /* ------------------------------------------- banco de pistas embutido */
 
 /**
  * Pistas que vêm com o programa (B-49): arquivos `.pista` publicados em
  * `public/pistas/`, listados em `index.json`. Carregam uma vez, quando o
- * painel abre, e somam-se às guardadas neste navegador. Com o mesmo nome
- * nos dois lados, vale a gravada por último: a do programa atualizada
- * substitui a cópia antiga, e a que o usuário mexeu depois continua dele.
+ * painel abre, e aparecem ao lado das guardadas neste navegador (ver
+ * `visiveis`).
  */
 let embutidas: ArenaTemplate[] = [];
 let carregando: Promise<void> | null = null;
@@ -74,30 +114,6 @@ export function loadBuiltinTemplates(): Promise<void> {
   return carregando;
 }
 
-function ler(): ArenaTemplate[] {
-  try {
-    const cru = window.localStorage.getItem(CHAVE);
-    if (!cru) return [];
-    const lista = JSON.parse(cru);
-    return Array.isArray(lista) ? lista.filter(isArenaTemplate) : [];
-  } catch {
-    // Repositório corrompido não pode impedir o programa de abrir.
-    return [];
-  }
-}
-
-function gravar(lista: ArenaTemplate[]): void {
-  try {
-    window.localStorage.setItem(CHAVE, JSON.stringify(lista));
-  } catch {
-    throw new TemplateStoreError(
-      'Não coube no repositório do navegador. ' +
-        'Provavelmente a imagem de fundo é grande demais — use "Exportar pista" ' +
-        'para guardar em arquivo.',
-    );
-  }
-}
-
 const resumo = (t: ArenaTemplate, builtin: boolean): TemplateSummary => ({
   id: t.id,
   name: t.name,
@@ -118,27 +134,38 @@ export function listTemplates(): TemplateSummary[] {
 export const getTemplate = (id: string): ArenaTemplate | null =>
   visiveis().find(({ t }) => t.id === id)?.t ?? null;
 
-/** Uma por nome: entre a local e a do programa, a gravada por último. */
+/**
+ * As do programa aparecem sempre; as suas também, menos a cópia velha de
+ * uma do programa (mesmo nome, gravada antes dela) — é o caso de quem
+ * guardou as pistas antes de elas virem com o programa e de elas serem
+ * corrigidas (decisão 88).
+ */
 function visiveis(): { t: ArenaTemplate; builtin: boolean }[] {
-  const porNome = new Map<string, { t: ArenaTemplate; builtin: boolean }>();
-  const poe = (t: ArenaTemplate, builtin: boolean) => {
-    const atual = porNome.get(t.name);
-    if (!atual || t.savedAt > atual.t.savedAt) porNome.set(t.name, { t, builtin });
-  };
-  for (const t of embutidas) poe(t, true);
-  for (const t of ler()) poe(t, false);
-  return [...porNome.values()];
+  const doPrograma = new Map(embutidas.map((t) => [t.name, t]));
+  const minhas = ler().filter((t) => {
+    const oficial = doPrograma.get(t.name);
+    return !oficial || t.savedAt > oficial.savedAt;
+  });
+  return [...embutidas.map((t) => ({ t, builtin: true })), ...minhas.map((t) => ({ t, builtin: false }))];
 }
 
-/** Grava, substituindo o modelo de mesmo nome se já existir. */
-export function saveTemplate(template: ArenaTemplate): void {
-  const lista = ler().filter((t) => t.name !== template.name);
-  lista.push(template);
-  gravar(lista);
+/** Grava em "Minhas pistas", substituindo a de mesmo nome se já existir. */
+export async function saveTemplate(template: ArenaTemplate): Promise<void> {
+  const mesmoNome = locais.filter((t) => t.name === template.name && t.id !== template.id);
+  try {
+    await idbPut('pistas', template);
+    for (const t of mesmoNome) await idbDelete('pistas', t.id);
+  } catch {
+    throw new TemplateStoreError(
+      'Não coube no armazenamento do navegador. Use "Exportar" para guardar a pista em arquivo.',
+    );
+  }
+  locais = [...locais.filter((t) => t.name !== template.name), template];
 }
 
-export function deleteTemplate(id: string): void {
-  gravar(ler().filter((t) => t.id !== id));
+export async function deleteTemplate(id: string): Promise<void> {
+  await idbDelete('pistas', id);
+  locais = locais.filter((t) => t.id !== id);
 }
 
 /* ------------------------------------------------- arquivo .pista */

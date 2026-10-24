@@ -61,6 +61,27 @@ export function ObstacleShape({ obstacle, k }: Props) {
           </>
         );
 
+      case 'x': {
+        // Duas varas cruzadas de uma ponta à outra, sobre os suportes.
+        const a = Math.min(halfW * 0.28, 0.7 * k);
+        return (
+          <>
+            {[-1, 1].map((s) => (
+              <line
+                key={s}
+                x1={-halfW}
+                y1={-a * s}
+                x2={halfW}
+                y2={a * s}
+                stroke={color.ink}
+                strokeWidth={stroke.heavy}
+                strokeLinecap="round"
+              />
+            ))}
+          </>
+        );
+      }
+
       case 'oxer':
         return (
           <>

@@ -7,6 +7,7 @@ import { DocumentPanel } from './inspector/DocumentPanel';
 import { Sidebar } from './sidebar/Sidebar';
 import { StatusBar } from './StatusBar';
 import { Toolbar } from './toolbar/Toolbar';
+import { ExerciseDialog } from './gym/ExerciseDialog';
 import { applyUpdate, usePwa } from '@platform/pwa';
 
 export function App() {
@@ -24,6 +25,7 @@ export function App() {
       <Dialogs />
       <MapWizardHost />
       <UpdateNotice />
+      <ExerciseDialog />
     </div>
   );
 }

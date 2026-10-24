@@ -1,7 +1,7 @@
 import { formatDistance, pathD } from '@core/model/path';
 import type { Vec2 } from '@core/geometry/vec';
 import type { CoursePath, Obstacle, TimingLine } from '@core/model/types';
-import { courseDistancesAlong } from '@core/assist/obstacleDistances';
+import { courseDistancesAlong, pathSampler } from '@core/assist/obstacleDistances';
 import {
   distanceFontMm,
   ON_LINE_GAP_MM,
@@ -69,6 +69,16 @@ export function PathLayer({ path, printScale, originMm, obstacles = [], timings 
         strokeLinejoin="round"
         pointerEvents="none"
       />
+
+      {path.label && (() => {
+        const amostra = pathSampler(path);
+        if (!amostra) return null;
+        const { p, normal } = amostra.pointAt(path.label.s);
+        const lbl = onLinePlacement(p, { x: normal.y, y: -normal.x }, altura, ON_LINE_GAP_MM / k);
+        return (
+          <DistanceText at={toPaper(lbl.pos)} angle={lbl.angle} value={path.label.text} color={path.totalLabel.color} sizeMm={corpo} />
+        );
+      })()}
 
       {escolhidas.map((d) => {
         // Sem leiaute (traçado provisório), fica no meio do trecho.

@@ -13,6 +13,7 @@ import { ObstacleMore, ObstaclePanel } from './ObstaclePanel';
 import { PathPanel } from './PathPanel';
 import { CombinationPanel } from './CombinationPanel';
 import { LinkRow } from './LinkRow';
+import { ExercisePanel } from '@ui/gym/ExercisePanel';
 import { HeightTablePanel } from './HeightTablePanel';
 import { InfoBoxPanel } from './InfoBoxPanel';
 import { TextPanel } from './TextPanel';
@@ -53,6 +54,11 @@ export function ObjectPanel() {
   // X e Y contam do canto superior esquerdo da pista, como as réguas.
   const canto = measureFrame(doc).originM;
 
+  // Um exercício de ginástica inteiro selecionado: edita-se como exercício.
+  const exercicio = objs[0]!.exercise;
+  if (exercicio && objs.length > 1 && objs.every((o) => o.exercise?.id === exercicio.id)) {
+    return <ExercisePanel id={exercicio.id} />;
+  }
   if (ehCombinacao) return <CombinationPanel obstacles={combinacao} />;
 
   return (

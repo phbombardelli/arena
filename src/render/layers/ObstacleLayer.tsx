@@ -53,6 +53,9 @@ export function ObstacleLayer({
         {onPointerDown && <ObstacleHitArea obstacle={obstacle} k={k} />}
         <ObstacleShape obstacle={obstacle} k={k} />
         {obstacle.arrow.visible && <JumpArrow obstacle={obstacle} k={k} />}
+        {obstacle.arrow.visible && obstacle.arrow.both && (
+          <JumpArrow obstacle={{ ...obstacle, arrow: { ...obstacle.arrow, reversed: !obstacle.arrow.reversed } }} k={k} />
+        )}
       </g>
 
       {/*

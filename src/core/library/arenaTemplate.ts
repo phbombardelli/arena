@@ -70,6 +70,8 @@ export function buildTemplate(
  * sem colidir com o que já existe.
  */
 export function applyTemplate(doc: CourseDocument, template: ArenaTemplate): void {
+  // A pista entra copiada e congelada; guarda-se só de onde veio (B-77).
+  doc.arenaSource = { name: template.name, savedAt: template.savedAt };
   const antigos = arenaScopeObjects(doc).map((o) => o.id);
   const assetsAntigos = new Set(
     doc.objects

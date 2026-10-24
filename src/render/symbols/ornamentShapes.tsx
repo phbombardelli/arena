@@ -9,6 +9,17 @@ import type { OrnamentType } from '@core/model/types';
  */
 export function OrnamentShape({ type, color }: { type: OrnamentType; color: string }) {
   switch (type) {
+    case 'cone':
+      // Cone de trânsito laranja com listras brancas, de pé (B-37): mais
+      // legível no croqui que a vista de cima, que seria só um círculo.
+      return (
+        <g>
+          <rect x={-0.95} y={0.72} width={1.9} height={0.28} rx={0.06} fill={color} stroke={darken(color)} strokeWidth={0.05} />
+          <path d="M -0.62 0.72 L -0.12 -1 L 0.12 -1 L 0.62 0.72 Z" fill={color} stroke={darken(color)} strokeWidth={0.05} />
+          <path d="M -0.46 0.16 L -0.3 -0.38 L 0.3 -0.38 L 0.46 0.16 Z" fill="#ffffff" />
+          <path d="M -0.24 -0.58 L -0.17 -0.82 L 0.17 -0.82 L 0.24 -0.58 Z" fill="#ffffff" />
+        </g>
+      );
     case 'arvore':
       return (
         <g>

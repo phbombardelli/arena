@@ -49,7 +49,36 @@ export function DocumentPanel() {
 
 function Resumo() {
   const mode = useEditorStore((s) => s.mode);
-  return mode === 'pista' ? <ResumoPista /> : <ResumoProva />;
+  const ginastica = useDocumentStore((s) => s.doc.kind === 'ginastica');
+  return mode === 'pista' ? <ResumoPista /> : ginastica ? <ResumoGinastica /> : <ResumoProva />;
+}
+
+/** Resumo da folha de ginástica (B-37): o que há nela, sem prova. */
+function ResumoGinastica() {
+  const doc = useDocumentStore((s) => s.doc);
+  const elementos = doc.objects.filter((o) => o.kind === 'obstacle').length;
+  const exercicios = new Set(doc.objects.map((o) => o.exercise?.id).filter(Boolean)).size;
+  return (
+    <section className="summary">
+      <h2>Ginástica</h2>
+      {doc.arenaSource && (
+        <p className="note arena-source">
+          Pista: <strong>{doc.arenaSource.name}</strong>
+        </p>
+      )}
+      <div className="stat-row">
+        <div className="stat">
+          <strong>{exercicios}</strong>
+          <span>exercícios</span>
+        </div>
+        <div className="stat">
+          <strong>{elementos}</strong>
+          <span>elementos</span>
+        </div>
+      </div>
+      <p className="note">Os exercícios ficam à esquerda: escolha, ajuste as distâncias e insira. Selecionado, um exercício se edita inteiro.</p>
+    </section>
+  );
 }
 
 function ResumoProva() {
@@ -68,6 +97,12 @@ function ResumoProva() {
   return (
     <section className="summary">
       <h2>Prova</h2>
+      {doc.arenaSource && (
+        <p className="note arena-source" title="A pista vai copiada no percurso: mudar a pista-modelo depois não altera este croqui.">
+          Pista: <strong>{doc.arenaSource.name}</strong>
+          <span> · {new Date(doc.arenaSource.savedAt).toLocaleDateString('pt-BR')}</span>
+        </p>
+      )}
       <div className="stat-row">
         <div className="stat">
           <b>{degraus.length}</b>

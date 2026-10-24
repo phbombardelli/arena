@@ -66,6 +66,14 @@ export const OBSTACLES: readonly ObstacleDef[] = [
     hint: 'Uma vara deitada no chão.',
   },
   {
+    type: 'x',
+    label: 'X',
+    faceWidthM: 3.5,
+    spreadM: null,
+    elements: 1,
+    hint: 'Duas varas cruzadas, com suporte nas pontas.',
+  },
+  {
     type: 'cavalete',
     label: 'Cavalete',
     faceWidthM: 3,
@@ -76,7 +84,14 @@ export const OBSTACLES: readonly ObstacleDef[] = [
 ] as const;
 
 /** Tipos desenhados com vara — os únicos em que o estilo da vara importa. */
-export const BAR_TYPES: readonly ObstacleType[] = ['vertical', 'oxer', 'triplice', 'plano', 'cavalete'];
+export const BAR_TYPES: readonly ObstacleType[] = ['vertical', 'oxer', 'triplice', 'plano', 'cavalete', 'x'];
+
+/** Os do percurso de salto; na ginástica entram todos (B-37). */
+export const COURSE_TYPES: readonly ObstacleType[] = ['vertical', 'oxer', 'triplice', 'muro'];
+
+/** Tipos oferecidos conforme o documento — mais o atual, se for outro. */
+export const obstacleTypesFor = (kind: 'percurso' | 'ginastica' | undefined, atual?: ObstacleType) =>
+  OBSTACLES.filter((o) => kind === 'ginastica' || COURSE_TYPES.includes(o.type) || o.type === atual);
 
 export const hasBars = (type: ObstacleType): boolean => BAR_TYPES.includes(type);
 

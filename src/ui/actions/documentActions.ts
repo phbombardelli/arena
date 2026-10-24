@@ -1,7 +1,9 @@
-import { createDocument } from '@core/model/document';
+import { applyTemplate, type ArenaTemplate } from '@core/library/arenaTemplate';
+import { centerOnPage, createDocument, fitScaleToPage } from '@core/model/document';
 import { CourseFileError } from '@core/persistence/format';
 import { deserialize, serialize, suggestedFileName } from '@core/persistence/serialize';
 import { openFile, saveFile, saveFileAs } from '@platform/fileSystem';
+import { getCourse, saveCourse as gravaNaBiblioteca } from '@platform/courseLibrary';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 
@@ -37,6 +39,81 @@ export function newDocument(): ActionResult {
   useDocumentStore.getState().replace(createDocument());
   useEditorStore.getState().clearSelection();
   return 'ok';
+}
+
+/**
+ * Novo percurso sobre uma pista (B-77): a pista entra copiada e congelada;
+ * sem pista, é o croqui em branco de sempre. Abre já no modo Percurso.
+ */
+export function newCourse(pista: ArenaTemplate | null, kind: 'percurso' | 'ginastica' = 'percurso'): ActionResult {
+  if (!confirmDiscard()) return 'cancelado';
+  const doc = createDocument();
+  if (kind === 'ginastica') doc.kind = 'ginastica';
+  if (pista) {
+    applyTemplate(doc, pista);
+    doc.meta.venue = pista.name;
+    doc.page.printScale = fitScaleToPage(doc);
+    centerOnPage(doc);
+  }
+  useDocumentStore.getState().replace(doc);
+  const ed = useEditorStore.getState();
+  ed.clearSelection();
+  ed.setMode('percurso');
+  return 'ok';
+}
+
+/** Nome para "Meus percursos": o que já tem, ou o título, ou o local. */
+function nomeSugerido(): string {
+  const { doc, fileName } = useDocumentStore.getState();
+  return (
+    fileName?.replace(/\.pcs$/i, '') ||
+    doc.meta.title ||
+    [doc.meta.venue, doc.meta.date].filter(Boolean).join(' ') ||
+    'Percurso sem nome'
+  );
+}
+
+/**
+ * Salvar percurso (B-77): grava pista e percurso juntos em "Meus
+ * percursos" e, se há um arquivo aberto que o navegador deixa regravar,
+ * nele também. Na primeira vez pede o nome.
+ */
+export async function saveCourse(): Promise<ActionResult> {
+  const { doc, fileHandle, libraryId, fileName } = useDocumentStore.getState();
+  let nome = fileName?.replace(/\.pcs$/i, '') ?? null;
+  if (!libraryId || !nome) {
+    const pedido = window.prompt('Nome do percurso em "Meus percursos":', nomeSugerido());
+    if (pedido === null) return 'cancelado';
+    nome = pedido.trim() || nomeSugerido();
+  }
+  try {
+    const entry = await gravaNaBiblioteca(doc, nome, libraryId);
+    if (fileHandle) await saveFile(serialize(doc), fileHandle, suggestedFileName(doc));
+    useDocumentStore.getState().markSaved({ name: fileHandle ? fileHandle.name : entry.name, handle: fileHandle, libraryId: entry.id });
+    return 'ok';
+  } catch (err) {
+    reportError(err, 'Não foi possível salvar o percurso.');
+    return 'erro';
+  }
+}
+
+/** Abre um percurso de "Meus percursos": pista e percurso, casados. */
+export async function openCourseFromLibrary(id: string): Promise<ActionResult> {
+  if (!confirmDiscard()) return 'cancelado';
+  try {
+    const entry = await getCourse(id);
+    if (!entry) return 'erro';
+    const { document, warnings } = deserialize(entry.text);
+    useDocumentStore.getState().replace(document, { name: entry.name, handle: null, libraryId: entry.id });
+    const ed = useEditorStore.getState();
+    ed.clearSelection();
+    ed.setMode('percurso');
+    if (warnings.length > 0) window.alert(`O percurso foi aberto, com ressalvas:\n\n- ${warnings.join('\n- ')}`);
+    return 'ok';
+  } catch (err) {
+    reportError(err, 'Não foi possível abrir o percurso.');
+    return 'erro';
+  }
 }
 
 export async function openDocument(): Promise<ActionResult> {
@@ -82,7 +159,9 @@ export async function saveDocumentAs(): Promise<ActionResult> {
   try {
     const saved = await saveFileAs(serialize(doc), suggestedFileName(doc));
     if (!saved) return 'cancelado';
-    useDocumentStore.getState().markSaved(saved);
+    // O arquivo novo também vai para "Meus percursos" (ou atualiza o registro).
+    const entry = await gravaNaBiblioteca(doc, saved.name.replace(/\.pcs$/i, ''), useDocumentStore.getState().libraryId);
+    useDocumentStore.getState().markSaved({ ...saved, libraryId: entry.id });
     return 'ok';
   } catch (err) {
     reportError(err, 'Não foi possível salvar o arquivo.');

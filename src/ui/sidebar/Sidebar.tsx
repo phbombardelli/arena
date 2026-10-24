@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { OBSTACLES } from '@core/library/obstacles';
+import { OBSTACLES, obstacleTypesFor } from '@core/library/obstacles';
+import { DEFAULT_CAVALETES, DEFAULT_RELOGIO, defaultPeDeGalinha } from '@core/library/exercises';
+import { useDocumentStore } from '@store/documentStore';
 import { ORNAMENTS } from '@core/library/ornaments';
 import { STRUCTURES } from '@core/library/structures';
 import { importBackgroundImage, startMapWizard } from '@ui/actions/imageActions';
@@ -9,10 +11,14 @@ import { startGuidedRide } from '@ui/actions/guidedActions';
 import { insertLogo } from '@ui/actions/logoActions';
 import { insertTimingLine } from '@ui/actions/timingActions';
 import { useEditorStore, type Tool } from '@store/editorStore';
-import type { OrnamentType } from '@core/model/types';
+import type { ExerciseKind, OrnamentType } from '@core/model/types';
 import {
   IconBarrierBlock,
+  IconArrowsSplit,
   IconBooks,
+  IconClockHour3,
+  IconGripHorizontal,
+  IconTrafficCone,
   IconBuilding,
   IconDoorEnter,
   IconFlag,
@@ -80,12 +86,83 @@ export function Sidebar() {
   const formaConstrucao: Tool = construcaoLivre ? 'arena-polygon' : 'arena-rect';
   const nomeObstaculo = OBSTACLES.find((o) => o.type === obstacleType)?.label ?? '';
   const nomeOrnamento = ORNAMENTS.find((o) => o.type === ornamentType)?.label ?? '';
+  const ginastica = useDocumentStore((st) => st.doc.kind === 'ginastica');
+  const abreExercicio = (kind: ExerciseKind, completo = true) =>
+    useEditorStore.getState().setExerciseEditor({
+      kind,
+      params: kind === 'cavaletes' ? DEFAULT_CAVALETES : kind === 'relogio' ? DEFAULT_RELOGIO : defaultPeDeGalinha(completo),
+      editingId: null,
+    });
 
   return (
     <nav className="rail" aria-label="Ferramentas">
       <RailButton icon={<IconPointer {...ICONE} />} label="Selecionar" shortcut="V" active={tool === 'select'} onClick={() => usa('select')} />
 
-      {mode === 'percurso' ? (
+      {mode === 'percurso' && ginastica ? (
+        <>
+          <RailGroup title="Elementos" />
+          <RailFlyout
+            icon={<IconBarrierBlock {...ICONE} />}
+            label="Obstáculo"
+            shortcut="O"
+            detail={nomeObstaculo}
+            active={tool === 'obstacle'}
+            onActivate={() => usa('obstacle')}
+            items={obstacleTypesFor('ginastica').map((o) => ({
+              label: o.label,
+              hint: o.hint,
+              active: tool === 'obstacle' && obstacleType === o.type,
+              onSelect: () => {
+                setObstacleType(o.type);
+                usa('obstacle');
+              },
+            }))}
+            footer="Clique na pista para inserir. Shift mantém a ferramenta."
+          />
+          <RailFlyout
+            icon={<IconTrafficCone {...ICONE} />}
+            label="Ornamentos"
+            active={tool === 'ornament' || ((tool === 'arena-rect' || tool === 'arena-polygon') && structureType === 'ilha')}
+            onActivate={() => {
+              setOrnamentType('cone');
+              usa('ornament');
+            }}
+            items={[
+              ...(['cone', 'vaso'] as OrnamentType[]).map((t) => ({
+                label: ORNAMENTS.find((o) => o.type === t)!.label,
+                hint: 'clique para colocar',
+                active: tool === 'ornament' && ornamentType === t,
+                onSelect: () => {
+                  setOrnamentType(t);
+                  usa('ornament');
+                },
+              })),
+              {
+                label: 'Ilha decorativa',
+                hint: 'arraste: nasce oval',
+                active: tool === 'arena-rect' && structureType === 'ilha',
+                onSelect: () => construcao('ilha', 'arena-rect'),
+              },
+            ]}
+          />
+
+          <RailGroup title="Exercícios" />
+          <RailButton icon={<IconGripHorizontal {...ICONE} />} label="Cavaletes" onClick={() => abreExercicio('cavaletes')} />
+          <RailFlyout
+            icon={<IconArrowsSplit {...ICONE} />}
+            label="Pé de galinha"
+            items={[
+              { label: 'Completo', hint: 'cavaletes, X, salto, central e as três saídas', onSelect: () => abreExercicio('pe-de-galinha', true) },
+              { label: 'Simples', hint: 'o salto central e as três saídas', onSelect: () => abreExercicio('pe-de-galinha', false) },
+            ]}
+          />
+          <RailButton icon={<IconClockHour3 {...ICONE} />} label="Relógio" onClick={() => abreExercicio('relogio')} />
+
+          <RailGroup title="Medir e anotar" />
+          <RailButton icon={<IconRulerMeasure {...ICONE} />} label="Trena" shortcut="M" active={tool === 'measure'} onClick={() => usa('measure')} />
+          <RailButton icon={<IconTypography {...ICONE} />} label="Texto" shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
+        </>
+      ) : mode === 'percurso' ? (
         <>
           <RailGroup title="Prova" />
           <RailFlyout
@@ -95,7 +172,7 @@ export function Sidebar() {
             detail={nomeObstaculo}
             active={tool === 'obstacle'}
             onActivate={() => usa('obstacle')}
-            items={OBSTACLES.map((o) => ({
+            items={obstacleTypesFor('percurso').map((o) => ({
               label: o.label,
               hint: o.hint,
               active: tool === 'obstacle' && obstacleType === o.type,

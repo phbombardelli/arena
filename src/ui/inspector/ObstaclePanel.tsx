@@ -3,7 +3,6 @@ import {
   setBarAppearance,
   setLiverpool,
   setWings,
-  flipArrow,
   setArrow,
   setFaceWidth,
   setLabelVisible,
@@ -14,7 +13,7 @@ import {
   setSpread,
 } from '@core/commands/obstacleOps';
 import {
-  OBSTACLES,
+  obstacleTypesFor,
   acceptsLiverpool,
   hasBars,
   semParaflanco,
@@ -35,7 +34,7 @@ const LETRAS: Obstacle['letter'][] = ['', 'A', 'B', 'C'];
  * configuração da tabela de alturas; as explicações viraram dica do mouse.
  */
 export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
-  const { apply } = useDocumentStore();
+  const { apply, doc } = useDocumentStore();
   const def = obstacleDef(obstacle.type);
   const travado = obstacle.locked;
 
@@ -52,7 +51,7 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
             )
           }
         >
-          {OBSTACLES.map((o) => (
+          {obstacleTypesFor(doc.kind, obstacle.type).map((o) => (
             <option key={o.type} value={o.type} title={o.hint}>{o.label}</option>
           ))}
         </select>
@@ -120,29 +119,28 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
         )}
       </div>
 
-      <div className="check-row">
-        <label className="check" title="A seta é perpendicular à frente e gira junto com o obstáculo.">
-          <input
-            type="checkbox"
-            checked={obstacle.arrow.visible}
-            disabled={travado}
-            onChange={(e) =>
-              apply('Seta', (d) => setArrow(d, obstacle.id, { visible: e.target.checked }))
-            }
-          />
-          Seta
-        </label>
-        {obstacle.arrow.visible && (
-          <button
-            className="mini neutral"
-            title="Inverter a direção do salto"
-            disabled={travado}
-            onClick={() => apply('Inverter a seta', (d) => flipArrow(d, obstacle.id))}
-          >
-            ⇄ inverter
-          </button>
-        )}
-      </div>
+      <label className="field" title="A seta é perpendicular à frente e gira junto com o obstáculo.">
+        <span>Sentido</span>
+        <select
+          value={!obstacle.arrow.visible ? 'sem' : obstacle.arrow.both ? 'duplo' : obstacle.arrow.reversed ? 'inverso' : 'frente'}
+          disabled={travado}
+          onChange={(e) => {
+            const v = e.target.value;
+            apply('Sentido do salto', (d) =>
+              setArrow(d, obstacle.id, {
+                visible: v !== 'sem',
+                both: v === 'duplo',
+                reversed: v === 'inverso' ? true : v === 'frente' ? false : obstacle.arrow.reversed,
+              }),
+            );
+          }}
+        >
+          <option value="frente">→ Para a frente</option>
+          <option value="inverso">← Invertido</option>
+          <option value="duplo">↔ Duplo</option>
+          <option value="sem">Sem seta</option>
+        </select>
+      </label>
     </>
   );
 }

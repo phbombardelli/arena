@@ -3,9 +3,7 @@ import { exportDocumentPdf } from '@platform/exportPdf';
 import { printDocument } from '@platform/print';
 import { installApp, usePwa } from '@platform/pwa';
 import {
-  newDocument,
-  openDocument,
-  saveDocument,
+  saveCourse,
   saveDocumentAs,
 } from '@ui/actions/documentActions';
 import {
@@ -79,10 +77,15 @@ export function Toolbar() {
 
   const pwa = usePwa();
   const arquivo: MenuEntry[] = [
-    { label: 'Novo', shortcut: 'Ctrl+N', onSelect: () => newDocument() },
-    { label: 'Abrir…', shortcut: 'Ctrl+O', onSelect: () => void openDocument() },
-    { label: 'Salvar', shortcut: 'Ctrl+S', onSelect: () => void saveDocument() },
-    { label: 'Salvar como…', shortcut: 'Ctrl+Shift+S', onSelect: () => void saveDocumentAs() },
+    { label: 'Novo percurso…', shortcut: 'Ctrl+N', onSelect: () => setDialog('novo') },
+    { label: 'Nova ginástica…', onSelect: () => setDialog('nova-ginastica') },
+    { label: 'Abrir percurso…', shortcut: 'Ctrl+O', onSelect: () => setDialog('abrir') },
+    { label: 'Salvar percurso', shortcut: 'Ctrl+S', onSelect: () => void saveCourse() },
+    { label: 'Salvar percurso como arquivo…', shortcut: 'Ctrl+Shift+S', onSelect: () => void saveDocumentAs() },
+    'separator',
+    { label: 'Abrir pista…', onSelect: () => setDialog('modelos') },
+    { label: 'Salvar pista…', onSelect: () => setDialog('modelos') },
+    { label: 'Pista pelo mapa…', onSelect: () => void startMapWizard() },
     'separator',
     {
       label: busy ? 'Exportando…' : 'Exportar PDF…',
@@ -93,8 +96,6 @@ export function Toolbar() {
     { label: 'Imprimir…', shortcut: 'Ctrl+P', onSelect: () => printDocument(doc) },
     'separator',
     { label: 'Configurar folha…', onSelect: () => setDialog('folha') },
-    { label: 'Modelos de pista…', onSelect: () => setDialog('modelos') },
-    { label: 'Pista pelo mapa…', onSelect: () => void startMapWizard() },
     ...(pwa.instalavel
       ? (['separator', { label: 'Instalar como app…', onSelect: () => void installApp() }] as MenuEntry[])
       : []),
@@ -205,7 +206,7 @@ export function Toolbar() {
           onClick={() => setMode('percurso')}
           title="Desenhar a prova: obstáculos, traçados, partida e chegada"
         >
-          Percurso
+          {doc.kind === 'ginastica' ? 'Ginástica' : 'Percurso'}
         </button>
       </div>
 

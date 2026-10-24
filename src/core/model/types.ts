@@ -59,7 +59,23 @@ interface BaseObject {
    * movem juntos. Ausente = solto. Usado no cenário da pista.
    */
   group?: string;
+  /**
+   * Elemento de um exercício de ginástica (B-37): todos os do mesmo
+   * exercício levam o mesmo `id` e os parâmetros, para "Editar ginástica"
+   * redesenhar o conjunto. A âncora é o elemento que dá posição e direção.
+   */
+  exercise?: ExerciseTag;
 }
+
+export interface ExerciseTag {
+  id: string;
+  kind: ExerciseKind;
+  params: unknown;
+  /** Posição e giro da âncora no sistema do exercício (gerado em 0,0 → leste). */
+  anchor?: { pos: Vec2; rotation: number };
+}
+
+export type ExerciseKind = 'cavaletes' | 'relogio' | 'pe-de-galinha';
 
 /* ---------------------------------------------------------------- pista */
 
@@ -112,7 +128,7 @@ export interface Arena extends BaseObject {
 
 /* ----------------------------------------------------------- obstáculos */
 
-export type ObstacleType = 'vertical' | 'oxer' | 'triplice' | 'muro' | 'plano' | 'cavalete';
+export type ObstacleType = 'vertical' | 'oxer' | 'triplice' | 'muro' | 'plano' | 'cavalete' | 'x';
 
 export interface ObstacleElement {
   /** Altura em metros. `null` = não informada. */
@@ -191,7 +207,8 @@ export interface Obstacle extends BaseObject {
   bar: BarAppearance;
   wings: WingsAppearance;
   liverpool: LiverpoolOption;
-  arrow: { visible: boolean; reversed: boolean; lengthMm: Millimeters };
+  /** `both`: seta para os dois lados — salto de sentido duplo (B-37). */
+  arrow: { visible: boolean; reversed: boolean; lengthMm: Millimeters; both?: boolean };
   /** Rótulo de alturas ao lado do obstáculo, como no croqui de referência. */
   heightLabel: ObstacleLabel;
   numberLabel: ObstacleLabel;
@@ -262,6 +279,11 @@ export interface CoursePath extends BaseObject {
   lockedDistances?: Record<string, number>;
   /** Corpo das letras das distâncias entre esforços, igual para todas (mm). */
   distanceSizeMm?: number;
+  /**
+   * Rótulo fixo sobre a linha, a `s` metros do começo (B-37): a distância
+   * das saídas de um exercício de ginástica, que não tem numeração.
+   */
+  label?: { text: string; s: number };
   /**
    * Traçado gerado pelos assistentes (automático ou por trechos). Rodar o
    * assistente de novo SUBSTITUI esse traçado em vez de empilhar outro por
@@ -406,6 +428,7 @@ export interface BackgroundImage extends BaseObject {
 }
 
 export type OrnamentType =
+  | 'cone'
   | 'arvore'
   | 'arbusto'
   | 'vaso'
@@ -480,6 +503,14 @@ export interface CourseDocument {
   layers: Layer[];
   objects: SceneObject[];
   assets: Record<string, Asset>;
+  /**
+   * De qual pista o percurso partiu (B-77). A pista em si vai copiada,
+   * congelada, nos objetos: isto só registra a origem, para mostrar e, um
+   * dia, oferecer atualizar.
+   */
+  arenaSource?: { name: string; savedAt: string };
+  /** Percurso de salto (padrão) ou folha de ginástica (B-37, decisão 89). */
+  kind?: 'percurso' | 'ginastica';
 }
 
 export const SCHEMA_VERSION = 11;

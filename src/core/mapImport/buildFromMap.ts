@@ -48,6 +48,8 @@ export function buildFromMap(doc: CourseDocument, r: MapResult): ObjectId[] {
   for (const o of antigos) if (o.kind === 'image') delete doc.assets[o.assetId];
   const idsAntigos = new Set(antigos.map((o) => o.id));
   doc.objects = doc.objects.filter((o) => !idsAntigos.has(o.id));
+  // Cenário novo, tirado do mapa: não vem de nenhuma pista guardada (B-77).
+  delete doc.arenaSource;
 
   const grupo = newId('grp');
   const ids: ObjectId[] = [];

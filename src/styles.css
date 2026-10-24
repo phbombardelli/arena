@@ -739,3 +739,43 @@ button.mini.neutral { color: var(--text); }
   font-size: 13px;
   z-index: 50;
 }
+
+/* Salvar e abrir (B-77). */
+.file-dialog { display: flex; flex-direction: column; gap: 6px; }
+.file-dialog h3 { margin: 10px 0 2px; }
+.file-tabs { display: flex; gap: 4px; margin: 4px 0 6px; }
+.file-tabs button { flex: 1; }
+.file-list { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.file-list li { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--chrome); }
+.file-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.file-name strong { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-name em { font-style: normal; font-size: 11.5px; color: var(--text-dim); }
+.file-upload { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 8px 0; }
+.file-blank { display: flex; flex-direction: column; align-items: flex-start; padding: 10px 12px; text-align: left; }
+.file-blank em { font-style: normal; font-size: 11.5px; color: var(--text-dim); }
+.file-save { display: flex; flex-direction: column; gap: 4px; }
+.ok-text { color: var(--ok); }
+.arena-source { margin: -4px 0 8px; }
+.arena-source span { color: var(--text-dim); }
+
+.file-tag { margin-left: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--gold-ink); background: var(--act-soft); border-radius: 4px; padding: 1px 5px; vertical-align: 1px; }
+
+/* Configurador de ginástica (B-37). */
+.dialog:has(.gym-config) { width: min(1040px, calc(100vw - 24px)); }
+.dialog:has(.file-dialog) { width: min(560px, calc(100vw - 24px)); }
+.gym-config { display: grid; grid-template-columns: minmax(250px, 300px) minmax(0, 1fr); gap: 14px; align-items: start; }
+.gym-form { max-height: 62vh; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 4px; }
+/* Janela estreita: a prévia em cima, os campos embaixo. */
+@media (max-width: 860px) {
+  .gym-config { grid-template-columns: minmax(0, 1fr); }
+  .gym-preview { order: -1; position: static; }
+  .gym-preview svg { height: 34vh; }
+  .gym-form { max-height: 34vh; }
+}
+.gym-group { border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px 6px; margin: 2px 0; }
+.gym-group legend { padding: 0 4px; font-weight: 600; }
+.gym-preview { position: sticky; top: 0; }
+.gym-preview svg { width: 100%; height: 56vh; border: 1px solid var(--border); border-radius: 8px; background: #fff; touch-action: none; }
+.gym-handle { fill: rgba(184, 151, 90, 0.25); stroke: var(--brass); stroke-width: 1; cursor: grab; }
+.gym-handle:active { cursor: grabbing; }

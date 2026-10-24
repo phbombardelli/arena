@@ -173,7 +173,8 @@ export function findInterferences(doc: CourseDocument): Interference[] {
   const obstacles = doc.objects.filter(
     (o): o is Obstacle => o.kind === 'obstacle' && o.visible,
   );
-  const paths = doc.objects.filter((o): o is CoursePath => o.kind === 'path' && o.visible);
+  // As linhas de um exercício de ginástica são só desenho das saídas, não traçado.
+  const paths = doc.objects.filter((o): o is CoursePath => o.kind === 'path' && o.visible && !o.exercise);
   const arena = doc.objects.find((o): o is Arena => o.kind === 'arena' && !o.structure);
   const out: Interference[] = [];
 

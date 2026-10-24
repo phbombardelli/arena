@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Vec2 } from '@core/geometry/vec';
 import type {
+  ExerciseKind,
   ObjectId,
   ObjectScope,
   ObstacleType,
@@ -20,7 +21,7 @@ import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
  */
 
 /** Janelas que se abrem por menu. Só uma de cada vez. */
-export type DialogId = 'atalhos' | 'modelos' | 'folha' | 'sobre' | 'alturas';
+export type DialogId = 'atalhos' | 'modelos' | 'folha' | 'sobre' | 'alturas' | 'novo' | 'nova-ginastica' | 'abrir';
 
 export type Tool =
   | 'select'
@@ -98,6 +99,9 @@ interface EditorState {
   structureType: StructureType | null;
   /** Janela aberta por menu, ou nenhuma. */
   dialog: DialogId | null;
+  /** Configurador de ginástica aberto (B-37): novo ou editando um exercício. */
+  exerciseEditor: { kind: ExerciseKind; params: unknown; editingId: string | null } | null;
+  setExerciseEditor: (e: { kind: ExerciseKind; params: unknown; editingId: string | null } | null) => void;
   /** Print aberto no assistente "Montar pista pelo mapa" (B-40). */
   mapWizard: ImportedImage | null;
   /**
@@ -176,6 +180,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   // mais selecionável, e uma seleção invisível é fonte de confusão.
   setStructureType: (structureType) => set({ structureType }),
   setDialog: (dialog) => set({ dialog }),
+  exerciseEditor: null,
+  setExerciseEditor: (exerciseEditor) => set({ exerciseEditor }),
   setMapWizard: (mapWizard) => set({ mapWizard }),
   toggleHints: () => set((s) => ({ showHints: !s.showHints })),
   setMode: (mode) =>

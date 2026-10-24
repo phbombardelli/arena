@@ -27,16 +27,21 @@ interface DocumentState {
   fileName: string | null;
   /** Arquivo aberto, quando o navegador permite gravar por cima. */
   fileHandle: FileHandleLike | null;
+  /** Em "Meus percursos": o registro que este percurso atualiza ao salvar. */
+  libraryId: string | null;
 
   /** Única porta de entrada para mutar o documento. */
   apply: (label: string, recipe: (draft: CourseDocument) => void, mergeKey?: string) => void;
   /** Mutação sem histórico — só para carregar/trocar o documento inteiro. */
-  replace: (doc: CourseDocument, file?: { name: string | null; handle: FileHandleLike | null }) => void;
+  replace: (
+    doc: CourseDocument,
+    file?: { name: string | null; handle: FileHandleLike | null; libraryId?: string | null },
+  ) => void;
   undo: () => void;
   redo: () => void;
   canUndo: () => boolean;
   canRedo: () => boolean;
-  markSaved: (file: { name: string; handle: FileHandleLike | null }) => void;
+  markSaved: (file: { name: string; handle: FileHandleLike | null; libraryId?: string | null }) => void;
 }
 
 export const useDocumentStore = create<DocumentState>((set, get) => ({
@@ -46,6 +51,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   dirty: false,
   fileName: null,
   fileHandle: null,
+  libraryId: null,
 
   apply: (label, recipe, mergeKey) => {
     const state = get();
@@ -89,6 +95,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       dirty: false,
       fileName: file?.name ?? null,
       fileHandle: file?.handle ?? null,
+      libraryId: file?.libraryId ?? null,
     }),
 
   undo: () => {
@@ -117,5 +124,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   canUndo: () => get().past.length > 0,
   canRedo: () => get().future.length > 0,
-  markSaved: ({ name, handle }) => set({ dirty: false, fileName: name, fileHandle: handle }),
+  markSaved: ({ name, handle, libraryId }) =>
+    set((st) => ({
+      dirty: false,
+      fileName: name,
+      fileHandle: handle,
+      libraryId: libraryId === undefined ? st.libraryId : libraryId,
+    })),
 }));

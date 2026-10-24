@@ -202,3 +202,19 @@ describe('arquivo de modelo', () => {
     expect(isArenaTemplate({ format: 'percurso-pista' })).toBe(false);
   });
 });
+
+describe('pista congelada no percurso (B-77)', () => {
+  it('aplicar a pista guarda de onde ela veio, e a cópia não muda se o modelo mudar', () => {
+    const origem = produce(createDocument(), (d) => {
+      d.objects.length = 0;
+      addObject(d, createRectangleArena({ x: 0, y: 0 }, 60, 40));
+    });
+    const modelo = buildTemplate(origem, 'AMAN - Pista Cel Jacques', 11);
+    const percurso = produce(createDocument(), (d) => applyTemplate(d, modelo));
+    expect(percurso.arenaSource?.name).toBe('AMAN - Pista Cel Jacques');
+    // Mexer no modelo depois não alcança o percurso: a pista foi copiada.
+    (modelo.objects[0] as { widthM: number }).widthM = 99;
+    const pista = percurso.objects.find((o) => o.kind === 'arena') as { widthM: number };
+    expect(pista.widthM).toBe(60);
+  });
+});

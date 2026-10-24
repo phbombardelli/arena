@@ -1,7 +1,7 @@
 import { HeightsEditor } from '@ui/inspector/HeightsEditor';
 import { useEditorStore } from '@store/editorStore';
 import { Dialog } from '@ui/common/Popover';
-import { ArenaLibraryPanel } from '@ui/inspector/ArenaLibraryPanel';
+import { NewCourseDialogBody, OpenCourseDialogBody, PistasDialogBody } from '@ui/files/FileDialogs';
 import { SheetSettings } from '@ui/inspector/SheetSettings';
 
 const ATALHOS: [string, string][] = [
@@ -64,8 +64,29 @@ export function Dialogs() {
   }
   if (dialog === 'modelos') {
     return (
-      <Dialog title="Modelos de pista" onClose={fecha}>
-        <ArenaLibraryPanel />
+      <Dialog title="Pistas" onClose={fecha}>
+        <PistasDialogBody />
+      </Dialog>
+    );
+  }
+  if (dialog === 'novo') {
+    return (
+      <Dialog title="Novo percurso" onClose={fecha}>
+        <NewCourseDialogBody />
+      </Dialog>
+    );
+  }
+  if (dialog === 'nova-ginastica') {
+    return (
+      <Dialog title="Nova ginástica" onClose={fecha}>
+        <NewCourseDialogBody kind="ginastica" />
+      </Dialog>
+    );
+  }
+  if (dialog === 'abrir') {
+    return (
+      <Dialog title="Abrir percurso" onClose={fecha}>
+        <OpenCourseDialogBody />
       </Dialog>
     );
   }

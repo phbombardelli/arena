@@ -1825,3 +1825,71 @@ lugar da mistura de símbolos e emojis.
   do meio continuam valendo.
 - Em tela baixa o trilho rola, sem barra visível, e as listas que abrem
   ao lado se posicionam pela janela para a rolagem não cortá-las.
+
+## 88. Salvar e abrir: Pista e Percurso separados (B-77)
+
+Duas coisas distintas, com nome próprio:
+- **Pista** — só o cenário (contorno, construções, água, ornamentos,
+  imagem de fundo). Arquivo `.pista`.
+- **Percurso** — pacote casado, pista e percurso no mesmo `.pcs`. Abrir
+  um percurso traz a pista dele, sempre. A pista vai **congelada como
+  cópia**: mudar a pista-modelo depois não altera croquis já feitos. O
+  percurso guarda só de onde ela veio (`arenaSource`: nome e data), e o
+  painel mostra "Pista: …". Cenário montado pelo mapa não tem origem.
+
+**Menu Arquivo**: Novo percurso… (Ctrl+N: em branco, ou sobre uma pista) ·
+Abrir percurso… (Ctrl+O: Meus percursos ou arquivo .pcs) · Salvar
+percurso (Ctrl+S) · Salvar percurso como arquivo… (Ctrl+Shift+S) · Abrir
+pista… / Salvar pista… · Pista pelo mapa…
+
+**Escolher pista**, em todo lugar, em três origens: Do programa · Minhas
+pistas · Arquivo (.pista, com a opção de guardar em Minhas pistas). As do
+programa aparecem sempre; uma sua com o mesmo nome só some se for cópia
+mais velha que a do programa.
+
+**Salvar percurso** grava em "Meus percursos" (pede o nome na primeira
+vez) e, se há um arquivo aberto que o navegador deixa regravar, nele
+também. "Salvar como arquivo" grava o `.pcs` e atualiza Meus percursos.
+
+**Armazenamento**: Minhas pistas e Meus percursos moram no banco local
+do navegador (IndexedDB) — cabe imagem de fundo e muitos arquivos, e é a
+base da sincronização com a nuvem (B-78). As pistas que estavam no
+localStorage migram na primeira abertura; o original fica intacto.
+
+## 89. Modo Ginástica (B-37)
+
+A ginástica é um **tipo de documento à parte** (`doc.kind = 'ginastica'`),
+sobre uma pista como o percurso, marcado "Ginástica" em Meus percursos.
+Arquivo › Nova ginástica… cria. Nele o segundo modo se chama Ginástica.
+
+**Obstáculos**: no percurso de salto, só vertical, oxer, tríplice e muro
+(lista, painel e inserção); na ginástica, todos — mais vara no chão,
+cavalete e o novo **X** (duas varas cruzadas, suporte nas pontas), sem
+número automático. Todo obstáculo ganhou **Sentido**: para a frente,
+invertido, **duplo** (seta para os dois lados) ou **sem seta**.
+
+**Trilho da ginástica**: Elementos (Obstáculo com todos os tipos;
+Ornamentos com o **cone** de trânsito, vaso e ilha) · Exercícios
+(Cavaletes, Pé de galinha completo/simples, Relógio) · Medir e anotar.
+Sem quadros técnicos e sem traçado (o T não faz nada ali).
+
+**Exercícios** (`core/library/exercises.ts`): gerados num sistema próprio
+e postos no centro da tela; nascem vinculados e marcados (`exercise`), e
+"Editar ginástica" reabre o configurador e redesenha no lugar e na
+direção em que o conjunto estiver (a âncora guarda a pose original).
+Distâncias de vara a vara — da vara de saída à de entrada; em cavalete,
+vara, X e vertical, que não têm largura, é o mesmo que de centro a
+centro. Sem lances de galope.
+- **Cavaletes**: quantidade, espaçamento e tipo (cavalete ou vara).
+- **Pé de galinha** completo (cavaletes, X, salto, central, três saídas)
+  e simples (central e saídas): cada parte liga e desliga, tipo e
+  distância de cada um, central duplo com a distância entre os dois, e
+  sentido de cada saída. As **saídas em curva** ficam sobre um arco que
+  sai da vara de saída do central: a distância é medida sobre a linha, e
+  na prévia o salto se **arrasta de lado** sobre o arco que ela permite
+  (o ângulo de abertura também se digita). Cotas nas distâncias retas e
+  linhas tracejadas com a distância nas saídas, que podem ser escondidas;
+  essas linhas não contam como traçado nos avisos de interferência.
+- **Relógio**: 4 elementos a 0°, 90°, 180° e 270°, no sentido do raio,
+  diâmetro medido pelo centro das varas, sentido horário, anti-horário ou
+  duplo, tipo à escolha, sem numeração; cota do diâmetro ao lado do eixo.
