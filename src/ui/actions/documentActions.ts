@@ -1,4 +1,7 @@
-import { applyTemplate, type ArenaTemplate } from '@core/library/arenaTemplate';
+import { applyTemplate, buildTemplate, type ArenaTemplate } from '@core/library/arenaTemplate';
+import { deepClone } from '@core/model/clone';
+import { objectScope } from '@core/model/transform';
+import { SCHEMA_VERSION } from '@core/model/types';
 import { centerOnPage, createDocument, fitScaleToPage } from '@core/model/document';
 import { CourseFileError } from '@core/persistence/format';
 import { deserialize, serialize, suggestedFileName } from '@core/persistence/serialize';
@@ -55,6 +58,58 @@ export function newCourse(pista: ArenaTemplate | null, kind: 'percurso' | 'ginas
     doc.page.printScale = fitScaleToPage(doc);
     centerOnPage(doc);
   }
+  useDocumentStore.getState().replace(doc);
+  const ed = useEditorStore.getState();
+  ed.clearSelection();
+  ed.setMode('percurso');
+  return 'ok';
+}
+
+export type DocKind = 'percurso' | 'ginastica';
+
+const kindOf = (): DocKind => (useDocumentStore.getState().doc.kind === 'ginastica' ? 'ginastica' : 'percurso');
+
+/**
+ * Abas Pista | Percurso | Ginástica (B-86, opção b): percurso e ginástica
+ * continuam arquivos separados. Clicar na aba do outro tipo, com o croqui
+ * ainda sem nada da prova, só troca o tipo; com algo desenhado, abre a
+ * escolha: nova na mesma pista, abrir uma guardada ou outra pista.
+ */
+export function switchKind(kind: DocKind): void {
+  const ed = useEditorStore.getState();
+  if (kindOf() === kind) {
+    ed.setMode('percurso');
+    return;
+  }
+  const { doc, apply } = useDocumentStore.getState();
+  const temProva = doc.objects.some((o) => objectScope(o) === 'percurso');
+  if (!temProva) {
+    apply(kind === 'ginastica' ? 'Virar ginástica' : 'Virar percurso', (d) => {
+      if (kind === 'ginastica') d.kind = 'ginastica';
+      else delete d.kind;
+    });
+    ed.setMode('percurso');
+    return;
+  }
+  ed.setDialog(kind === 'ginastica' ? 'outro-ginastica' : 'outro-percurso');
+}
+
+/**
+ * Novo croqui do outro tipo sobre a MESMA pista do aberto: o cenário vai
+ * copiado, com a mesma folha, escala e enquadramento.
+ */
+export function newKindOnSameArena(kind: DocKind): ActionResult {
+  if (!confirmDiscard()) return 'cancelado';
+  const atual = useDocumentStore.getState().doc;
+  const pista = buildTemplate(atual, atual.arenaSource?.name || atual.meta.venue || 'Pista', SCHEMA_VERSION);
+  const doc = createDocument();
+  if (kind === 'ginastica') doc.kind = 'ginastica';
+  applyTemplate(doc, pista);
+  doc.page = deepClone(atual.page);
+  doc.originMm = { ...atual.originMm };
+  doc.meta.venue = atual.meta.venue;
+  if (atual.arenaSource) doc.arenaSource = { ...atual.arenaSource };
+  else delete doc.arenaSource;
   useDocumentStore.getState().replace(doc);
   const ed = useEditorStore.getState();
   ed.clearSelection();

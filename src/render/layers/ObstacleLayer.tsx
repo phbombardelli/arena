@@ -52,10 +52,8 @@ export function ObstacleLayer({
       >
         {onPointerDown && <ObstacleHitArea obstacle={obstacle} k={k} />}
         <ObstacleShape obstacle={obstacle} k={k} />
-        {obstacle.arrow.visible && <JumpArrow obstacle={obstacle} k={k} />}
-        {obstacle.arrow.visible && obstacle.arrow.both && (
-          <JumpArrow obstacle={{ ...obstacle, arrow: { ...obstacle.arrow, reversed: !obstacle.arrow.reversed } }} k={k} />
-        )}
+        {obstacle.arrow.visible && !obstacle.arrow.both && <JumpArrow obstacle={obstacle} k={k} />}
+        {obstacle.arrow.visible && obstacle.arrow.both && <SetasDuplas obstacle={obstacle} k={k} />}
       </g>
 
       {/*
@@ -126,5 +124,25 @@ function ObstacleHitArea({ obstacle, k }: { obstacle: Obstacle; k: number }) {
       strokeWidth={HIT_MARGIN_PX * 2}
       vectorEffect="non-scaling-stroke"
     />
+  );
+}
+
+/**
+ * Duplo sentido (B-88): as duas setas lado a lado, uma de cada lado do
+ * centro, como placa de mão dupla. Entre duas varas vizinhas, a que vai e
+ * a que volta passam uma ao lado da outra em vez de bater de frente.
+ */
+function SetasDuplas({ obstacle, k }: { obstacle: Obstacle; k: number }) {
+  const meiaCabeca = obstacle.arrow.lengthMm * 0.42 * 0.45;
+  const lado = Math.min(meiaCabeca + 0.4, (obstacle.faceWidthM / 2) * k);
+  return (
+    <>
+      <g transform={`translate(${round(lado)} 0)`}>
+        <JumpArrow obstacle={obstacle} k={k} />
+      </g>
+      <g transform={`translate(${round(-lado)} 0)`}>
+        <JumpArrow obstacle={{ ...obstacle, arrow: { ...obstacle.arrow, reversed: !obstacle.arrow.reversed } }} k={k} />
+      </g>
+    </>
   );
 }

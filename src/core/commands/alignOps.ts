@@ -1,4 +1,4 @@
-import { add, fromAngle, normalizeAngle, scale, sub, type Vec2 } from '@core/geometry/vec';
+import { add, fromAngle, normalizeAngle, rotate, scale, sub, type Vec2 } from '@core/geometry/vec';
 import { linkObjects } from './groupOps';
 import { jumpHeading } from '@core/assist/ridePath';
 import type { CourseDocument, ObjectId, Obstacle } from '@core/model/types';
@@ -265,5 +265,107 @@ export function setFreeGap(doc: CourseDocument, ids: ObjectId[], indice: number,
   const delta = { x: (dx / d) * (novo - d), y: (dy / d) * (novo - d) };
   for (const o of ord.slice(indice + 1)) {
     if (!o.locked) o.pos = { x: o.pos.x + delta.x, y: o.pos.y + delta.y };
+  }
+}
+
+/* ------------------------------------------------- curva por distância */
+
+/**
+ * Curva por distância (B-81): o mesmo mecanismo do pé de galinha da
+ * ginástica, no Percurso. Do anterior ao seguinte vai um ARCO de círculo
+ * que sai da vara de saída do anterior na direção do salto dele; o vão é
+ * medido SOBRE o arco, de vara a vara, e a abertura é quanto a linha gira
+ * até o seguinte (negativo abre à esquerda). Mudar a abertura não muda a
+ * distância: o seguinte anda de lado, sobre o que aquele vão permite, e
+ * fica de frente para a curva.
+ */
+export interface ArcGap {
+  gapM: number;
+  angleDeg: number;
+}
+
+/** O limite da abertura: além disso o cavalo não chega de frente. */
+export const ARC_MAX_DEG = 120;
+
+/** Ponto e direção a `s` metros sobre o arco de comprimento `L`. */
+function sobreArco(inicio: Vec2, rumo: number, L: number, anguloDeg: number, s: number): { p: Vec2; heading: number } {
+  const th = (anguloDeg * Math.PI) / 180;
+  let local: Vec2;
+  let giro: number;
+  if (Math.abs(th) < 1e-6 || L <= 0) {
+    local = { x: s, y: 0 };
+    giro = 0;
+  } else {
+    const raio = L / th;
+    const phi = (th * s) / L;
+    local = { x: raio * Math.sin(phi), y: raio * (1 - Math.cos(phi)) };
+    giro = (phi * 180) / Math.PI;
+  }
+  const c = Math.cos((rumo * Math.PI) / 180);
+  const sn = Math.sin((rumo * Math.PI) / 180);
+  return { p: add(inicio, { x: local.x * c - local.y * sn, y: local.x * sn + local.y * c }), heading: rumo + giro };
+}
+
+/** Onde o seguinte fica, dado o anterior, o vão sobre o arco e a abertura. */
+export function arcPose(a: Obstacle, meiaB: number, gap: ArcGap): { pos: Vec2; heading: number } {
+  const rumo = jumpHeading(a);
+  const saida = add(a.pos, scale(fromAngle(rumo), meiaVara(a)));
+  const fim = sobreArco(saida, rumo, gap.gapM, gap.angleDeg, gap.gapM);
+  return { pos: add(fim.p, scale(fromAngle(fim.heading), meiaB)), heading: fim.heading };
+}
+
+/** Pontos do arco do vão, para desenhar (da vara de saída à de entrada). */
+export function arcPoints(a: Obstacle, gap: ArcGap, n = 24): Vec2[] {
+  const rumo = jumpHeading(a);
+  const saida = add(a.pos, scale(fromAngle(rumo), meiaVara(a)));
+  return Array.from({ length: n + 1 }, (_, i) => sobreArco(saida, rumo, gap.gapM, gap.angleDeg, (gap.gapM * i) / n).p);
+}
+
+/**
+ * Lê o arco que já existe entre dois obstáculos: o círculo tangente à
+ * direção do anterior que passa pela vara de entrada do seguinte.
+ */
+export function arcGapBetween(a: Obstacle, b: Obstacle): ArcGap {
+  const rumo = jumpHeading(a);
+  const saida = add(a.pos, scale(fromAngle(rumo), meiaVara(a)));
+  const entrada = sub(b.pos, scale(fromAngle(jumpHeading(b)), meiaVara(b)));
+  const q = sub(entrada, saida);
+  const c = Math.cos((-rumo * Math.PI) / 180);
+  const sn = Math.sin((-rumo * Math.PI) / 180);
+  const x = q.x * c - q.y * sn;
+  const y = q.x * sn + q.y * c;
+  const corda = Math.hypot(x, y);
+  const th = 2 * Math.atan2(y, x);
+  const gapM = Math.abs(th) < 1e-6 ? corda : (corda * (th / 2)) / Math.sin(th / 2);
+  return { gapM, angleDeg: (th * 180) / Math.PI };
+}
+
+export function arcGaps(ordered: Obstacle[]): ArcGap[] {
+  return ordered.slice(1).map((b, i) => arcGapBetween(ordered[i]!, b));
+}
+
+/**
+ * Acerta um vão em curva: o seguinte vai para o fim do arco e gira de
+ * frente para ele; os de depois acompanham como um bloco (giram e andam
+ * junto), para os vãos deles não mudarem.
+ */
+export function setArcGap(doc: CourseDocument, ids: ObjectId[], indice: number, gap: ArcGap): void {
+  const sel = ids
+    .map((id) => doc.objects.find((o) => o.id === id))
+    .filter((o): o is Obstacle => o?.kind === 'obstacle');
+  const ord = orderAlongLine(sel);
+  const a = ord[indice];
+  const b = ord[indice + 1];
+  if (!a || !b || b.locked) return;
+  const vao = sameCombination(a, b) ? clampCombinationGap(gap.gapM) : Math.max(0.5, gap.gapM);
+  const angulo = Math.max(-ARC_MAX_DEG, Math.min(ARC_MAX_DEG, gap.angleDeg));
+  const alvo = arcPose(a, meiaVara(b), { gapM: vao, angleDeg: angulo });
+  const giro = normalizeAngle(alvo.heading - jumpHeading(b) + 180) - 180;
+  const de = b.pos;
+  for (const o of ord.slice(indice + 1)) {
+    if (o.locked) continue;
+    const relativo = rotate(sub(o.pos, de), giro);
+    o.pos = add(alvo.pos, relativo);
+    o.rotation = normalizeAngle(o.rotation + giro);
   }
 }

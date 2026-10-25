@@ -47,6 +47,8 @@ export function ExerciseDialog() {
 
 function Configurador({ kind, params: iniciais, editingId }: { kind: ExerciseKind; params: ExerciseParams; editingId: string | null }) {
   const [params, setParams] = useState<ExerciseParams>(() => structuredClone(iniciais));
+  // Último lado em curva mexido no pé de galinha: é ele que manda ao igualar (B-89).
+  const [ultimo, setUltimo] = useState<LadoCurva>('direita');
   const fecha = () => useEditorStore.getState().setExerciseEditor(null);
   const pg = kind === 'pe-de-galinha' ? (params as PeDeGalinhaParams) : null;
   const titulo = pg ? `${TITULOS[kind]} ${pg.completo ? 'completo' : 'simples'}` : TITULOS[kind];
@@ -67,6 +69,8 @@ function Configurador({ kind, params: iniciais, editingId }: { kind: ExerciseKin
         ids = placeExercise(d, kind, params, { x: alvo.x - c.x, y: alvo.y - c.y }, 0);
       });
     }
+    // Entra selecionado e com a ferramenta de seleção: pronto para arrastar (B-84).
+    useEditorStore.getState().setTool('select');
     useEditorStore.getState().setSelection(ids);
     fecha();
   };
@@ -78,9 +82,9 @@ function Configurador({ kind, params: iniciais, editingId }: { kind: ExerciseKin
           {kind === 'cavaletes' && <FormCavaletes p={params as CavaletesParams} set={setParams} />}
           {kind === 'relogio' && <FormRelogio p={params as RelogioParams} set={setParams} />}
           {kind === 'leque' && <FormLeque p={params as LequeParams} set={setParams} />}
-          {pg && <FormPeDeGalinha p={pg} set={setParams} />}
+          {pg && <FormPeDeGalinha p={pg} set={setParams} onLado={setUltimo} />}
         </div>
-        <Previa kind={kind} params={params} set={setParams} />
+        <Previa kind={kind} params={params} set={setParams} ultimo={ultimo} onLado={setUltimo} />
       </div>
       <div className="row-buttons">
         <button onClick={fecha}>Cancelar</button>
@@ -115,9 +119,23 @@ function centroGerado(kind: ExerciseKind, params: ExerciseParams): Vec2 {
   return { x: (b.min.x + b.max.x) / 2, y: (b.min.y + b.max.y) / 2 };
 }
 
-function Previa({ kind, params, set }: { kind: ExerciseKind; params: ExerciseParams; set: (p: ExerciseParams) => void }) {
+type LadoCurva = 'esquerda' | 'direita';
+
+function Previa({
+  kind,
+  params,
+  set,
+  ultimo,
+  onLado,
+}: {
+  kind: ExerciseKind;
+  params: ExerciseParams;
+  set: (p: ExerciseParams) => void;
+  ultimo: LadoCurva;
+  onLado: (lado: LadoCurva) => void;
+}) {
   const svg = useRef<SVGSVGElement | null>(null);
-  const [arrasto, setArrasto] = useState<{ lado: 'esquerda' | 'direita'; quadro: ReturnType<typeof caixa> } | null>(null);
+  const [arrasto, setArrasto] = useState<{ lado: LadoCurva; quadro: ReturnType<typeof caixa> } | null>(null);
   const atual = useMemo(() => caixa(kind, params), [kind, params]);
   // Arrastando, o enquadramento fica parado: sem isso a prévia "fugia" do dedo.
   const quadro = arrasto?.quadro ?? atual;
@@ -187,24 +205,62 @@ function Previa({ kind, params, set }: { kind: ExerciseKind; params: ExercisePar
             const s = pg.saidas[lado];
             if (!s.on) return null;
             const pose = saidaPose(saidaDe, s);
+            const cx = origemMm.x + pose.pos.x * k;
+            const cy = origemMm.y + pose.pos.y * k;
+            // O ângulo fica do lado de fora da curva, longe da reta (B-89).
+            const ty = cy + (lado === 'esquerda' ? -9 : 11);
             return (
-              <circle
-                key={lado}
-                className="gym-handle"
-                cx={origemMm.x + pose.pos.x * k}
-                cy={origemMm.y + pose.pos.y * k}
-                r={4.5}
-                onPointerDown={(e) => {
-                  (e.target as Element).setPointerCapture?.(e.pointerId);
-                  setArrasto({ lado, quadro: atual });
-                }}
-              >
-                <title>Arraste para abrir ou fechar a curva; a distância fica a mesma</title>
-              </circle>
+              <g key={lado}>
+                <text x={cx} y={ty} className="gym-angle" textAnchor="middle">
+                  {Math.abs(Math.round(s.angleDeg))}°
+                </text>
+                <circle
+                  className="gym-handle"
+                  cx={cx}
+                  cy={cy}
+                  r={4.5}
+                  onPointerDown={(e) => {
+                    (e.target as Element).setPointerCapture?.(e.pointerId);
+                    setArrasto({ lado, quadro: atual });
+                    onLado(lado);
+                  }}
+                >
+                  <title>Arraste para abrir ou fechar a curva; a distância fica a mesma</title>
+                </circle>
+              </g>
             );
           })}
       </svg>
       {pg && <p className="note">Arraste os círculos para abrir ou fechar as curvas: a distância sobre a linha não muda.</p>}
+      {pg && <IgualarAngulos p={pg} set={set} ultimo={ultimo} />}
+    </div>
+  );
+}
+
+/**
+ * Igualar ângulos (B-89): o lado mexido por último manda; o outro recebe
+ * o mesmo ângulo, espelhado.
+ */
+function IgualarAngulos({ p, set, ultimo }: { p: PeDeGalinhaParams; set: (p: ExerciseParams) => void; ultimo: LadoCurva }) {
+  const { esquerda, direita } = p.saidas;
+  if (!esquerda.on || !direita.on) return null;
+  const iguais = Math.abs(esquerda.angleDeg) === Math.abs(direita.angleDeg);
+  const base = Math.abs(p.saidas[ultimo].angleDeg);
+  const outro: LadoCurva = ultimo === 'esquerda' ? 'direita' : 'esquerda';
+  return (
+    <div className="row-buttons gym-equalize">
+      <button
+        disabled={iguais}
+        title={iguais ? 'Os dois lados já têm o mesmo ângulo' : `Leva os ${Math.round(base)}° da ${ultimo} para a ${outro}`}
+        onClick={() =>
+          set({
+            ...p,
+            saidas: { ...p.saidas, [outro]: { ...p.saidas[outro], angleDeg: outro === 'esquerda' ? -base : base } },
+          })
+        }
+      >
+        {iguais ? 'Ângulos iguais' : `Igualar ângulos (${Math.round(base)}°, da ${ultimo})`}
+      </button>
     </div>
   );
 }
@@ -321,7 +377,7 @@ function FormLeque({ p, set }: { p: LequeParams; set: (p: LequeParams) => void }
   );
 }
 
-function FormPeDeGalinha({ p, set }: { p: PeDeGalinhaParams; set: (p: PeDeGalinhaParams) => void }) {
+function FormPeDeGalinha({ p, set, onLado }: { p: PeDeGalinhaParams; set: (p: PeDeGalinhaParams) => void; onLado: (lado: LadoCurva) => void }) {
   const saida = (lado: 'esquerda' | 'reta' | 'direita', nome: string) => {
     const s = p.saidas[lado];
     const muda = (patch: Partial<Saida>) => set({ ...p, saidas: { ...p.saidas, [lado]: { ...s, ...patch } } });
@@ -346,7 +402,10 @@ function FormPeDeGalinha({ p, set }: { p: PeDeGalinhaParams; set: (p: PeDeGalinh
                 step={1}
                 min={1}
                 max={120}
-                onCommit={(v) => muda({ angleDeg: lado === 'esquerda' ? -Math.abs(v) : Math.abs(v) })}
+                onCommit={(v) => {
+                  onLado(lado);
+                  muda({ angleDeg: lado === 'esquerda' ? -Math.abs(v) : Math.abs(v) });
+                }}
               />
             )}
             <SentidoCampo value={s.sentido} onChange={(v) => muda({ sentido: v })} />

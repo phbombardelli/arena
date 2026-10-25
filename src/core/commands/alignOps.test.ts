@@ -5,7 +5,7 @@ import { createDocument } from '@core/model/document';
 import { distance } from '@core/geometry/vec';
 import type { CourseDocument, Obstacle, ObstacleType } from '@core/model/types';
 import { addObject } from './ops';
-import { alignCombination, COMBINATION_GAP, confirmCombination, currentGaps, freeGaps, orderAlongLine, setFreeGap, splitCombination } from './alignOps';
+import { alignCombination, arcGapBetween, COMBINATION_GAP, confirmCombination, currentGaps, freeGaps, orderAlongLine, setArcGap, setFreeGap, splitCombination } from './alignOps';
 
 const salto = (
   tipo: ObstacleType,
@@ -276,4 +276,37 @@ describe('composto ou linha (decisão 80)', () => {
   });
 
 
+});
+
+describe('curva por distância (B-81)', () => {
+  it('põe o seguinte no fim do arco, de frente para ele, e lê de volta o mesmo vão e abertura', () => {
+    const doc = cena(salto('oxer', 0, 0, '1'), salto('vertical', 20, 0, '2'));
+    const ids = obstaculos(doc).map((o) => o.id);
+    const depois = produce(doc, (d) => setArcGap(d, ids, 0, { gapM: 18, angleDeg: 40 }));
+    const lido = arcGapBetween(acha(depois, '1'), acha(depois, '2'));
+    expect(lido.gapM).toBeCloseTo(18, 6);
+    expect(lido.angleDeg).toBeCloseTo(40, 6);
+    // De frente para a curva: girou os mesmos 40°.
+    expect(acha(depois, '2').rotation).toBeCloseTo(40, 6);
+  });
+
+  it('abrir mais não muda a distância sobre o arco, e abre para o lado pedido', () => {
+    const doc = cena(salto('vertical', 0, 0, '1'), salto('vertical', 20, 0, '2'));
+    const ids = obstaculos(doc).map((o) => o.id);
+    const esquerda = produce(doc, (d) => setArcGap(d, ids, 0, { gapM: 20, angleDeg: -60 }));
+    const lido = arcGapBetween(acha(esquerda, '1'), acha(esquerda, '2'));
+    expect(lido.gapM).toBeCloseTo(20, 6);
+    expect(lido.angleDeg).toBeCloseTo(-60, 6);
+    // O salto 1 pula para o norte (rotação 0 → rumo -90°): virar à esquerda vai para oeste.
+    expect(acha(esquerda, '2').pos.x).toBeLessThan(0);
+  });
+
+  it('os de depois acompanham como bloco', () => {
+    const doc = cena(salto('vertical', 0, 0, '1'), salto('vertical', 0, -20, '2'), salto('vertical', 0, -40, '3'));
+    const ids = obstaculos(doc).map((o) => o.id);
+    const antes = distance(acha(doc, '2').pos, acha(doc, '3').pos);
+    const depois = produce(doc, (d) => setArcGap(d, ids, 0, { gapM: 20, angleDeg: 30 }));
+    expect(distance(acha(depois, '2').pos, acha(depois, '3').pos)).toBeCloseTo(antes, 6);
+    expect(acha(depois, '3').rotation).toBeCloseTo(30, 6);
+  });
 });

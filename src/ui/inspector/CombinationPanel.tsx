@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import {
   alignCombination,
+  ARC_MAX_DEG,
+  arcGaps,
   COMBINATION_GAP,
   confirmCombination,
   currentGaps,
-  freeGaps,
   isStraightLine,
   orderAlongLine,
   sameCombination,
-  setFreeGap,
+  setArcGap,
   splitCombination,
+  type ArcGap,
 } from '@core/commands/alignOps';
 import { obstacleLabel } from '@core/library/obstacles';
 import { canSetDistance, courseDistances, setCourseDistance } from '@core/commands/distanceOps';
 import type { CoursePath, Obstacle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
+import { ArcGapPreview } from './ArcGapPreview';
 import { LinkRow } from './LinkRow';
 import { NumberField } from './NumberField';
 
@@ -27,10 +30,10 @@ import { NumberField } from './NumberField';
  *   vão de vara a vara fica entre 7 e 12 m. Voltar para Linha desfaz as
  *   letras e renumera (5A, 5B viram 5 e 6).
  * - LINHA: números próprios, e a linha é RETA (todos no eixo do primeiro)
- *   ou CURVA (cada um onde está, de frente para a curva). Em qualquer das
- *   duas, "Alinhar" acerta: na reta, exatamente reta; na curva, cada
- *   obstáculo gira para a curva suave que passa pelos centros, num ângulo
- *   que dá para saltar.
+ *   ou CURVA. Na curva sem traçado, cada vão é um arco que sai da vara de
+ *   saída do anterior (B-81, como no pé de galinha da ginástica): a
+ *   distância se mede sobre o arco, e a abertura — no campo ou arrastando
+ *   na prévia — leva o seguinte de lado sem mudar a distância.
  *
  * A distância se mede de VARA A VARA, e digitar outra JÁ ajusta o croqui.
  * A ordem é a da NUMERAÇÃO do percurso, não a da geometria.
@@ -45,7 +48,8 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
   // Reta ou curva é escolha do painel; começa pelo que o croqui já é.
   const [curva, setCurva] = useState(() => !isStraightLine(ordenados));
   const emCurva = !jaComposto && curva;
-  const vaos = emCurva ? freeGaps(ordenados) : currentGaps(ordenados);
+  const vaos = currentGaps(ordenados);
+  const arcos = arcGaps(ordenados);
 
   // Na curva com um traçado passando pelos dois, a medida é a do traçado,
   // e quem anda é o de destino, sobre ele (B-60).
@@ -70,6 +74,11 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
     return String((todos.length ? Math.max(...todos) : 0) + 1);
   })();
 
+  // Vãos em curva que andam pelo arco: os que não têm traçado passando.
+  const curvas = ordenados.slice(1).map((_, i) => emCurva && !peloTracado(i));
+  const curvaArco = (indice: number, gap: ArcGap, mergeKey?: string) =>
+    apply('Curva da linha', (d) => setArcGap(d, ids, indice, gap), mergeKey);
+
   const ajusta = (indice: number, metros: number) => {
     const t = peloTracado(indice);
     if (t) {
@@ -78,14 +87,16 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
       });
       return;
     }
+    if (curvas[indice]) {
+      curvaArco(indice, { gapM: metros, angleDeg: arcos[indice]?.angleDeg ?? 0 });
+      return;
+    }
     apply(jaComposto ? 'Distância do composto' : 'Distância da linha', (d) =>
-      emCurva
-        ? setFreeGap(d, ids, indice, metros)
-        : alignCombination(
-            d,
-            ids,
-            vaos.map((v, i) => (i === indice ? metros : v)),
-          ),
+      alignCombination(
+        d,
+        ids,
+        vaos.map((v, i) => (i === indice ? metros : v)),
+      ),
     );
   };
 
@@ -135,21 +146,46 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
       {ordenados.slice(1).map((o, i) => {
         const composto = sameCombination(ordenados[i]!, o);
         const t = peloTracado(i);
+        const arco = curvas[i] ? arcos[i] : undefined;
+        const metros = t ? t.d.meters : arco ? arco.gapM : (vaos[i] ?? 0);
         return (
-          <NumberField
-            key={o.id}
-            label={`${nome(ordenados[i]!, i)} - ${nome(o, i + 1)}`}
-            unit="m"
-            value={t ? Math.round(t.d.meters * 100) / 100 : Math.round((vaos[i] ?? 0) * 100) / 100}
-            decimals={2}
-            step={0.1}
-            min={composto ? COMBINATION_GAP.min : undefined}
-            max={composto ? COMBINATION_GAP.max : undefined}
-            disabled={travado}
-            onCommit={(v) => ajusta(i, v)}
-          />
+          <div key={o.id} className={arco ? 'arc-gap' : undefined}>
+            <NumberField
+              label={`${nome(ordenados[i]!, i)} - ${nome(o, i + 1)}${arco ? ' (na curva)' : ''}`}
+              unit="m"
+              value={Math.round(metros * 100) / 100}
+              decimals={2}
+              step={0.1}
+              min={composto ? COMBINATION_GAP.min : undefined}
+              max={composto ? COMBINATION_GAP.max : undefined}
+              disabled={travado}
+              onCommit={(v) => ajusta(i, v)}
+            />
+            {arco && (
+              <NumberField
+                label="Abertura"
+                unit="°"
+                value={Math.round(arco.angleDeg)}
+                decimals={0}
+                step={1}
+                min={-ARC_MAX_DEG}
+                max={ARC_MAX_DEG}
+                disabled={travado || o.locked}
+                onCommit={(v) => curvaArco(i, { gapM: arco.gapM, angleDeg: v })}
+              />
+            )}
+          </div>
         );
       })}
+
+      {curvas.some(Boolean) && (
+        <ArcGapPreview
+          ordenados={ordenados}
+          curvas={curvas}
+          travado={travado}
+          onAbertura={(i, gap) => curvaArco(i, gap, `arco-${ids.join('-')}-${i}`)}
+        />
+      )}
 
       {/* Na curva não há o que alinhar: cada um mantém o próprio ângulo. */}
       {!emCurva && (
@@ -170,8 +206,9 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
         Da vara de saída de um até a vara de entrada do seguinte. O primeiro
         elemento não se move. No composto (5A, 5B...) o vão fica entre{' '}
         {COMBINATION_GAP.min} e {COMBINATION_GAP.max} m; na linha é livre. Na
-        curva, a medida é entre os centros, ou sobre o traçado quando ele
-        passa pelos dois.
+        curva, a medida é sobre o arco que sai do anterior na direção do
+        salto, ou sobre o traçado quando ele passa pelos dois; abertura
+        negativa vira à esquerda.
       </p>
     </section>
   );

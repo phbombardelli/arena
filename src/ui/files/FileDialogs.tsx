@@ -15,7 +15,7 @@ import {
 } from '@platform/templateStore';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
-import { newCourse, openCourseFromLibrary, openDocument } from '@ui/actions/documentActions';
+import { newCourse, newKindOnSameArena, openCourseFromLibrary, openDocument, type DocKind } from '@ui/actions/documentActions';
 
 /**
  * Salvar e abrir (B-77, decisão 88). Duas coisas distintas:
@@ -176,6 +176,77 @@ export function NewCourseDialogBody({ kind = 'percurso' }: { kind?: 'percurso' |
       <p className="note dim">
         A pista entra copiada {kind === 'ginastica' ? 'na ginástica' : 'no percurso'}: mudar a pista depois não altera este croqui.
       </p>
+    </section>
+  );
+}
+
+/**
+ * A aba do outro tipo foi clicada com um croqui já desenhado (B-86, opção
+ * b): percurso e ginástica são arquivos separados, então aqui se escolhe
+ * de onde vem o novo.
+ */
+export function OtherKindDialogBody({ kind }: { kind: DocKind }) {
+  const [lista, setLista] = useState<CourseSummary[] | null>(null);
+  useEffect(() => {
+    void listCourses().then(
+      (todos) => setLista(todos.filter((c) => (c.kind === 'ginastica' ? 'ginastica' : 'percurso') === kind)),
+      () => setLista([]),
+    );
+  }, [kind]);
+  const aberto = kind === 'ginastica' ? 'o percurso aberto' : 'a ginástica aberta';
+  const voltar = kind === 'ginastica' ? 'ao percurso' : 'à ginástica';
+
+  return (
+    <section className="file-dialog">
+      <p className="note">
+        Percurso e ginástica são arquivos separados: {aberto} não muda.
+        {useDocumentStore.getState().dirty ? ' Salve antes, se quiser guardar as alterações.' : ''}
+      </p>
+      <button
+        className="file-blank"
+        onClick={() => {
+          if (newKindOnSameArena(kind) === 'ok') fecha();
+        }}
+      >
+        <strong>{kind === 'ginastica' ? 'Nova ginástica' : 'Novo percurso'} nesta mesma pista</strong>
+        <em>{kind === 'ginastica' ? 'a pista do percurso aberto' : 'a pista da ginástica aberta'}, com a mesma folha e escala</em>
+      </button>
+      <h3>Ou abra {kind === 'ginastica' ? 'uma ginástica guardada' : 'um percurso guardado'}</h3>
+      {lista === null ? (
+        <p className="note">Carregando…</p>
+      ) : lista.length === 0 ? (
+        <p className="note dim">{kind === 'ginastica' ? 'Nenhuma ginástica guardada' : 'Nenhum percurso guardado'} ainda.</p>
+      ) : (
+        <ul className="file-list">
+          {lista.map((c) => (
+            <li key={c.id}>
+              <div className="file-name">
+                <strong>{c.name}</strong>
+                <em>
+                  {c.arenaName ? `${c.arenaName} · ` : ''}
+                  {data(c.savedAt)}
+                </em>
+              </div>
+              <button
+                className="primary"
+                onClick={() =>
+                  void openCourseFromLibrary(c.id).then((r) => {
+                    if (r === 'ok') fecha();
+                  })
+                }
+              >
+                Abrir
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="row-buttons">
+        <button onClick={() => useEditorStore.getState().setDialog(kind === 'ginastica' ? 'nova-ginastica' : 'novo')}>
+          {kind === 'ginastica' ? 'Nova ginástica' : 'Novo percurso'} sobre outra pista…
+        </button>
+      </div>
+      <p className="note dim">Para voltar {voltar} depois, abra em Arquivo › Abrir (Meus percursos).</p>
     </section>
   );
 }

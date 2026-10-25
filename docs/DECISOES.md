@@ -1938,3 +1938,52 @@ o arco**, o raio (que diz quanto o leque abre), o sentido e o tipo
 (padrão: vara no chão, 6 varas, 3 m, raio 9 m). Uma cota em arco por
 intervalo, por dentro do arco, onde as setas não alcançam. As cotas dos
 exercícios passam a ter sempre duas casas ("3,00 m", "23,50 m").
+
+## 92. Ajustes da ginástica (B-84, B-87, B-88, B-89)
+
+- **Exercício novo** (B-84): entra no centro da tela, já selecionado e
+  com a ferramenta de seleção, pronto para arrastar ao lugar.
+- **Cone** (B-87): nasce com 1,5 m (era 0,7 m). Foge da proporção real
+  de propósito, para ler bem na escala da folha.
+- **Setas de duplo sentido** (B-88): as duas ficam lado a lado, uma de
+  cada lado do centro da vara, como placa de mão dupla. Entre duas varas
+  vizinhas (o leque, por exemplo), a seta que vai e a que volta passam uma
+  ao lado da outra em vez de bater de frente. Vale para todo obstáculo com
+  duplo sentido.
+- **Ângulos do pé de galinha** (B-89): a prévia mostra a abertura de cada
+  saída em curva junto do salto, ao vivo no arraste. "Igualar ângulos"
+  leva a abertura do lado mexido por último (no arraste ou no campo) para
+  o outro, espelhada.
+
+## 93. Extensão corrigida no quadro técnico (B-90)
+
+O quadro técnico mostra a extensão **medida no desenho** (o maior traçado,
+lida na hora) ao lado da **corrigida na pista**, digitada depois de armar
+e medir, e a diferença entre as duas. Informada, a corrigida vai para o
+campo Distância, e "Preencher do desenho" não a apaga. Apagá-la volta o
+campo para a medida do desenho. Nada no programa calcula o tempo concedido
+a partir da distância; ele continua digitado.
+
+## 94. Linha em curva por distância no Percurso (B-81)
+
+O mecanismo do pé de galinha chega ao painel "Composto ou linha": em
+Linha + Curva, quando nenhum traçado passa pelos dois, cada vão é um
+**arco** que sai da vara de saída do anterior, na direção do salto dele.
+A distância é medida sobre o arco, de vara a vara, e a **abertura** (°,
+negativa à esquerda) se muda no campo ou arrastando o salto numa prévia
+do painel. A distância não muda, e o salto fica de frente para a curva.
+Os elementos de depois acompanham como bloco. Com traçado passando pelos
+dois, vale a medida sobre o traçado, como antes (B-60). A curva medida
+"entre centros" (`setFreeGap`) saiu do painel.
+
+## 95. Ginástica como terceira aba (B-86)
+
+As abas do topo passam a ser sempre **Pista | Percurso | Ginástica**.
+Percurso e ginástica continuam **arquivos separados** (opção b, escolhida
+pelo usuário em 25/10), como na decisão 89. Clicar na aba do outro tipo:
+- com o croqui ainda sem nada da prova, só troca o tipo;
+- com algo desenhado, abre a escolha: novo do outro tipo **nesta mesma
+  pista** (cenário copiado, mesma folha, escala e enquadramento), abrir
+  um guardado desse tipo em Meus percursos, ou novo sobre outra pista.
+
+O croqui aberto não muda: para voltar a ele, abre-se em Meus percursos.

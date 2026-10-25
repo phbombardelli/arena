@@ -1,7 +1,7 @@
 import { HeightsEditor } from '@ui/inspector/HeightsEditor';
 import { useEditorStore } from '@store/editorStore';
 import { Dialog } from '@ui/common/Popover';
-import { NewCourseDialogBody, OpenCourseDialogBody, PistasDialogBody } from '@ui/files/FileDialogs';
+import { NewCourseDialogBody, OpenCourseDialogBody, OtherKindDialogBody, PistasDialogBody } from '@ui/files/FileDialogs';
 import { SheetSettings } from '@ui/inspector/SheetSettings';
 import { AdminPanelBody, CloudConsentBody } from '@ui/cloud/CloudUI';
 
@@ -81,6 +81,14 @@ export function Dialogs() {
     return (
       <Dialog title="Nova ginástica" onClose={fecha}>
         <NewCourseDialogBody kind="ginastica" />
+      </Dialog>
+    );
+  }
+  if (dialog === 'outro-ginastica' || dialog === 'outro-percurso') {
+    const kind = dialog === 'outro-ginastica' ? 'ginastica' : 'percurso';
+    return (
+      <Dialog title={kind === 'ginastica' ? 'Ginástica' : 'Percurso'} onClose={fecha}>
+        <OtherKindDialogBody kind={kind} />
       </Dialog>
     );
   }

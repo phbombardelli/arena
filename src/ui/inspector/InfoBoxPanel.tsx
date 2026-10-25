@@ -1,6 +1,7 @@
 import { courseOrder } from '@core/assist/courseRide';
 import { formatDistance, pathLength } from '@core/model/path';
 import type { CourseDocument, InfoBox, Obstacle } from '@core/model/types';
+import { useEffect, useState } from 'react';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
 
@@ -16,20 +17,28 @@ import { NumberField } from './NumberField';
  * esportiva, e sobrescrever o que o desenhador digitou seria pior que
  * deixar em branco.
  */
-function doDesenho(doc: CourseDocument): Record<string, string> {
+function doDesenho(doc: CourseDocument, corrigidaM?: number): Record<string, string> {
   const obstaculos = doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
   const degraus = courseOrder(obstaculos);
   const elementos = degraus.reduce((n, d) => n + d.elements.length, 0);
-  const tracados = doc.objects.filter((o) => o.kind === 'path');
-  const maior = tracados.reduce((m, p) => Math.max(m, p.kind === 'path' ? pathLength(p) : 0), 0);
+  const maior = extensaoDesenho(doc);
 
   const out: Record<string, string> = {
     obstaculos: String(degraus.length),
     esforcos: String(elementos),
   };
-  if (maior > 0) out.distancia = `${formatDistance(maior, 0)} m`;
+  // A extensão corrigida na pista vale mais que a medida no desenho (B-90).
+  if (corrigidaM != null) out.distancia = metros(corrigidaM);
+  else if (maior > 0) out.distancia = metros(maior);
   return out;
 }
+
+/** Comprimento do maior traçado: a extensão medida no desenho. */
+function extensaoDesenho(doc: CourseDocument): number {
+  return doc.objects.reduce((m, p) => Math.max(m, p.kind === 'path' ? pathLength(p) : 0), 0);
+}
+
+const metros = (m: number) => `${formatDistance(m, 0)} m`;
 
 export function InfoBoxPanel({ box }: { box: InfoBox }) {
   const { doc, apply } = useDocumentStore();
@@ -46,7 +55,7 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
     );
 
   const preencher = () => {
-    const valores = doDesenho(doc);
+    const valores = doDesenho(doc, box.distanciaCorrigidaM);
     edita('Preencher do desenho', (b) => {
       for (const campo of b.fields) {
         const v = valores[campo.id];
@@ -66,6 +75,8 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
           Preencher do desenho
         </button>
       </div>
+
+      <Extensao box={box} medidaM={extensaoDesenho(doc)} travado={travado} edita={edita} />
 
       <h3>Campos</h3>
       <div className="leg-list">
@@ -139,6 +150,85 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
       <p className="note dim">
         O quadro é da folha: mudar a escala do croqui não mexe nele.
       </p>
+    </>
+  );
+}
+
+/**
+ * Extensão do percurso (B-90): a medida no desenho ao lado da corrigida
+ * pelo que foi armado e medido na pista. Informar a corrigida já põe o
+ * valor no campo Distância; apagá-la volta para a medida no desenho.
+ */
+function Extensao({
+  box,
+  medidaM,
+  travado,
+  edita,
+}: {
+  box: InfoBox;
+  medidaM: number;
+  travado: boolean;
+  edita: (rotulo: string, recipe: (b: InfoBox) => void) => void;
+}) {
+  const corrigida = box.distanciaCorrigidaM;
+  const [texto, setTexto] = useState(corrigida != null ? formatDistance(corrigida, 0) : '');
+  useEffect(() => setTexto(corrigida != null ? formatDistance(corrigida, 0) : ''), [corrigida]);
+
+  const confirma = () => {
+    const limpo = texto.trim().replace(',', '.');
+    const valor = limpo === '' ? undefined : Number(limpo);
+    if (valor != null && (!Number.isFinite(valor) || valor <= 0)) {
+      setTexto(corrigida != null ? formatDistance(corrigida, 0) : '');
+      return;
+    }
+    if (valor === corrigida) return;
+    edita(valor == null ? 'Tirar a extensão corrigida' : 'Extensão corrigida', (b) => {
+      if (valor == null) delete b.distanciaCorrigidaM;
+      else b.distanciaCorrigidaM = valor;
+      const campo = b.fields.find((f) => f.id === 'distancia');
+      if (!campo) return;
+      if (valor != null) campo.value = metros(valor);
+      else if (medidaM > 0) campo.value = metros(medidaM);
+    });
+  };
+
+  const diferenca = corrigida != null && medidaM > 0 ? corrigida - medidaM : null;
+  return (
+    <>
+      <h3>Extensão do percurso</h3>
+      <div className="extensao">
+        <p className="field">
+          <span>No desenho</span>
+          <strong>{medidaM > 0 ? metros(medidaM) : '—'}</strong>
+        </p>
+        <label className="field">
+          <span>Corrigida na pista</span>
+          <span className="input-unit">
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="—"
+              value={texto}
+              disabled={travado}
+              onChange={(e) => setTexto(e.target.value)}
+              onBlur={confirma}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+              }}
+            />
+            <em>m</em>
+          </span>
+        </label>
+        {diferenca != null && (
+          <p className="note">
+            Diferença: {diferenca > 0 ? '+' : diferenca < 0 ? '−' : ''}
+            {formatDistance(Math.abs(diferenca), 0)} m em relação ao desenho. É a corrigida que vai para a folha.
+          </p>
+        )}
+        {corrigida == null && (
+          <p className="note dim">Depois de armar e medir na pista, informe aqui: vai para a folha e o “Preencher” não a apaga.</p>
+        )}
+      </div>
     </>
   );
 }

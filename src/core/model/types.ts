@@ -333,6 +333,13 @@ export interface InfoBox extends BaseObject {
   columns: number;
   fields: InfoBoxField[];
   style: { sizeMm: Millimeters; borderMm: Millimeters };
+  /**
+   * Extensão corrigida pelo que foi de fato armado e medido na pista
+   * (B-90). Informada, é ela que vai para o campo Distância, e "Preencher
+   * do desenho" não a apaga. A medida no desenho não se guarda: é lida do
+   * traçado na hora.
+   */
+  distanciaCorrigidaM?: number;
 }
 
 export interface HeightTable extends BaseObject {

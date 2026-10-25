@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Fundo marinho cheio até a borda, sem cantos arredondados -->
+  <rect width="1024" height="1024" fill="#13294B"/>
+  <!-- Zona segura: círculo de 80% (819 px). Todo o desenho tem de caber aqui dentro -->
+  <circle cx="512" cy="512" r="409.6" fill="none" stroke="#B8975A" stroke-width="4" stroke-dasharray="18 12"/>
+  <!-- Área ideal do desenho: quadrado de 580 px, dentro do círculo, centralizado -->
+  <rect x="222" y="222" width="580" height="580" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="3" stroke-dasharray="6 8"/>
+  <g font-family="Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="512" y="470" font-size="46" font-weight="700" fill="#FFFFFF">cavalo + obstáculo aqui</text>
+    <text x="512" y="530" font-size="30" fill="#FFFFFF" fill-opacity="0.8">linhas brancas, detalhes em dourado #B8975A</text>
+    <text x="512" y="580" font-size="30" fill="#FFFFFF" fill-opacity="0.8">sem texto, sem o nome ARENA</text>
+    <text x="512" y="60" font-size="28" fill="#FFFFFF" fill-opacity="0.75">quadrado tracejado branco = onde o desenho fica melhor (580 px)</text>
+    <text x="512" y="960" font-size="28" fill="#B8975A">círculo dourado = limite: nada pode sair dele (819 px)</text>
+    <text x="512" y="1000" font-size="24" fill="#FFFFFF" fill-opacity="0.6">PNG 1024 × 1024 · fundo #13294B até a borda · cantos retos</text>
+  </g>
+</svg>

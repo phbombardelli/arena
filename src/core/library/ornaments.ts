@@ -17,7 +17,7 @@ export interface OrnamentDef {
 }
 
 export const ORNAMENTS: readonly OrnamentDef[] = [
-  { type: 'cone', label: 'Cone', defaultSizeM: 0.7, defaultColor: '#F26A1B', rotatable: false },
+  { type: 'cone', label: 'Cone', defaultSizeM: 1.5, defaultColor: '#F26A1B', rotatable: false },
   { type: 'arvore', label: 'Árvore', defaultSizeM: 3, defaultColor: '#3f7d3f', rotatable: false },
   { type: 'arbusto', label: 'Arbusto', defaultSizeM: 1.6, defaultColor: '#5a9448', rotatable: false },
   { type: 'vaso', label: 'Vaso', defaultSizeM: 1, defaultColor: '#7a6a52', rotatable: true },

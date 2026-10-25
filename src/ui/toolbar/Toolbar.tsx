@@ -6,6 +6,7 @@ import { AccountButton } from '@ui/cloud/CloudUI';
 import {
   saveCourse,
   saveDocumentAs,
+  switchKind,
 } from '@ui/actions/documentActions';
 import {
   bringSelectionToFront,
@@ -203,11 +204,18 @@ export function Toolbar() {
           Pista
         </button>
         <button
-          className={mode === 'percurso' ? 'active' : ''}
-          onClick={() => setMode('percurso')}
+          className={mode === 'percurso' && doc.kind !== 'ginastica' ? 'active' : ''}
+          onClick={() => switchKind('percurso')}
           title="Desenhar a prova: obstáculos, traçados, partida e chegada"
         >
-          {doc.kind === 'ginastica' ? 'Ginástica' : 'Percurso'}
+          Percurso
+        </button>
+        <button
+          className={mode === 'percurso' && doc.kind === 'ginastica' ? 'active' : ''}
+          onClick={() => switchKind('ginastica')}
+          title="Montar ginásticas: cavaletes, pé de galinha, relógio, leque (arquivo à parte do percurso)"
+        >
+          Ginástica
         </button>
       </div>
 
