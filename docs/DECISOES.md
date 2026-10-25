@@ -1987,3 +1987,15 @@ pelo usuário em 25/10), como na decisão 89. Clicar na aba do outro tipo:
   um guardado desse tipo em Meus percursos, ou novo sobre outra pista.
 
 O croqui aberto não muda: para voltar a ele, abre-se em Meus percursos.
+
+## 96. Ícone do app com o logo (B-82)
+
+O ícone do PWA passa a ser o cavalo saltando do logo (arquivo do Gemini,
+guardado em `docs/icone/`). Os cantos brancos arredondados do original
+viram o marinho do próprio desenho (#142944), para o sistema arredondar
+por conta própria. Saem dele:
+- `icon-192`, `icon-512` e `apple-touch-icon` (180): o desenho centralizado
+  a 88% do original, com respiro nas bordas;
+- `icon-maskable-512`: o desenho a 76%, dentro do círculo seguro de 80%
+  que o Android recorta;
+- `favicon-32` no lugar do `icon.svg` antigo, que saiu.
