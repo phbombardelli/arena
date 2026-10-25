@@ -1999,3 +1999,11 @@ por conta própria. Saem dele:
 - `icon-maskable-512`: o desenho a 76%, dentro do círculo seguro de 80%
   que o Android recorta;
 - `favicon-32` no lugar do `icon.svg` antigo, que saiu.
+
+## 97. Ornamento colocado na prova é da prova (B-91)
+
+O cone nascia como objeto da Pista e, no modo Percurso ou na ginástica,
+os objetos da Pista ficam travados: depois de posto, não se movia mais.
+Agora todo ornamento colocado no modo Percurso (ou na ginástica) é da
+prova, como a ilha decorativa (decisão 74), e o cone é sempre da prova,
+como o vaso. Colocado na aba Pista, o ornamento continua do local.

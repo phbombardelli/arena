@@ -309,6 +309,9 @@ export function Canvas() {
           tipo,
           snapped(toModel(e)),
         );
+        // Colocado no modo Percurso (ou na ginástica), é da prova: se ficasse
+        // na pista, travaria logo depois de posto (B-91).
+        if (useEditorStore.getState().mode === 'percurso') ornament.scope = 'percurso';
         // Entrada e saída já nascem perpendiculares à cerca mais próxima.
         if (tipo === 'entrada' || tipo === 'saida') {
           ornament.rotation = gateRotation(tipo, ornament.pos, measureFrame(useDocumentStore.getState().doc).outline);
