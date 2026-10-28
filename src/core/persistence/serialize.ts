@@ -5,7 +5,7 @@ import { applyMigrations, type RawDocument } from './migrations';
 import { validateDocument, type ValidationResult } from './validate';
 import { t } from '@core/i18n/i18n';
 
-export const APP_VERSION = '0.1.0';
+export const APP_VERSION = '1.0.0';
 
 /**
  * Serialização do projeto. Indentado com 2 espaços de propósito: o arquivo
