@@ -578,6 +578,9 @@ details.fold[open] > summary::before { content: "▾ "; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 14px; border-bottom: 1px solid var(--border);
 }
+.dialog-handle { cursor: grab; user-select: none; touch-action: none; }
+.dialog-handle:active { cursor: grabbing; }
+.dialog-backdrop.claro { background: transparent; }
 .dialog h2 { font-size: 14px; margin: 0; }
 .dialog-body { padding: 12px 14px 16px; overflow-y: auto; }
 .dialog-body p { margin: 0 0 8px; }

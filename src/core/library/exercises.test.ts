@@ -103,9 +103,13 @@ describe('ginástica (B-37)', () => {
     expect(9 * Math.abs(ang(g.obstacles[1]!) - ang(g.obstacles[0]!))).toBeCloseTo(3, 9);
     // Simétrico em torno do alto.
     expect(g.obstacles[0]!.pos.x).toBeCloseTo(-g.obstacles[5]!.pos.x, 9);
-    // Uma cota por intervalo, com o valor digitado.
+    // Uma linha de centro só, no raio das varas, com uma etiqueta deitada.
     const cotas = g.extras.filter((e): e is CoursePath => e.kind === 'path');
-    expect(cotas).toHaveLength(5);
+    expect(cotas).toHaveLength(1);
     expect(cotas[0]!.label?.text).toBe('3,00 m');
+    expect(cotas[0]!.label?.deitado).toBeTruthy();
+    for (const n of cotas[0]!.nodes) expect(distance(n.pos, { x: 0, y: 0 })).toBeCloseTo(9, 9);
+    // Setas só nas varas das pontas.
+    expect(g.obstacles.map((o) => o.arrow.visible)).toEqual([true, false, false, false, false, true]);
   });
 });

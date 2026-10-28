@@ -1,4 +1,5 @@
 import type { Vec2 } from '@core/geometry/vec';
+import { besideLinePlacement, textWidth } from '@core/assist/labelLayout';
 import { measureLength } from '@core/library/measures';
 import { formatDistance } from '@core/model/path';
 import type { MeasureLine } from '@core/model/types';
@@ -29,17 +30,23 @@ export function MeasureLayer({ measure, printScale, originMm, onPointerDown }: P
   const traco = (p: Vec2) =>
     `M${round(p.x + n.x * ponta)} ${round(p.y + n.y * ponta)}L${round(p.x - n.x * ponta)} ${round(p.y - n.y * ponta)}`;
 
-  // Texto de pé: a linha que aponta para a esquerda se lê ao contrário.
-  let ang = (Math.atan2(dy, dx) * 180) / Math.PI;
-  if (ang > 90) ang -= 180;
-  else if (ang <= -90) ang += 180;
-  const r = (ang * Math.PI) / 180;
-  const acima = { x: Math.sin(r), y: -Math.cos(r) };
-  const afasta = measure.sizeMm * 0.45;
-  const m = {
-    x: (a.x + b.x) / 2 + acima.x * afasta,
-    y: (a.y + b.y) / 2 + acima.y * afasta,
-  };
+  const texto = `${formatDistance(measureLength(measure), measure.decimals)} m`;
+  const meio = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  let ang = 0;
+  let m: Vec2;
+  if (measure.textoDeitado) {
+    // Horizontal, do lado de fora, longe o bastante para não cobrir a linha.
+    m = besideLinePlacement(meio, { x: -n.x, y: -n.y }, textWidth(texto, measure.sizeMm), measure.sizeMm, measure.sizeMm * 0.3);
+  } else {
+    // Texto de pé: a linha que aponta para a esquerda se lê ao contrário.
+    ang = (Math.atan2(dy, dx) * 180) / Math.PI;
+    if (ang > 90) ang -= 180;
+    else if (ang <= -90) ang += 180;
+    const r = (ang * Math.PI) / 180;
+    const acima = { x: Math.sin(r), y: -Math.cos(r) };
+    const afasta = measure.sizeMm * 0.45;
+    m = { x: meio.x + acima.x * afasta, y: meio.y + acima.y * afasta };
+  }
 
   return (
     <g data-object={measure.id} data-kind="measure" onPointerDown={onPointerDown} style={{ cursor: 'move' }}>
@@ -57,7 +64,7 @@ export function MeasureLayer({ measure, printScale, originMm, onPointerDown }: P
       <text
         x={round(m.x)}
         y={round(m.y)}
-        transform={`rotate(${round(ang)} ${round(m.x)} ${round(m.y)})`}
+        transform={ang !== 0 ? `rotate(${round(ang)} ${round(m.x)} ${round(m.y)})` : undefined}
         fontSize={measure.sizeMm}
         fontFamily="Helvetica, Arial, sans-serif"
         fill={measure.color}
@@ -66,10 +73,10 @@ export function MeasureLayer({ measure, printScale, originMm, onPointerDown }: P
         strokeLinejoin="round"
         paintOrder="stroke"
         textAnchor="middle"
-        dominantBaseline="auto"
+        dominantBaseline={measure.textoDeitado ? 'central' : 'auto'}
         style={{ userSelect: 'none' }}
       >
-        {formatDistance(measureLength(measure), measure.decimals)} m
+        {texto}
       </text>
     </g>
   );

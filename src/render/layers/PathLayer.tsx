@@ -3,9 +3,11 @@ import type { Vec2 } from '@core/geometry/vec';
 import type { CoursePath, Obstacle, TimingLine } from '@core/model/types';
 import { courseDistancesAlong, pathSampler } from '@core/assist/obstacleDistances';
 import {
+  besideLinePlacement,
   distanceFontMm,
   ON_LINE_GAP_MM,
   onLinePlacement,
+  textWidth,
   type OnLineLabel,
 } from '@core/assist/labelLayout';
 import { mmPerMeter } from '@core/scale/units';
@@ -74,7 +76,19 @@ export function PathLayer({ path, printScale, originMm, obstacles = [], timings 
         const amostra = pathSampler(path);
         if (!amostra) return null;
         const { p, normal } = amostra.pointAt(path.label.s);
-        const lbl = onLinePlacement(p, { x: normal.y, y: -normal.x }, altura, ON_LINE_GAP_MM / k);
+        const deitado = path.label.deitado;
+        const lbl = deitado
+          ? {
+              pos: besideLinePlacement(
+                p,
+                { x: -normal.x, y: -normal.y },
+                textWidth(path.label.text, corpo) / k,
+                altura,
+                ON_LINE_GAP_MM / k + deitado.folgaM,
+              ),
+              angle: 0,
+            }
+          : onLinePlacement(p, { x: normal.y, y: -normal.x }, altura, ON_LINE_GAP_MM / k);
         return (
           <DistanceText at={toPaper(lbl.pos)} angle={lbl.angle} value={path.label.text} color={path.totalLabel.color} sizeMm={corpo} />
         );

@@ -283,7 +283,16 @@ export interface CoursePath extends BaseObject {
    * Rótulo fixo sobre a linha, a `s` metros do começo (B-37): a distância
    * das saídas de um exercício de ginástica, que não tem numeração.
    */
-  label?: { text: string; s: number };
+  label?: {
+    text: string;
+    s: number;
+    /**
+     * Texto sempre na horizontal, fora da linha, do lado de fora (−normal),
+     * mesmo com o exercício girado; `folgaM` afasta mais, para passar das
+     * varas que a linha cruza.
+     */
+    deitado?: { folgaM: number };
+  };
   /**
    * Traçado gerado pelos assistentes (automático ou por trechos). Rodar o
    * assistente de novo SUBSTITUI esse traçado em vez de empilhar outro por
@@ -316,6 +325,12 @@ export interface MeasureLine extends BaseObject {
   sizeMm: Millimeters;
   decimals: number;
   color: string;
+  /**
+   * Texto sempre na horizontal, afastado da linha para o lado de fora
+   * (−normal de a→b), qualquer que seja o giro: as cotas dos exercícios de
+   * ginástica, que giram com o exercício e têm de continuar legíveis.
+   */
+  textoDeitado?: true;
 }
 
 export interface InfoBoxField {

@@ -70,9 +70,23 @@ export function onLinePlacement(ponto: Vec2, tangente: Vec2, alturaM: number, fo
   return { pos: { x: ponto.x + cima.x * d, y: ponto.y + cima.y * d }, angle };
 }
 
+/**
+ * Texto deitado (horizontal) ao lado de uma linha: o centro sai do ponto na
+ * direção `lado` (unitário) o bastante para a caixa do texto não tocar a
+ * linha, mais a folga. Serve a qualquer giro da linha. Unidades livres,
+ * desde que todas iguais (mm de papel ou metros).
+ */
+export function besideLinePlacement(ponto: Vec2, lado: Vec2, larguraTexto: number, alturaTexto: number, folga: number): Vec2 {
+  const d = (Math.abs(lado.x) * larguraTexto + Math.abs(lado.y) * alturaTexto) / 2 + folga;
+  return { x: ponto.x + lado.x * d, y: ponto.y + lado.y * d };
+}
+
+/** Largura aproximada de um texto, na mesma unidade do corpo da letra. */
+export const textWidth = (texto: string, corpo: number): number => Math.max(1, texto.length) * corpo * 0.6;
+
 /** Caixa alinhada aos eixos que contém o texto girado. */
 function rotatedTextBox(lbl: OnLineLabel, texto: string, fontMm: number, k: number): Box {
-  const w = (Math.max(1, texto.length) * fontMm * 0.6) / k;
+  const w = textWidth(texto, fontMm) / k;
   const h = (fontMm * 1.05) / k;
   const a = (lbl.angle * Math.PI) / 180;
   const hw = (Math.abs(Math.cos(a)) * w + Math.abs(Math.sin(a)) * h) / 2;

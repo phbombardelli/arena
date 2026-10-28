@@ -1,4 +1,5 @@
 import { add, DEG, fromAngle, rotate, scale, sub, type Vec2 } from '@core/geometry/vec';
+import { formatDecimal } from '@core/i18n/i18n';
 import { newId } from '@core/model/ids';
 import { createPath } from '@core/model/path';
 import type {
@@ -123,6 +124,12 @@ function elemento(type: ObstacleType, pos: Vec2, heading: number, sentido: Senti
   return o;
 }
 
+/** Cota com o texto sempre na horizontal: continua legível com o exercício girado. */
+function deitada(m: MeasureLine): MeasureLine {
+  m.textoDeitado = true;
+  return m;
+}
+
 /** Cota de vara a vara entre dois elementos em linha, afastada para o lado. */
 function cotaEntre(a: Obstacle, b: Obstacle, lado: number): MeasureLine {
   const xa = a.pos.x + meia(a.type);
@@ -152,7 +159,7 @@ export function generateCavaletes(p: CavaletesParams): Generated {
   const obstacles = emLinha(Array.from({ length: n }, () => ({ type: p.type, distM: p.spacingM, sentido: 'sem' as const })));
   if (p.numerar) numera(obstacles);
   const lado = -(obstacleDef(p.type).faceWidthM / 2 + 1);
-  const extras = p.cotas && n > 1 ? [cotaEntre(obstacles[0]!, obstacles[1]!, lado)] : [];
+  const extras = p.cotas && n > 1 ? [deitada(cotaEntre(obstacles[0]!, obstacles[1]!, lado))] : [];
   return { obstacles, extras };
 }
 
@@ -167,7 +174,8 @@ export function generateRelogio(p: RelogioParams): Generated {
   });
   // O diâmetro, paralelo ao eixo de cima a baixo e afastado dele: em cima
   // do eixo a cota cobriria as varas.
-  const extras = p.cotas ? [createMeasure({ x: 1.5, y: -r }, { x: 1.5, y: r })] : [];
+  // O texto deitado sai para o lado de fora do eixo (−normal de a→b = +x).
+  const extras = p.cotas ? [deitada(createMeasure({ x: 1.5, y: -r }, { x: 1.5, y: r }))] : [];
   return { obstacles, extras };
 }
 
@@ -181,16 +189,26 @@ export function generateLeque(p: LequeParams): Generated {
   const r = Math.max(1, p.radiusM);
   const passo = p.spacingM / r / DEG;
   const angulos = Array.from({ length: n }, (_, i) => -90 + (i - (n - 1) / 2) * passo);
-  const obstacles = angulos.map((a) => {
+  const obstacles = angulos.map((a, i) => {
     const heading = p.sentido === 'antihorario' ? a - 90 : a + 90;
-    const sentido: Sentido = p.sentido === 'duplo' ? 'duplo' : p.sentido === 'sem' ? 'sem' : 'ida';
+    // Seta só nas varas das pontas: no meio, com varas a 1,40 m, as setas
+    // se amontoam e escondem o desenho. Nos dois sentidos, cada ponta leva
+    // só a seta que sai para fora (← varas →): a que entraria passaria por
+    // cima das varas vizinhas.
+    const ponta = i === 0 || i === n - 1;
+    const sentido: Sentido =
+      p.sentido === 'sem' || !ponta ? 'sem' : p.sentido === 'duplo' ? (i === 0 ? 'volta' : 'ida') : 'ida';
     return elemento(p.type, scale(fromAngle(a), r), heading, sentido);
   });
   const extras: (MeasureLine | CoursePath)[] = [];
   if (p.cotas) {
-    // A cota corre por dentro do arco: por fora ficam as setas, na tangente.
-    const rc = r - 1.5;
-    for (let i = 1; i < n; i += 1) extras.push(arcoCotado(rc, angulos[i - 1]!, angulos[i]!, formatoMetros(p.spacingM)));
+    // Uma linha de centro só (traço e ponto), no raio das varas: ela cruza
+    // cada vara no meio, que é por onde a distância é medida. Uma etiqueta
+    // só, curta e deitada, do lado de fora, além da meia vara do meio.
+    const linha = arcoCotado(r, angulos[0]!, angulos[n - 1]!, formatoMetros(p.spacingM));
+    linha.style.dash = 'dashdot';
+    linha.label = { ...linha.label!, deitado: { folgaM: obstacleDef(p.type).faceWidthM / 2 + 0.3 } };
+    extras.push(linha);
   }
   return { obstacles, extras };
 }
@@ -259,7 +277,7 @@ function linhaDaSaida(centro: Vec2, saidaDe: Vec2, s: Saida, destino: Vec2): Cou
   return path;
 }
 
-const formatoMetros = (m: number) => `${m.toFixed(2).replace('.', ',')} m`;
+const formatoMetros = (m: number) => `${formatDecimal(m, 2)} m`;
 
 export function generatePeDeGalinha(p: PeDeGalinhaParams): Generated {
   const cadeia: { type: ObstacleType; distM: number; sentido?: Sentido }[] = [];

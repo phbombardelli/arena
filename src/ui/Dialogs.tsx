@@ -125,7 +125,7 @@ export function Dialogs() {
   }
   if (dialog === 'alturas') {
     return (
-      <Dialog title={t('dialogo.alturas')} onClose={fecha}>
+      <Dialog title={t('dialogo.alturas')} onClose={fecha} fundoClaro>
         <HeightsEditor />
       </Dialog>
     );
