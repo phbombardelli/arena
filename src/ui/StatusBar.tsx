@@ -69,6 +69,9 @@ export function StatusBar() {
         </Popover>
       )}
 
+      <button className="chip-button" onClick={() => setDialog('contato')} title={t('barra.contatoDica')}>
+        ✉ {t('barra.contato')}
+      </button>
       <button className="chip-button" onClick={() => setDialog('atalhos')} title={t('barra.atalhosDica')}>
         ? {t('barra.atalhos')}
       </button>

@@ -19,13 +19,14 @@ import {
   sendSelectionToBack,
   unlinkSelection,
 } from '@ui/actions/editActions';
-import { actualSize, fitPage, toggleGrid, zoomBy } from '@ui/actions/viewActions';
+import { actualSize, fitPage, toggleBackgroundImage, toggleGrid, zoomBy } from '@ui/actions/viewActions';
 import { insertHeightTable, insertInfoBox } from '@ui/actions/annotationActions';
 import { insertTimingLine } from '@ui/actions/timingActions';
 import { importBackgroundImage, pasteImageFromSystemClipboard, startMapWizard } from '@ui/actions/imageActions';
 import { insertLogo } from '@ui/actions/logoActions';
 import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
 import { hasLinked } from '@core/commands/groupOps';
+import { isLayerVisible } from '@core/model/document';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { Popover } from '@ui/common/Popover';
@@ -164,6 +165,9 @@ export function Toolbar() {
 
   const exibir: MenuEntry[] = [
     { label: check(doc.grid.visible, t('exibir.grade')), shortcut: 'G', onSelect: toggleGrid },
+    ...(doc.objects.some((o) => o.kind === 'image')
+      ? [{ label: check(isLayerVisible(doc, 'background'), t('exibir.imagemFundo')), onSelect: toggleBackgroundImage }]
+      : []),
     { label: check(showPageFrame, t('exibir.limitesFolha')), onSelect: togglePageFrame },
     { label: check(showInterference, t('exibir.avisosInterferencia')), onSelect: toggleInterference },
     'separator',
@@ -175,6 +179,7 @@ export function Toolbar() {
 
   const ajuda: MenuEntry[] = [
     { label: t('ajuda.atalhos'), shortcut: '?', onSelect: () => setDialog('atalhos') },
+    { label: t('ajuda.contato'), onSelect: () => setDialog('contato') },
     { label: t('ajuda.sobre'), onSelect: () => setDialog('sobre') },
   ];
 

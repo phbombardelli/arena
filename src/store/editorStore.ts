@@ -21,7 +21,7 @@ import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
  */
 
 /** Janelas que se abrem por menu. Só uma de cada vez. */
-export type DialogId = 'atalhos' | 'modelos' | 'folha' | 'sobre' | 'alturas' | 'novo' | 'nova-ginastica' | 'outro-ginastica' | 'outro-percurso' | 'abrir' | 'nuvem' | 'admin';
+export type DialogId = 'atalhos' | 'modelos' | 'folha' | 'sobre' | 'alturas' | 'novo' | 'nova-ginastica' | 'outro-ginastica' | 'outro-percurso' | 'abrir' | 'nuvem' | 'admin' | 'contato';
 
 export type Tool =
   | 'select'

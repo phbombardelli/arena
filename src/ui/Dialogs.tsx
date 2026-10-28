@@ -6,6 +6,7 @@ import { SheetSettings } from '@ui/inspector/SheetSettings';
 import { AdminPanelBody, CloudConsentBody } from '@ui/cloud/CloudUI';
 import { t } from '@core/i18n/i18n';
 import { APP_VERSION } from '@core/persistence/serialize';
+import { ContactForm } from '@ui/help/ContactForm';
 
 /** A lista na língua atual: montada a cada abertura, não no carregamento. */
 const atalhos = (): [string, string][] => [
@@ -130,6 +131,13 @@ export function Dialogs() {
       </Dialog>
     );
   }
+  if (dialog === 'contato') {
+    return (
+      <Dialog title={t('dialogo.contato')} onClose={fecha}>
+        <ContactForm />
+      </Dialog>
+    );
+  }
   if (dialog === 'sobre') {
     return (
       <Dialog title={t('dialogo.sobre')} onClose={fecha}>
@@ -143,6 +151,9 @@ export function Dialogs() {
           <p>{t('sobre.arquivos')}</p>
           <p className="note">Português · English · Español</p>
           <p className="note dim">{t('sobre.versao', { versao: APP_VERSION.replace(/\.0$/, '') })} · Pedro H Bombardelli</p>
+          <div className="row-buttons">
+            <button onClick={() => setDialog('contato')}>{t('dialogo.contato')}</button>
+          </div>
         </section>
       </Dialog>
     );

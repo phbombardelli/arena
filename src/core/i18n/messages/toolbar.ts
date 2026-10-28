@@ -66,6 +66,7 @@ export const TOOLBAR = {
 
   // Exibir
   'exibir.grade': { pt: 'Grade', en: 'Grid', es: 'Cuadrícula' },
+  'exibir.imagemFundo': { pt: 'Imagem de fundo', en: 'Background image', es: 'Imagen de fondo' },
   'exibir.limitesFolha': { pt: 'Limites da folha', en: 'Page bounds', es: 'Límites de la hoja' },
   'exibir.avisosInterferencia': { pt: 'Avisos de interferência', en: 'Conflict warnings', es: 'Avisos de interferencia' },
   'exibir.ajustarPagina': { pt: 'Ajustar à página', en: 'Fit to page', es: 'Ajustar a la página' },
