@@ -5,9 +5,13 @@ formulário para um Google Apps Script publicado na conta Google do
 desenvolvedor, que manda o e-mail. O endereço de quem escreveu fica como
 "Responder para".
 
-Enquanto o script do Arena não estiver publicado, o Arena usa o do SAPH
-(`FEEDBACK_URL` em `src/platform/feedback.ts`); o assunto sai como
-"[SAPH PT] Sugestão — Nome (Arena 1)".
+Publicado em 28/10/2026 como "Arena feedback"; o endereço está em
+`FEEDBACK_URL`, em `src/platform/feedback.ts`. O assunto sai como
+"[Arena PT] Sugestão — Nome".
+
+O script é todo ASCII (acentos como `\u00e3`): colado com acentos de
+verdade, o editor do Apps Script os estragava. Para copiar:
+`pbcopy < feedback/apps-script.gs`.
 
 ## Publicar (uma vez)
 

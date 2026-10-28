@@ -5,13 +5,9 @@ import { APP_VERSION } from '@core/persistence/serialize';
  * "Sugestões e contato", como no SAPH: o formulário vai para um Google Apps
  * Script publicado na conta do desenvolvedor, que repassa por e-mail
  * (código e instruções em feedback/ na raiz do repositório).
- *
- * Por enquanto aponta para o script do SAPH, que já está no ar; o assunto
- * do e-mail sai marcado "(Arena …)". Quando o script próprio do Arena for
- * publicado, basta trocar este endereço.
  */
 const FEEDBACK_URL =
-  'https://script.google.com/macros/s/AKfycbx8iixZmDiSInGrGHRKCbtx9kz81Nw98RV_fWTdSi5PFGiimEPp_EtiF8TuMetezC1D/exec';
+  'https://script.google.com/macros/s/AKfycbzTDDNB-DyfZTflG22mPWgD7bBHs66NoTBA-EzlpgZaYgwDjB6FSLUmZS-ZHd9AgRN3HA/exec';
 
 export type TipoContato = 'sugestao' | 'erro' | 'contato';
 
@@ -59,7 +55,6 @@ const contexto = () => ({
   versao: APP_VERSION,
   idioma: getLang().toUpperCase(),
   tela: 'Arena',
-  evento: `Arena ${APP_VERSION.replace(/\.0$/, '')}`,
   navegador: navigator.userAgent,
   telaPx: `${screen.width}x${screen.height} (janela ${innerWidth}x${innerHeight})`,
 });

@@ -1,8 +1,11 @@
 /**
- * Arena — receptor de "Sugestões e contato" (PT, EN e ES).
+ * Arena - receptor de "Sugestoes e contato" (PT, EN e ES).
+ *
+ * O arquivo e todo ASCII: acentos e travessoes estao escritos como \uXXXX,
+ * para nao virarem caracteres estranhos ao colar no editor do Apps Script.
  *
  * Publicado como App da Web na conta Google do desenvolvedor. O Arena
- * faz POST com o formulário em JSON (Content-Type text/plain, para evitar o
+ * faz POST com o formulario em JSON (Content-Type text/plain, para evitar o
  * preflight de CORS), e este script repassa por e-mail.
  *
  * Como publicar: ver feedback/README.md.
@@ -10,13 +13,13 @@
 
 const DESTINO = 'pedrohbombardelli@gmail.com';
 
-const TIPOS = { sugestao: 'Sugestão', erro: 'Erro', contato: 'Contato', acesso: 'Pedido de acesso' };
+const TIPOS = { sugestao: 'Sugest\u00e3o', erro: 'Erro', contato: 'Contato', acesso: 'Pedido de acesso' };
 
-// Limites defensivos: o endereço do App da Web é público.
+// Limites defensivos: o endereco do App da Web e publico.
 const LIMITE = { nome: 120, celular: 40, email: 160, mensagem: 5000, contexto: 600 };
 
-// v1.20.15: o endereço é público — sem teto, alguém podia disparar milhares de mensagens, encher a caixa e esgotar a
-// cota diária de e-mails do Google (aí pedidos de acesso e sugestões de verdade paravam de chegar). Tetos bem acima
+// v1.20.15: o endereco e publico - sem teto, alguem podia disparar milhares de mensagens, encher a caixa e esgotar a
+// cota diaria de e-mails do Google (ai pedidos de acesso e sugestoes de verdade paravam de chegar). Tetos bem acima
 // do uso normal (alguns por dia) e abaixo da cota (100 e-mails/dia numa conta Gmail comum).
 const TETO = { porHora: 20, porDia: 60, porRemetenteHora: 4 };
 
@@ -33,13 +36,13 @@ function doPost(e) {
       return resposta({ ok: false, erro: 'campos' });
     }
 
-    // O admin tenta de novo quando a resposta demora (1ª execução "a frio"), mas o e-mail
-    // pode já ter saído. Cada mensagem tem um id: repetido em até 6 h = já enviado.
+    // O admin tenta de novo quando a resposta demora (1? execucao "a frio"), mas o e-mail
+    // pode ja ter saido. Cada mensagem tem um id: repetido em ate 6 h = ja enviado.
     const id = corta(d.id, 40);
     const cache = CacheService.getScriptCache();
     if (id && cache.get('fb_' + id)) return resposta({ ok: true, repetido: true });
 
-    // tetos: conta este envio (repetições do mesmo id não chegam aqui); a trava evita duas contagens ao mesmo tempo
+    // tetos: conta este envio (repeticoes do mesmo id nao chegam aqui); a trava evita duas contagens ao mesmo tempo
     const trava = LockService.getScriptLock();
     if (!trava.tryLock(10000)) return resposta({ ok: false, erro: 'ocupado' });
     let cotas;
@@ -53,20 +56,20 @@ function doPost(e) {
     const idioma = corta(ctx.idioma, 4) || '?';
     const evento = corta(ctx.evento, 120);
 
-    const assunto = '[Arena ' + idioma + '] ' + tipo + ' — ' + nome + (evento ? ' (' + evento + ')' : '');
+    const assunto = '[Arena ' + idioma + '] ' + tipo + ' \u2014 ' + nome + (evento ? ' (' + evento + ')' : '');
     const corpo = [
       tipo.toUpperCase(),
       '',
       mensagem,
       '',
-      '──────────────',
+      '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
       'Nome: ' + nome,
-      'Celular: ' + (celular || '—'),
-      'E-mail: ' + (email || '—'),
+      'Celular: ' + (celular || '\u2014'),
+      'E-mail: ' + (email || '\u2014'),
       '',
-      'Versão do Arena: ' + corta(ctx.versao, 20) + ' (' + idioma + ')',
-      'Tela: ' + corta(ctx.tela, 30) + (ctx.modalidade ? ' · modalidade ' + corta(ctx.modalidade, 20) : ''),
-      'Evento: ' + (evento || '—'),
+      'Vers\u00e3o do Arena: ' + corta(ctx.versao, 20) + ' (' + idioma + ')',
+      'Tela: ' + corta(ctx.tela, 30) + (ctx.modalidade ? ' \u00b7 modalidade ' + corta(ctx.modalidade, 20) : ''),
+      'Evento: ' + (evento || '\u2014'),
       'Tela/janela: ' + corta(ctx.telaPx, 60),
       'Navegador: ' + corta(ctx.navegador, LIMITE.contexto),
     ].join('\n');
@@ -83,7 +86,7 @@ function doPost(e) {
 }
 
 /**
- * Conta mais um envio e devolve true; devolve false (sem contar) se algum teto já foi atingido.
+ * Conta mais um envio e devolve true; devolve false (sem contar) se algum teto ja foi atingido.
  * Hora e remetente: CacheService (some sozinho em 1 h). Dia: PropertiesService, pela data de hoje.
  */
 function contar(cache, remetente) {
@@ -101,7 +104,7 @@ function contar(cache, remetente) {
   return true;
 }
 
-/** Abrir o endereço no navegador só confirma que está no ar. */
+/** Abrir o endereco no navegador so confirma que esta no ar. */
 function doGet() {
   return resposta({ ok: true, servico: 'Arena feedback' });
 }
