@@ -4,36 +4,38 @@ import { Dialog } from '@ui/common/Popover';
 import { NewCourseDialogBody, OpenCourseDialogBody, OtherKindDialogBody, PistasDialogBody } from '@ui/files/FileDialogs';
 import { SheetSettings } from '@ui/inspector/SheetSettings';
 import { AdminPanelBody, CloudConsentBody } from '@ui/cloud/CloudUI';
+import { t } from '@core/i18n/i18n';
 
-const ATALHOS: [string, string][] = [
-  ['Ferramentas', ''],
-  ['V', 'Selecionar'],
-  ['H  ou  espaço segurado', 'Mover a vista'],
-  ['O', 'Obstáculo'],
-  ['T', 'Traçado à mão'],
-  ['X', 'Texto'],
-  ['M', 'Trena (Shift: perpendicular ou paralela à cerca)'],
-  ['Esc', 'Volta a Selecionar e limpa a seleção'],
-  ['Vista', ''],
-  ['roda do mouse', 'Zoom sob o cursor'],
-  ['botão do meio', 'Mover a vista'],
-  ['Ctrl+0', 'Ajustar à página'],
-  ['G', 'Mostrar ou esconder a grade'],
-  ['Edição', ''],
-  ['Ctrl+Z  /  Ctrl+Y', 'Desfazer  /  refazer'],
-  ['Ctrl+C  /  V  /  D', 'Copiar  /  colar  /  duplicar'],
-  ['Ctrl+V com um print copiado', 'Colar como imagem de fundo'],
-  ['Ctrl+A', 'Selecionar tudo do modo atual'],
-  ['Ctrl+G  /  Ctrl+Shift+G', 'Vincular  /  desvincular'],
-  ['Alt + clique', 'Pegar só um elemento vinculado'],
-  ['setas  /  Shift+setas', 'Mover 10 cm  /  1 m'],
-  ['Alt+setas', 'Obstáculo preso desliza sobre o traçado'],
-  ['Delete', 'Excluir a seleção'],
-  ['Arquivo', ''],
-  ['Ctrl+N  /  Ctrl+O', 'Novo  /  abrir'],
-  ['Ctrl+S  /  Ctrl+Shift+S', 'Salvar  /  salvar como'],
-  ['Ctrl+E', 'Exportar PDF'],
-  ['Ctrl+P', 'Imprimir'],
+/** A lista na língua atual: montada a cada abertura, não no carregamento. */
+const atalhos = (): [string, string][] => [
+  [t('atalho.grupoFerramentas'), ''],
+  ['V', t('atalho.selecionar')],
+  [t('atalho.teclaH'), t('atalho.moverVista')],
+  ['O', t('atalho.obstaculo')],
+  ['T', t('atalho.tracadoMao')],
+  ['X', t('atalho.texto')],
+  ['M', t('atalho.trena')],
+  ['Esc', t('atalho.esc')],
+  [t('atalho.grupoVista'), ''],
+  [t('atalho.roda'), t('atalho.zoomCursor')],
+  [t('atalho.botaoMeio'), t('atalho.moverVista')],
+  ['Ctrl+0', t('atalho.ajustar')],
+  ['G', t('atalho.grade')],
+  [t('atalho.grupoEdicao'), ''],
+  ['Ctrl+Z  /  Ctrl+Y', t('atalho.desfazer')],
+  ['Ctrl+C  /  V  /  D', t('atalho.copiar')],
+  [t('atalho.ctrlVPrint'), t('atalho.colarFundo')],
+  ['Ctrl+A', t('atalho.selecionarTudo')],
+  ['Ctrl+G  /  Ctrl+Shift+G', t('atalho.vincular')],
+  [t('atalho.altClique'), t('atalho.pegarUm')],
+  [t('atalho.setas'), t('atalho.mover')],
+  [t('atalho.altSetas'), t('atalho.desliza')],
+  ['Delete', t('atalho.excluir')],
+  [t('atalho.grupoArquivo'), ''],
+  ['Ctrl+N  /  Ctrl+O', t('atalho.novo')],
+  ['Ctrl+S  /  Ctrl+Shift+S', t('atalho.salvar')],
+  ['Ctrl+E', t('atalho.exportar')],
+  ['Ctrl+P', t('atalho.imprimir')],
 ];
 
 /** As janelas abertas por menu. Só uma de cada vez. */
@@ -43,10 +45,10 @@ export function Dialogs() {
 
   if (dialog === 'atalhos') {
     return (
-      <Dialog title="Atalhos do teclado" onClose={fecha}>
+      <Dialog title={t('dialogo.atalhos')} onClose={fecha}>
         <table className="shortcuts">
           <tbody>
-            {ATALHOS.map(([tecla, acao], i) =>
+            {atalhos().map(([tecla, acao], i) =>
               acao === '' ? (
                 <tr key={i} className="group">
                   <th colSpan={2}>{tecla}</th>
@@ -65,21 +67,21 @@ export function Dialogs() {
   }
   if (dialog === 'modelos') {
     return (
-      <Dialog title="Pistas" onClose={fecha}>
+      <Dialog title={t('dialogo.pistas')} onClose={fecha}>
         <PistasDialogBody />
       </Dialog>
     );
   }
   if (dialog === 'novo') {
     return (
-      <Dialog title="Novo percurso" onClose={fecha}>
+      <Dialog title={t('dialogo.novoPercurso')} onClose={fecha}>
         <NewCourseDialogBody />
       </Dialog>
     );
   }
   if (dialog === 'nova-ginastica') {
     return (
-      <Dialog title="Nova ginástica" onClose={fecha}>
+      <Dialog title={t('dialogo.novaGinastica')} onClose={fecha}>
         <NewCourseDialogBody kind="ginastica" />
       </Dialog>
     );
@@ -87,51 +89,51 @@ export function Dialogs() {
   if (dialog === 'outro-ginastica' || dialog === 'outro-percurso') {
     const kind = dialog === 'outro-ginastica' ? 'ginastica' : 'percurso';
     return (
-      <Dialog title={kind === 'ginastica' ? 'Ginástica' : 'Percurso'} onClose={fecha}>
+      <Dialog title={kind === 'ginastica' ? t('dialogo.ginastica') : t('dialogo.percurso')} onClose={fecha}>
         <OtherKindDialogBody kind={kind} />
       </Dialog>
     );
   }
   if (dialog === 'nuvem') {
     return (
-      <Dialog title="Backup na nuvem" onClose={fecha}>
+      <Dialog title={t('dialogo.backup')} onClose={fecha}>
         <CloudConsentBody />
       </Dialog>
     );
   }
   if (dialog === 'admin') {
     return (
-      <Dialog title="Painel de admin" onClose={fecha}>
+      <Dialog title={t('dialogo.admin')} onClose={fecha}>
         <AdminPanelBody />
       </Dialog>
     );
   }
   if (dialog === 'abrir') {
     return (
-      <Dialog title="Abrir percurso" onClose={fecha}>
+      <Dialog title={t('dialogo.abrirPercurso')} onClose={fecha}>
         <OpenCourseDialogBody />
       </Dialog>
     );
   }
   if (dialog === 'folha') {
     return (
-      <Dialog title="Configurar folha" onClose={fecha}>
+      <Dialog title={t('dialogo.configurarFolha')} onClose={fecha}>
         <SheetSettings />
       </Dialog>
     );
   }
   if (dialog === 'alturas') {
     return (
-      <Dialog title="Alturas dos obstáculos" onClose={fecha}>
+      <Dialog title={t('dialogo.alturas')} onClose={fecha}>
         <HeightsEditor />
       </Dialog>
     );
   }
   if (dialog === 'sobre') {
     return (
-      <Dialog title="Sobre o Arena" onClose={fecha}>
-        <p>Editor de croquis de percurso de salto. Funciona offline, sem servidor e sem nuvem.</p>
-        <p className="note">O arquivo do croqui (.pcs) fica no seu computador.</p>
+      <Dialog title={t('dialogo.sobre')} onClose={fecha}>
+        <p>{t('dialogo.sobreTexto')}</p>
+        <p className="note">{t('dialogo.sobreArquivo')}</p>
       </Dialog>
     );
   }

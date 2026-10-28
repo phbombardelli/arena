@@ -37,6 +37,7 @@ import {
   IconTypography,
   IconWand,
 } from '@tabler/icons-react';
+import { t } from '@core/i18n/i18n';
 
 /** Ícones do trilho: um conjunto só, de traço fino (decisão 87). */
 const ICONE = { size: 19, stroke: 1.6 } as const;
@@ -80,7 +81,7 @@ export function Sidebar() {
     setStructureType(tipo);
     usa(alvo);
   };
-  const nomeConstrucao = STRUCTURES.find((s) => s.type === structureType)?.label ?? 'Arquibancada';
+  const nomeConstrucao = STRUCTURES.find((s) => s.type === structureType)?.label ?? STRUCTURES.find((s) => s.type === 'arquibancada')!.label;
   // Forma da construção (decisão 69): vale para o tipo que se escolher
   // depois — antes só a arquibancada parecia ter contorno livre.
   const [construcaoLivre, setConstrucaoLivre] = useState(false);
@@ -103,15 +104,15 @@ export function Sidebar() {
     });
 
   return (
-    <nav className="rail" aria-label="Ferramentas">
-      <RailButton icon={<IconPointer {...ICONE} />} label="Selecionar" shortcut="V" active={tool === 'select'} onClick={() => usa('select')} />
+    <nav className="rail" aria-label={t('rail.ferramentas')}>
+      <RailButton icon={<IconPointer {...ICONE} />} label={t('rail.selecionar')} shortcut="V" active={tool === 'select'} onClick={() => usa('select')} />
 
       {mode === 'percurso' && ginastica ? (
         <>
-          <RailGroup title="Elementos" />
+          <RailGroup title={t('rail.elementos')} />
           <RailFlyout
             icon={<IconBarrierBlock {...ICONE} />}
-            label="Obstáculo"
+            label={t('rail.obstaculo')}
             shortcut="O"
             detail={nomeObstaculo}
             active={tool === 'obstacle'}
@@ -125,58 +126,58 @@ export function Sidebar() {
                 usa('obstacle');
               },
             }))}
-            footer="Clique na pista para inserir. Shift mantém a ferramenta."
+            footer={t('rail.inserirRodape')}
           />
           <RailFlyout
             icon={<IconTrafficCone {...ICONE} />}
-            label="Ornamentos"
+            label={t('rail.ornamentos')}
             active={tool === 'ornament' || ((tool === 'arena-rect' || tool === 'arena-polygon') && structureType === 'ilha')}
             onActivate={() => {
               setOrnamentType('cone');
               usa('ornament');
             }}
             items={[
-              ...(['cone', 'vaso'] as OrnamentType[]).map((t) => ({
-                label: ORNAMENTS.find((o) => o.type === t)!.label,
-                hint: 'clique para colocar',
-                active: tool === 'ornament' && ornamentType === t,
+              ...(['cone', 'vaso'] as OrnamentType[]).map((tipo) => ({
+                label: ORNAMENTS.find((o) => o.type === tipo)!.label,
+                hint: t('rail.cliqueColocar'),
+                active: tool === 'ornament' && ornamentType === tipo,
                 onSelect: () => {
-                  setOrnamentType(t);
+                  setOrnamentType(tipo);
                   usa('ornament');
                 },
               })),
               {
-                label: 'Ilha decorativa',
-                hint: 'arraste: nasce oval',
+                label: t('rail.ilhaDecorativa'),
+                hint: t('rail.arrasteOval'),
                 active: tool === 'arena-rect' && structureType === 'ilha',
                 onSelect: () => construcao('ilha', 'arena-rect'),
               },
             ]}
           />
 
-          <RailGroup title="Exercícios" />
-          <RailButton icon={<IconGripHorizontal {...ICONE} />} label="Cavaletes" onClick={() => abreExercicio('cavaletes')} />
+          <RailGroup title={t('rail.exercicios')} />
+          <RailButton icon={<IconGripHorizontal {...ICONE} />} label={t('rail.cavaletes')} onClick={() => abreExercicio('cavaletes')} />
           <RailFlyout
             icon={<IconArrowsSplit {...ICONE} />}
-            label="Pé de galinha"
+            label={t('rail.peDeGalinha')}
             items={[
-              { label: 'Completo', hint: 'cavaletes, X, salto, central e as três saídas', onSelect: () => abreExercicio('pe-de-galinha', true) },
-              { label: 'Simples', hint: 'o salto central e as três saídas', onSelect: () => abreExercicio('pe-de-galinha', false) },
+              { label: t('rail.completo'), hint: t('rail.completoDica'), onSelect: () => abreExercicio('pe-de-galinha', true) },
+              { label: t('rail.simples'), hint: t('rail.simplesDica'), onSelect: () => abreExercicio('pe-de-galinha', false) },
             ]}
           />
-          <RailButton icon={<IconClockHour3 {...ICONE} />} label="Relógio" onClick={() => abreExercicio('relogio')} />
-          <RailButton icon={<IconChartArcs {...ICONE} />} label="Leque de varas" onClick={() => abreExercicio('leque')} />
+          <RailButton icon={<IconClockHour3 {...ICONE} />} label={t('rail.relogio')} onClick={() => abreExercicio('relogio')} />
+          <RailButton icon={<IconChartArcs {...ICONE} />} label={t('rail.leque')} onClick={() => abreExercicio('leque')} />
 
-          <RailGroup title="Medir e anotar" />
-          <RailButton icon={<IconRulerMeasure {...ICONE} />} label="Trena" shortcut="M" active={tool === 'measure'} onClick={() => usa('measure')} />
-          <RailButton icon={<IconTypography {...ICONE} />} label="Texto" shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
+          <RailGroup title={t('rail.medirAnotar')} />
+          <RailButton icon={<IconRulerMeasure {...ICONE} />} label={t('rail.trena')} shortcut="M" active={tool === 'measure'} onClick={() => usa('measure')} />
+          <RailButton icon={<IconTypography {...ICONE} />} label={t('rail.texto')} shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
         </>
       ) : mode === 'percurso' ? (
         <>
-          <RailGroup title="Prova" />
+          <RailGroup title={t('rail.prova')} />
           <RailFlyout
             icon={<IconBarrierBlock {...ICONE} />}
-            label="Obstáculo"
+            label={t('rail.obstaculo')}
             shortcut="O"
             detail={nomeObstaculo}
             active={tool === 'obstacle'}
@@ -190,20 +191,20 @@ export function Sidebar() {
                 usa('obstacle');
               },
             }))}
-            footer="Clique na pista para inserir. Shift mantém a ferramenta."
+            footer={t('rail.inserirRodape')}
           />
           <RailFlyout
             icon={<IconFlag {...ICONE} />}
-            label="Partida e chegada"
+            label={t('rail.partidaChegada')}
             items={[
-              { label: 'Partida', hint: 'no eixo do primeiro obstáculo', onSelect: () => insertTimingLine('start') },
-              { label: 'Chegada', hint: 'no eixo do último obstáculo', onSelect: () => insertTimingLine('finish') },
+              { label: t('rail.partida'), hint: t('rail.partidaDica'), onSelect: () => insertTimingLine('start') },
+              { label: t('rail.chegada'), hint: t('rail.chegadaDica'), onSelect: () => insertTimingLine('finish') },
             ]}
-            footer="Seguem a numeração; a distância se ajusta no painel da linha."
+            footer={t('rail.partidaRodape')}
           />
           <RailFlyout
             icon={<IconPlant {...ICONE} />}
-            label="Ornamentos"
+            label={t('rail.ornamentos')}
             active={
               (tool === 'ornament' && ornamentType === 'vaso') ||
               ((tool === 'arena-rect' || tool === 'arena-polygon') && structureType === 'ilha')
@@ -211,20 +212,20 @@ export function Sidebar() {
             onActivate={() => construcao('ilha', 'arena-rect')}
             items={[
               {
-                label: 'Ilha decorativa',
-                hint: 'arraste: nasce oval',
+                label: t('rail.ilhaDecorativa'),
+                hint: t('rail.arrasteOval'),
                 active: tool === 'arena-rect' && structureType === 'ilha',
                 onSelect: () => construcao('ilha', 'arena-rect'),
               },
               {
-                label: 'Ilha em contorno livre',
-                hint: 'clique cada vértice; Enter fecha',
+                label: t('rail.ilhaContornoLivre'),
+                hint: t('rail.contornoLivreDica'),
                 active: tool === 'arena-polygon' && structureType === 'ilha',
                 onSelect: () => construcao('ilha', 'arena-polygon'),
               },
               {
-                label: 'Vaso',
-                hint: 'clique para colocar',
+                label: t('rail.vaso'),
+                hint: t('rail.cliqueColocar'),
                 active: tool === 'ornament' && ornamentType === 'vaso',
                 onSelect: () => {
                   setOrnamentType('vaso');
@@ -232,20 +233,20 @@ export function Sidebar() {
                 },
               },
             ]}
-            footer="Móveis da prova: o assistente contorna, e o traçado por cima vira aviso."
+            footer={t('rail.ornamentosProvaRodape')}
           />
 
-          <RailGroup title="Traçado" />
+          <RailGroup title={t('rail.tracado')} />
           <RailFlyout
             icon={<IconPencil {...ICONE} />}
-            label="Desenhar"
+            label={t('rail.desenhar')}
             shortcut="T"
             active={tool === 'path'}
             onActivate={() => usa('path')}
             items={[
               {
-                label: 'À mão, curvo',
-                hint: 'clique a clique; os cliques viram curva',
+                label: t('rail.maoCurvo'),
+                hint: t('rail.maoCurvoDica'),
                 active: tool === 'path' && pathSmooth,
                 onSelect: () => {
                   setPathSmooth(true);
@@ -253,8 +254,8 @@ export function Sidebar() {
                 },
               },
               {
-                label: 'À mão, reto',
-                hint: 'clique a clique, em segmentos retos',
+                label: t('rail.maoReto'),
+                hint: t('rail.maoRetoDica'),
                 active: tool === 'path' && !pathSmooth,
                 onSelect: () => {
                   setPathSmooth(false);
@@ -265,58 +266,58 @@ export function Sidebar() {
           />
           <RailFlyout
             icon={<IconWand {...ICONE} />}
-            label="Assistente"
+            label={t('rail.assistente')}
             items={[
-              { label: 'Por trechos', hint: 'você escolhe a forma de cada volta', onSelect: startGuidedRide },
-              { label: 'Automático', hint: 'traça tudo pela numeração', onSelect: () => traceCourse() },
+              { label: t('rail.porTrechos'), hint: t('rail.porTrechosDica'), onSelect: startGuidedRide },
+              { label: t('rail.automatico'), hint: t('rail.automaticoDica'), onSelect: () => traceCourse() },
             ]}
-            footer="Seguem a numeração dos obstáculos, da partida à chegada."
+            footer={t('rail.assistenteRodape')}
           />
 
-          <RailGroup title="Medir e anotar" />
-          <RailButton icon={<IconRulerMeasure {...ICONE} />} label="Trena" shortcut="M" active={tool === 'measure'} onClick={() => usa('measure')} />
-          <RailButton icon={<IconTypography {...ICONE} />} label="Texto" shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
+          <RailGroup title={t('rail.medirAnotar')} />
+          <RailButton icon={<IconRulerMeasure {...ICONE} />} label={t('rail.trena')} shortcut="M" active={tool === 'measure'} onClick={() => usa('measure')} />
+          <RailButton icon={<IconTypography {...ICONE} />} label={t('rail.texto')} shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
 
-          <RailGroup title="Folha" />
+          <RailGroup title={t('rail.folha')} />
           <RailFlyout
             icon={<IconTable {...ICONE} />}
-            label="Quadros técnicos"
+            label={t('rail.quadrosTecnicos')}
             items={[
-              { label: 'Quadro técnico', hint: 'prova, tabela, altura, velocidade…', onSelect: insertInfoBox },
-              { label: 'Tabela de alturas', hint: 'lê as alturas dos obstáculos', onSelect: insertHeightTable },
+              { label: t('rail.quadroTecnico'), hint: t('rail.quadroTecnicoDica'), onSelect: insertInfoBox },
+              { label: t('rail.tabelaAlturas'), hint: t('rail.tabelaAlturasDica'), onSelect: insertHeightTable },
             ]}
           />
           <RailButton
             icon={<IconPhoto {...ICONE} />}
-            label="Logo ou imagem"
+            label={t('rail.logo')}
             onClick={() => void insertLogo()}
-            title="PNG, JPG ou WEBP, posicionado na folha"
+            title={t('rail.logoDica')}
           />
         </>
       ) : (
         <>
-          <RailGroup title="Local" />
+          <RailGroup title={t('rail.local')} />
           <RailButton
             icon={<IconMap2 {...ICONE} />}
-            label="Pista pelo mapa"
+            label={t('rail.pistaPeloMapa')}
             onClick={() => void startMapWizard()}
-            title="Cole ou abra um print do Google Maps com uma medida marcada"
+            title={t('rail.pistaPeloMapaDica')}
           />
           <RailFlyout
             icon={<IconSquare {...ICONE} />}
-            label="Contorno"
+            label={t('rail.contorno')}
             active={desenhandoContorno && structureType === null}
             onActivate={() => contornoDaPista('arena-rect')}
             items={[
               {
-                label: 'Retângulo',
-                hint: 'arraste; as medidas se digitam no painel',
+                label: t('rail.retangulo'),
+                hint: t('rail.retanguloPistaDica'),
                 active: tool === 'arena-rect' && structureType === null,
                 onSelect: () => contornoDaPista('arena-rect'),
               },
               {
-                label: 'Contorno livre',
-                hint: 'clique cada vértice; Enter fecha',
+                label: t('rail.contornoLivre'),
+                hint: t('rail.contornoLivreDica'),
                 active: tool === 'arena-polygon' && structureType === null,
                 onSelect: () => contornoDaPista('arena-polygon'),
               },
@@ -324,28 +325,28 @@ export function Sidebar() {
           />
           <RailButton
             icon={<IconPhoto {...ICONE} />}
-            label="Imagem de fundo"
+            label={t('rail.imagemFundo')}
             onClick={() => void importBackgroundImage()}
-            title="Importa PNG, JPG ou WEBP como referência. O arquivo fica embutido no projeto."
+            title={t('rail.imagemFundoDica')}
           />
           <RailButton
             icon={<IconBooks {...ICONE} />}
-            label="Modelos de pista"
+            label={t('rail.modelosPista')}
             onClick={() => setDialog('modelos')}
-            title="As pistas do programa e as que você guardou"
+            title={t('rail.modelosPistaDica')}
           />
 
-          <RailGroup title="Cenário" />
+          <RailGroup title={t('rail.cenario')} />
           <RailFlyout
             icon={<IconBuilding {...ICONE} />}
-            label="Construção"
+            label={t('rail.construcao')}
             detail={structureType && structureType !== 'rio' && structureType !== 'lago' ? nomeConstrucao : undefined}
             active={desenhandoContorno && structureType !== null && structureType !== 'rio' && structureType !== 'lago'}
             onActivate={() => construcao(structureType && structureType !== 'rio' && structureType !== 'lago' ? structureType : 'arquibancada', formaConstrucao)}
             items={[
               {
-                label: 'Retângulo',
-                hint: 'arraste um retângulo',
+                label: t('rail.retangulo'),
+                hint: t('rail.arrasteRetangulo'),
                 active: !construcaoLivre,
                 onSelect: () => {
                   setConstrucaoLivre(false);
@@ -353,8 +354,8 @@ export function Sidebar() {
                 },
               },
               {
-                label: 'Contorno livre',
-                hint: 'clique cada vértice; Enter fecha',
+                label: t('rail.contornoLivre'),
+                hint: t('rail.contornoLivreDica'),
                 active: construcaoLivre,
                 onSelect: () => {
                   setConstrucaoLivre(true);
@@ -364,51 +365,51 @@ export function Sidebar() {
               'separator' as const,
               ...STRUCTURES.filter((s) => !s.water).map((s) => ({
                 label: s.label,
-                hint: construcaoLivre ? 'em contorno livre' : 'em retângulo',
+                hint: construcaoLivre ? t('rail.emContornoLivre') : t('rail.emRetangulo'),
                 active: (tool === 'arena-rect' || tool === 'arena-polygon') && structureType === s.type,
                 onSelect: () => construcao(s.type, formaConstrucao),
               })),
             ]}
-            footer="Referência do local: arquibancada, área de concreto, prédios. Não limita o traçado."
+            footer={t('rail.construcaoRodape')}
           />
           <RailFlyout
             icon={<IconRipple {...ICONE} />}
-            label="Água"
+            label={t('rail.agua')}
             active={(tool === 'arena-rect' || tool === 'arena-polygon') && (structureType === 'rio' || structureType === 'lago')}
             onActivate={() => construcao('rio', 'arena-rect')}
             items={[
               {
-                label: 'Rio',
-                hint: 'arraste um retângulo; aceita obstáculo em cima',
+                label: t('rail.rio'),
+                hint: t('rail.rioDica'),
                 active: tool === 'arena-rect' && structureType === 'rio',
                 onSelect: () => construcao('rio', 'arena-rect'),
               },
               {
-                label: "Massa d'água",
-                hint: 'lago ou córrego: clique cada vértice; Enter fecha',
+                label: t('rail.massaAgua'),
+                hint: t('rail.massaAguaDica'),
                 active: tool === 'arena-polygon' && structureType === 'lago',
                 onSelect: () => construcao('lago', 'arena-polygon'),
               },
             ]}
-            footer="Obstáculo sobre massa d'água aparece nos avisos de interferência; sobre o rio, pode."
+            footer={t('rail.aguaRodape')}
           />
           <RailFlyout
             icon={<IconDoorEnter {...ICONE} />}
-            label="Entrada e saída"
+            label={t('rail.entradaSaida')}
             active={tool === 'ornament' && PORTOES.includes(ornamentType)}
-            items={PORTOES.map((t) => ({
-              label: ORNAMENTS.find((o) => o.type === t)!.label,
-              hint: 'nasce de frente para a cerca mais próxima',
-              active: tool === 'ornament' && ornamentType === t,
+            items={PORTOES.map((tipo) => ({
+              label: ORNAMENTS.find((o) => o.type === tipo)!.label,
+              hint: t('rail.portaoDica'),
+              active: tool === 'ornament' && ornamentType === tipo,
               onSelect: () => {
-                setOrnamentType(t);
+                setOrnamentType(tipo);
                 usa('ornament');
               },
             }))}
           />
           <RailFlyout
             icon={<IconTree {...ICONE} />}
-            label="Ornamentos"
+            label={t('rail.ornamentos')}
             detail={tool === 'ornament' && !PORTOES.includes(ornamentType) ? nomeOrnamento : undefined}
             active={tool === 'ornament' && !PORTOES.includes(ornamentType)}
             onActivate={() => {
@@ -430,7 +431,7 @@ export function Sidebar() {
       {/* Mover a vista é recurso, não ferramenta de desenho: fica no pé,
           e Espaço ou o botão do meio fazem o mesmo de qualquer lugar. */}
       <div className="rail-foot">
-        <RailButton icon={<IconHandStop {...ICONE} />} label="Mover vista" shortcut="H" active={tool === 'pan'} onClick={() => usa('pan')} />
+        <RailButton icon={<IconHandStop {...ICONE} />} label={t('rail.moverVista')} shortcut="H" active={tool === 'pan'} onClick={() => usa('pan')} />
       </div>
     </nav>
   );

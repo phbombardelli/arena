@@ -5,6 +5,7 @@ import type { Vec2 } from '@core/geometry/vec';
 import type { Obstacle } from '@core/model/types';
 import { mmPerMeter } from '@core/scale/units';
 import { ObstacleLayer } from '@render/layers/ObstacleLayer';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Prévia da linha em curva (B-81), como a do pé de galinha da ginástica:
@@ -126,7 +127,7 @@ export function ArcGapPreview({ ordenados, curvas, travado, onAbertura }: Props)
                     setArrasto({ indice: i, quadro: atual });
                   }}
                 >
-                  <title>Arraste para abrir ou fechar a curva; a distância fica a mesma</title>
+                  <title>{t('comb.arrasteArco')}</title>
                 </circle>
               </g>
             );

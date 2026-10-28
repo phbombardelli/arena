@@ -1,6 +1,8 @@
 import type { Vec2 } from '@core/geometry/vec';
 import { newId } from '@core/model/ids';
 import type { InfoBox, InfoBoxField, HeightTable, TextLabel } from '@core/model/types';
+import { localizeDefault, t } from '@core/i18n/i18n';
+import type { MessageKey } from '@core/i18n/messages';
 
 /**
  * Anotações da folha: texto livre, quadro técnico e tabela de alturas.
@@ -16,7 +18,7 @@ import type { InfoBox, InfoBoxField, HeightTable, TextLabel } from '@core/model/
  *   quadro técnico nem tirá-lo do canto onde foi posto.
  */
 
-export function createTextLabel(pos: Vec2, text = 'Texto'): TextLabel {
+export function createTextLabel(pos: Vec2, text = t('texto.padrao')): TextLabel {
   return {
     id: newId('txt'),
     kind: 'text',
@@ -54,19 +56,31 @@ const campo = (id: string, label: string, value = ''): InfoBoxField => ({
  * esportiva, então o programa não confere nada disso. Quem manda é quem
  * assina o croqui.
  */
-export const CAMPOS_PADRAO: InfoBoxField[] = [
-  campo('prova', 'Prova'),
-  campo('tabela', 'Tabela'),
-  campo('artigo', 'Artigo'),
-  campo('altura', 'Altura'),
-  campo('velocidade', 'Velocidade', '350 m/min'),
-  campo('distancia', 'Distância'),
-  campo('tempo', 'Tempo concedido'),
-  campo('limite', 'Tempo limite'),
-  campo('obstaculos', 'Obstáculos'),
-  campo('esforcos', 'Esforços'),
-  campo('desenhador', 'Desenhador'),
+const CAMPOS: [id: string, key: MessageKey, valor?: string][] = [
+  ['prova', 'quadro.prova'],
+  ['tabela', 'quadro.tabela'],
+  ['artigo', 'quadro.artigo'],
+  ['altura', 'quadro.altura'],
+  ['velocidade', 'quadro.velocidade', '350 m/min'],
+  ['distancia', 'quadro.distancia'],
+  ['tempo', 'quadro.tempo'],
+  ['limite', 'quadro.limite'],
+  ['obstaculos', 'quadro.obstaculos'],
+  ['esforcos', 'quadro.esforcos'],
+  ['desenhador', 'quadro.desenhador'],
 ];
+
+/** Os campos padrão, com o título na língua atual. */
+export const camposPadrao = (): InfoBoxField[] => CAMPOS.map(([id, key, valor]) => campo(id, t(key), valor));
+
+/**
+ * Título de um campo como sai na folha: o padrão segue a língua da tela;
+ * o que o usuário reescreveu fica como está.
+ */
+export function fieldLabel(f: InfoBoxField): string {
+  const key = CAMPOS.find(([id]) => id === f.id)?.[1];
+  return key ? localizeDefault(f.label, key) : f.label;
+}
 
 export function createInfoBox(posMm: Vec2): InfoBox {
   return {
@@ -80,7 +94,7 @@ export function createInfoBox(posMm: Vec2): InfoBox {
     posMm,
     widthMm: 78,
     columns: 1,
-    fields: CAMPOS_PADRAO.map((f) => ({ ...f })),
+    fields: camposPadrao(),
     style: { sizeMm: 3, borderMm: 0.3 },
   };
 }

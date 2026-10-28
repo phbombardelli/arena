@@ -9,6 +9,7 @@ import { Popover } from '@ui/common/Popover';
 import { GridSettings } from '@ui/inspector/SheetSettings';
 import { measureFrame } from '@core/model/measureFrame';
 import { InterferencePanel } from '@ui/inspector/InterferencePanel';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Barra de baixo: onde o cursor está e o estado das ajudas de desenho.
@@ -39,10 +40,10 @@ export function StatusBar() {
         className="chip"
         placement="up"
         align="right"
-        title="Grade: dentro da pista, a partir do canto superior esquerdo. Sai na folha como aparece; desligue em Exibir para imprimir sem ela."
+        title={t('barra.gradeDica')}
         trigger={
           <span className={doc.grid.visible ? '' : 'off'}>
-            Grade {doc.grid.visible ? `${formatMeters(step, step < 1 ? 2 : 0)} m` : 'oculta'}
+            {doc.grid.visible ? t('barra.grade', { m: formatMeters(step, step < 1 ? 2 : 0) }) : t('barra.gradeOculta')}
           </span>
         }
       >
@@ -55,12 +56,12 @@ export function StatusBar() {
           className={achados.length === 0 ? 'chip ok' : 'chip warn'}
           placement="up"
           align="right"
-          title="Obstáculos atravessados ou sobrepostos"
+          title={t('barra.interfDica')}
           trigger={
             <span>
               {achados.length === 0
-                ? 'Sem interferências'
-                : `${achados.length} ${achados.length === 1 ? 'interferência' : 'interferências'}`}
+                ? t('barra.semInterf')
+                : t(achados.length === 1 ? 'barra.umaInterferencia' : 'barra.nInterferencias', { n: achados.length })}
             </span>
           }
         >
@@ -68,8 +69,8 @@ export function StatusBar() {
         </Popover>
       )}
 
-      <button className="chip-button" onClick={() => setDialog('atalhos')} title="Atalhos do teclado (?)">
-        ? Atalhos
+      <button className="chip-button" onClick={() => setDialog('atalhos')} title={t('barra.atalhosDica')}>
+        ? {t('barra.atalhos')}
       </button>
     </footer>
   );

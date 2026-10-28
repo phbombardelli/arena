@@ -5,6 +5,7 @@ import { legCandidates, type CurveSolution } from './legCurve';
 import type { CoursePrep } from './courseRide';
 import { courseGates, gateStraightNodes, joinNodes } from './courseRide';
 import { DEFAULT_RIDE, type RideParams } from './ridePath';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Traçado por trechos, com escolha do desenhador.
@@ -76,7 +77,7 @@ export function prepareGuidedRide(
   for (let i = 0; i < gates.length - 1; i += 1) {
     const g = gates[i]!;
     const proximo = gates[i + 1]!;
-    const where = `${g.label} para ${proximo.label}`;
+    const where = t('ride.trecho', { de: g.label, para: proximo.label });
 
     // Cruzada de tempo nunca tem volta: reta, e nada a escolher.
     if (g.kind === 'timing' || proximo.kind === 'timing') {

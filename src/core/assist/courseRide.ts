@@ -13,6 +13,7 @@ import {
   type Field,
   type RideParams,
 } from './ridePath';
+import { t } from '@core/i18n/i18n';
 
 /**
  * O traçado do percurso inteiro: partida, obstáculos na ordem numerada,
@@ -212,11 +213,11 @@ export function courseGates(
   const chegada = timings.find((t) => t.role === 'finish');
 
   const gates: Gate[] = [];
-  if (partida) gates.push({ label: 'partida', kind: 'timing', line: partida });
+  if (partida) gates.push({ label: t('ride.partida'), kind: 'timing', line: partida });
   for (const stop of courseOrder(obstacles)) {
     gates.push({ label: stop.label, kind: 'obstacle', elements: stop.elements });
   }
-  if (chegada) gates.push({ label: 'chegada', kind: 'timing', line: chegada });
+  if (chegada) gates.push({ label: t('ride.chegada'), kind: 'timing', line: chegada });
   if (gates.length < 2) return null;
 
   const com = (chave: 'approachM' | 'getawayM', metros: number): RideParams => ({
@@ -381,7 +382,7 @@ export function buildCourseRide(
 
     pieces.push(solucao.nodes);
     legs.push({
-      where: `${g.label} para ${proximo.label}`,
+      where: t('ride.trecho', { de: g.label, para: proximo.label }),
       minRadiusM: solucao.minRadiusM,
       inflections: solucao.inflections,
       turnDeg: solucao.turnDeg,
@@ -389,7 +390,7 @@ export function buildCourseRide(
       shape: solucao.shape,
     });
     for (const warning of solucao.warnings) {
-      problems.push({ where: `${g.label} para ${proximo.label}`, warning });
+      problems.push({ where: t('ride.trecho', { de: g.label, para: proximo.label }), warning });
     }
   });
 

@@ -21,6 +21,7 @@ import { canSetDistance, lockDistance, setCourseDistance } from '@core/commands/
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { NumberField } from './NumberField';
+import { t } from '@core/i18n/i18n';
 
 export function PathPanel({ path }: { path: CoursePath }) {
   const { doc, apply } = useDocumentStore();
@@ -44,25 +45,23 @@ export function PathPanel({ path }: { path: CoursePath }) {
       <div className="row-buttons">
         <button
           disabled={travado}
-          title="Transforma os cliques numa curva contínua, sem mover os nós"
+          title={t('tracadop.suavizarDica')}
           onClick={() => apply('Suavizar traçado', (d) => smoothPath(d, path.id))}
         >
-          Suavizar
+          {t('tracadop.suavizar')}
         </button>
         <button
           disabled={travado}
-          title="Volta a segmentos retos entre os nós"
+          title={t('tracadop.endireitarDica')}
           onClick={() => apply('Endireitar traçado', (d) => sharpenPath(d, path.id))}
         >
-          Endireitar
+          {t('tracadop.endireitar')}
         </button>
       </div>
 
-      <h3>Distância entre esforços</h3>
+      <h3>{t('tracadop.entreEsforcos')}</h3>
       {pares.length === 0 ? (
-        <p className="note">
-          O traçado ainda não passa por dois obstáculos numerados em sequência (nem pela partida ou chegada).
-        </p>
+        <p className="note">{t('tracadop.semPares')}</p>
       ) : (
         <>
           <ul className="pair-list">
@@ -73,7 +72,7 @@ export function PathPanel({ path }: { path: CoursePath }) {
                 <li key={p.key} className="pair-row">
                   <input
                     type="checkbox"
-                    title="Mostrar no croqui"
+                    title={t('campo.mostrarCroqui')}
                     checked={Boolean(path.obstacleDistances?.[p.key])}
                     disabled={travado}
                     onChange={(e) =>
@@ -86,10 +85,10 @@ export function PathPanel({ path }: { path: CoursePath }) {
                     className="pair-edit"
                     title={
                       editavel
-                        ? 'Digite a medida: o obstáculo de destino anda sobre o traçado até bater'
+                        ? t('tracadop.digiteDica')
                         : trava !== undefined
-                          ? 'Distância travada'
-                          : 'Só no traçado do assistente, preso aos obstáculos'
+                          ? t('tracadop.travada')
+                          : t('tracadop.soAssistente')
                     }
                   >
                     <NumberField
@@ -112,8 +111,8 @@ export function PathPanel({ path }: { path: CoursePath }) {
                     disabled={travado}
                     title={
                       trava !== undefined
-                        ? `Travada em ${formatDistance(trava)} m — clique para destravar`
-                        : 'Travar: ao mover os obstáculos, esta medida se mantém'
+                        ? t('tracadop.travadaEm', { m: formatDistance(trava) })
+                        : t('tracadop.travarDica')
                     }
                     onClick={() =>
                       apply(trava !== undefined ? 'Destravar distância' : 'Travar distância', (d) =>
@@ -131,26 +130,26 @@ export function PathPanel({ path }: { path: CoursePath }) {
             <button
               disabled={travado || marcadas === pares.length}
               onClick={() =>
-                apply('Mostrar todas as distâncias', (d) =>
+                apply(t('tracadop.mostrarTodas'), (d) =>
                   setObstacleDistances(d, path.id, pares.map((p) => p.key), true),
                 )
               }
             >
-              Todas
+              {t('tracadop.todas')}
             </button>
             <button
               disabled={travado || marcadas === 0}
               onClick={() =>
-                apply('Ocultar as distâncias', (d) =>
+                apply(t('tracadop.ocultarTodas'), (d) =>
                   setObstacleDistances(d, path.id, pares.map((p) => p.key), false),
                 )
               }
             >
-              Nenhuma
+              {t('tracadop.nenhuma')}
             </button>
           </div>
           <NumberField
-            label="Tamanho das letras"
+            label={t('tracadop.tamanhoLetras')}
             unit="mm"
             value={distanceFontMm(path)}
             decimals={1}
@@ -166,7 +165,7 @@ export function PathPanel({ path }: { path: CoursePath }) {
             }
           />
           <label className="field">
-            <span>Cor das letras</span>
+            <span>{t('tracadop.corLetras')}</span>
             <input
               type="color"
               value={path.totalLabel.color}
@@ -180,18 +179,13 @@ export function PathPanel({ path }: { path: CoursePath }) {
               }
             />
           </label>
-          <p className="note dim">
-            Medidas sobre o traçado, de vara a vara. Marque as que devem aparecer no
-            croqui. No traçado do assistente, digite a medida para o obstáculo
-            andar até ela; o cadeado a mantém ao mover os obstáculos. Alt + setas
-            desliza o obstáculo sobre o traçado.
-          </p>
+          <p className="note dim">{t('tracadop.paresNota')}</p>
         </>
       )}
 
       <details className="fold">
-        <summary>Trechos e nós · edição fina</summary>
-      <h3>Trechos</h3>
+        <summary>{t('tracadop.edicaoFina')}</summary>
+      <h3>{t('tracadop.trechos')}</h3>
       <div className="leg-list">
         {path.legs.map((leg, i) => {
           const curvo = legLength(path, i);
@@ -204,14 +198,14 @@ export function PathPanel({ path }: { path: CoursePath }) {
               {desvio > 0.005 && (
                 <span
                   className="leg-straight"
-                  title={`Em linha reta seriam ${formatDistance(reto)} m. O croqui mostra o traçado desenhado.`}
+                  title={t('tracadop.emLinhaReta', { m: formatDistance(reto) })}
                 >
-                  reta {formatDistance(reto)}
+                  {t('tracadop.reta', { m: formatDistance(reto) })}
                 </span>
               )}
               <button
                 className="mini"
-                title="Endireitar este trecho"
+                title={t('tracadop.endireitarTrecho')}
                 disabled={travado}
                 onClick={() => apply('Endireitar trecho', (d) => straightenLeg(d, path.id, i))}
               >
@@ -222,14 +216,14 @@ export function PathPanel({ path }: { path: CoursePath }) {
         })}
       </div>
 
-      <h3>Nós</h3>
+      <h3>{t('tracadop.nos')}</h3>
       <label className="field">
-        <span>Nó ativo</span>
+        <span>{t('tracadop.noAtivo')}</span>
         <select
           value={activeNode ?? ''}
           onChange={(e) => setActiveNode(e.target.value === '' ? null : Number(e.target.value))}
         >
-          <option value="">nenhum</option>
+          <option value="">{t('tracadop.nenhum')}</option>
           {path.nodes.map((_, i) => (
             <option key={i} value={i}>{i + 1}</option>
           ))}
@@ -238,7 +232,7 @@ export function PathPanel({ path }: { path: CoursePath }) {
       {activeNode !== null && path.nodes[activeNode] && (
         <>
           <label className="field">
-            <span>Tipo</span>
+            <span>{t('campo.tipo')}</span>
             <select
               value={path.nodes[activeNode]!.type}
               disabled={travado}
@@ -248,8 +242,8 @@ export function PathPanel({ path }: { path: CoursePath }) {
                 )
               }
             >
-              <option value="corner">Canto</option>
-              <option value="smooth">Liso</option>
+              <option value="corner">{t('tracadop.canto')}</option>
+              <option value="smooth">{t('tracadop.liso')}</option>
             </select>
           </label>
           <div className="row-buttons">
@@ -257,27 +251,24 @@ export function PathPanel({ path }: { path: CoursePath }) {
               className="danger"
               disabled={travado || path.nodes.length <= 2}
               onClick={() => {
-                apply('Remover nó', (d) => {
+                apply(t('tracadop.removerNo'), (d) => {
                   removeNode(d, path.id, activeNode);
                 });
                 setActiveNode(null);
               }}
             >
-              Remover nó
+              {t('tracadop.removerNo')}
             </button>
           </div>
         </>
       )}
-      <p className="note dim">
-        Arraste um nó para movê-lo. Arraste a bolinha do meio de um trecho para
-        curvá-lo; duplo clique nela insere um nó.
-      </p>
+      <p className="note dim">{t('tracadop.nosNota')}</p>
 
       </details>
 
-      <h3>Traço</h3>
+      <h3>{t('campo.traco')}</h3>
       <label className="field">
-        <span>Estilo</span>
+        <span>{t('campo.estilo')}</span>
         <select
           value={path.style.dash}
           disabled={travado}
@@ -287,14 +278,14 @@ export function PathPanel({ path }: { path: CoursePath }) {
             )
           }
         >
-          <option value="dashed">Tracejado</option>
-          <option value="solid">Contínuo</option>
-          <option value="dotted">Pontilhado</option>
-          <option value="dashdot">Traço e ponto</option>
+          <option value="dashed">{t('tracadop.tracejado')}</option>
+          <option value="solid">{t('tracadop.continuo')}</option>
+          <option value="dotted">{t('tracadop.pontilhado')}</option>
+          <option value="dashdot">{t('tracadop.tracoPonto')}</option>
         </select>
       </label>
       <NumberField
-        label="Espessura"
+        label={t('campo.espessura')}
         unit="mm"
         value={path.style.strokeMm}
         decimals={2}
@@ -304,7 +295,7 @@ export function PathPanel({ path }: { path: CoursePath }) {
         onCommit={(v) => apply('Espessura do traçado', (d) => setPathStyle(d, path.id, { strokeMm: v }))}
       />
       <label className="field">
-        <span>Cor</span>
+        <span>{t('campo.cor')}</span>
         <input
           type="color"
           value={path.style.color}

@@ -21,19 +21,22 @@ import { MeasurePanel } from './MeasurePanel';
 import { TimingPanel } from './TimingPanel';
 import { LogoPanel } from './LogoPanel';
 import { NumberField } from './NumberField';
+import { t } from '@core/i18n/i18n';
+import type { MessageKey } from '@core/i18n/messages';
+import { gateLabel } from '@core/library/ornaments';
 
-const KIND_LABEL: Record<SceneObject['kind'], string> = {
-  arena: 'Pista',
-  obstacle: 'Obstáculo',
-  path: 'Traçado',
-  text: 'Texto',
-  measure: 'Trena',
-  infobox: 'Quadro técnico',
-  heighttable: 'Tabela de alturas',
-  image: 'Imagem de fundo',
-  ornament: 'Ornamento',
-  timing: 'Linha de cronometragem',
-  logo: 'Logo ou imagem',
+const KIND_LABEL: Record<SceneObject['kind'], MessageKey> = {
+  arena: 'objeto.arena',
+  obstacle: 'objeto.obstacle',
+  path: 'objeto.path',
+  text: 'objeto.text',
+  measure: 'objeto.measure',
+  infobox: 'objeto.infobox',
+  heighttable: 'objeto.heighttable',
+  image: 'objeto.image',
+  ornament: 'objeto.ornament',
+  timing: 'objeto.timing',
+  logo: 'objeto.logo',
 };
 
 export function ObjectPanel() {
@@ -68,22 +71,22 @@ export function ObjectPanel() {
           {single
             ? single.kind === 'arena' && single.structure
               ? isWater(single.structure.type)
-                ? 'Água'
+                ? t('objeto.agua')
                 : single.structure.type === 'ilha'
                   ? objectScope(single) === 'percurso'
-                    ? 'Ilha decorativa'
-                    : 'Ilha'
-                  : 'Construção'
-              : KIND_LABEL[single.kind]
+                    ? t('objeto.ilhaDecorativa')
+                    : t('objeto.ilha')
+                  : t('objeto.construcao')
+              : t(KIND_LABEL[single.kind])
             : vinculoUnico
-            ? `Cenário vinculado · ${objs.length}`
-            : `${objs.length} objetos selecionados`}
+            ? t('objeto.cenarioVinculado', { n: objs.length })
+            : t('objeto.nSelecionados', { n: objs.length })}
         </h3>
         {/* Frente e Trás ficam no menu Editar; aqui só o que se usa sempre. */}
         <button
           className="icon-button"
-          title={todosTravados ? 'Desbloquear' : 'Bloquear'}
-          aria-label={todosTravados ? 'Desbloquear' : 'Bloquear'}
+          title={todosTravados ? t('objeto.desbloquear') : t('objeto.bloquear')}
+          aria-label={todosTravados ? t('objeto.desbloquear') : t('objeto.bloquear')}
           onClick={() =>
             apply(todosTravados ? 'Desbloquear' : 'Bloquear', (d) =>
               setLocked(d, selection, !todosTravados),
@@ -94,8 +97,8 @@ export function ObjectPanel() {
         </button>
         <button
           className="icon-button danger"
-          title="Excluir (Delete)"
-          aria-label="Excluir"
+          title={`${t('editar.excluir')} (Delete)`}
+          aria-label={t('editar.excluir')}
           onClick={() => {
             apply('Excluir', (d) => deleteObjects(d, selection));
             clearSelection();
@@ -122,7 +125,7 @@ export function ObjectPanel() {
           {single.kind === 'ornament' && (
             <>
               <label className="field">
-                <span>Tipo</span>
+                <span>{t('campo.tipo')}</span>
                 <select
                   value={single.type}
                   disabled={single.locked}
@@ -151,11 +154,11 @@ export function ObjectPanel() {
                       })
                     }
                   />
-                  Escrever {single.type === 'entrada' ? 'ENTRADA' : 'SAÍDA'}
+                  {t('objeto.escrever', { texto: gateLabel(single.type) })}
                 </label>
               )}
               <NumberField
-                label="Tamanho"
+                label={t('campo.tamanho')}
                 unit="m"
                 value={single.sizeM}
                 decimals={2}
@@ -170,7 +173,7 @@ export function ObjectPanel() {
                 }
               />
               <label className="field">
-                <span>Cor</span>
+                <span>{t('campo.cor')}</span>
                 <input
                   type="color"
                   value={single.color}
@@ -189,13 +192,13 @@ export function ObjectPanel() {
           {getRotation(single) !== null && single.kind !== 'timing' && (
             <>
               <NumberField
-                label="Rotação"
+                label={t('objeto.rotacao')}
                 unit="°"
                 value={getRotation(single)!}
                 decimals={1}
                 step={1}
                 disabled={single.locked}
-                onCommit={(v) => apply('Rotação', (d) => setObjectRotation(d, single.id, v))}
+                onCommit={(v) => apply(t('objeto.rotacao'), (d) => setObjectRotation(d, single.id, v))}
               />
               <RotationSlider
                 id={single.id}
@@ -206,8 +209,8 @@ export function ObjectPanel() {
           )}
           {mostraPosicao(single) && (
           <details className="fold">
-            <summary>Mais opções</summary>
-            <h3>Posição</h3>
+            <summary>{t('objeto.maisOpcoes')}</summary>
+            <h3>{t('campo.posicao')}</h3>
             <NumberField
               label="X"
               unit="m"
@@ -262,7 +265,7 @@ function RotationSlider({ id, value, disabled }: { id: string; value: number; di
     <input
       type="range"
       className="rotation-slider"
-      aria-label="Girar"
+      aria-label={t('objeto.girar')}
       min={0}
       max={360}
       step={1}
@@ -273,7 +276,7 @@ function RotationSlider({ id, value, disabled }: { id: string; value: number; di
       }}
       onChange={(e) =>
         apply(
-          'Rotação',
+          t('objeto.rotacao'),
           (d) => setObjectRotation(d, id, Number(e.target.value)),
           `giro-barra-${id}-${arrasto.current}`,
         )

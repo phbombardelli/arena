@@ -4,6 +4,7 @@ import { obstacleLabel } from '@core/library/obstacles';
 import type { TimingLine, WingStyle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Painel da partida/chegada, enxuto (B-53). A linha é solidária ao
@@ -23,7 +24,7 @@ export function TimingPanel({ line }: { line: TimingLine }) {
       {line.anchor && dono?.kind === 'obstacle' ? (
         <>
           <NumberField
-            label="Distância"
+            label={t('campo.distancia')}
             unit="m"
             value={line.anchor.distanceM}
             decimals={1}
@@ -64,20 +65,19 @@ export function TimingPanel({ line }: { line: TimingLine }) {
             }}
           />
           <p className="note">
-            {line.role === 'start' ? 'Da linha até a vara de entrada' : 'Da vara de saída até a linha'} do
-            obstáculo {obstacleLabel(dono) || 'sem número'}. Acompanha o obstáculo quando ele
-            se move ou gira.
+            {t(line.role === 'start' ? 'timingp.notaPartida' : 'timingp.notaChegada', {
+              obstaculo: obstacleLabel(dono) || t('alturas.semNumero'),
+            })}
           </p>
         </>
       ) : (
         <p className="note dim">
-          Cruzada solta, sem vínculo com obstáculo. Use Inserir › Partida ou
-          Chegada para colocá-la em relação ao percurso.
+          {t('timingp.solta')}
         </p>
       )}
 
       <label className="field">
-        <span>Papel</span>
+        <span>{t('timingp.papel')}</span>
         <select
           value={line.role}
           disabled={travado}
@@ -87,13 +87,13 @@ export function TimingPanel({ line }: { line: TimingLine }) {
             )
           }
         >
-          <option value="start">Partida</option>
-          <option value="finish">Chegada</option>
+          <option value="start">{t('timingp.partida')}</option>
+          <option value="finish">{t('timingp.chegada')}</option>
         </select>
       </label>
 
       <NumberField
-        label="Largura"
+        label={t('campo.largura')}
         unit="m"
         value={line.widthM}
         decimals={2}
@@ -104,7 +104,7 @@ export function TimingPanel({ line }: { line: TimingLine }) {
       />
 
       <label className="field">
-        <span>Texto</span>
+        <span>{t('campo.texto')}</span>
         <input
           type="text"
           value={line.label}
@@ -124,15 +124,15 @@ export function TimingPanel({ line }: { line: TimingLine }) {
           checked={line.labelVisible}
           disabled={travado}
           onChange={(e) =>
-            apply('Texto no desenho', (d) =>
+            apply(t('timingp.textoDesenho'), (d) =>
               setTimingLine(d, line.id, { labelVisible: e.target.checked }),
             )
           }
         />
-        Texto no desenho
+        {t('timingp.textoDesenho')}
       </label>
 
-      <h3>Passagem</h3>
+      <h3>{t('timingp.passagem')}</h3>
       <label className="check">
         <input
           type="checkbox"
@@ -144,10 +144,10 @@ export function TimingPanel({ line }: { line: TimingLine }) {
             )
           }
         />
-        Mostrar a seta
+        {t('timingp.mostrarSeta')}
       </label>
       <label className="field">
-        <span>Cor do traço</span>
+        <span>{t('timingp.corTraco')}</span>
         <input
           type="color"
           value={line.style.color}
@@ -162,7 +162,7 @@ export function TimingPanel({ line }: { line: TimingLine }) {
         />
       </label>
       <label className="field">
-        <span>Traço</span>
+        <span>{t('campo.traco')}</span>
         <select
           value={line.style.dash}
           disabled={travado}
@@ -174,10 +174,10 @@ export function TimingPanel({ line }: { line: TimingLine }) {
             )
           }
         >
-          <option value="solid">Contínuo</option>
-          <option value="dashed">Tracejado</option>
-          <option value="dotted">Pontilhado</option>
-          <option value="dashdot">Traço e ponto</option>
+          <option value="solid">{t('tracadop.continuo')}</option>
+          <option value="dashed">{t('tracadop.tracejado')}</option>
+          <option value="dotted">{t('tracadop.pontilhado')}</option>
+          <option value="dashdot">{t('tracadop.tracoPonto')}</option>
         </select>
       </label>
 

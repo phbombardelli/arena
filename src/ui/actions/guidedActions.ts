@@ -2,6 +2,7 @@ import { prepareGuidedRide } from '@core/assist/guidedRide';
 import { DEFAULT_RIDE } from '@core/assist/ridePath';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Começa o traçado por trechos.
@@ -15,12 +16,7 @@ export function startGuidedRide(): void {
   const guiado = prepareGuidedRide(useDocumentStore.getState().doc, DEFAULT_RIDE);
   if (!guiado) {
     window.alert(
-      [
-        'Não há o que traçar ainda.',
-        '',
-        'O traçado segue a numeração dos obstáculos: numere pelo menos',
-        'dois deles, ou acrescente partida e chegada.',
-      ].join('\n'),
+      t('aviso.nadaTracarGuiado'),
     );
     return;
   }

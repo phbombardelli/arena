@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { findInterferences } from '@core/assist/interference';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Lista de interferências.
@@ -21,20 +22,20 @@ export function InterferencePanel() {
 
   return (
     <section>
-      <h3>Interferências</h3>
+      <h3>{t('interf.titulo')}</h3>
 
       <label className="check">
         <input type="checkbox" checked={showInterference} onChange={toggleInterference} />
-        Marcar no desenho
+        {t('interf.marcar')}
       </label>
 
       {achados.length === 0 ? (
-        <p className="note">Nada atravessado. O percurso está limpo.</p>
+        <p className="note">{t('interf.limpo')}</p>
       ) : (
         <ul className="issue-list">
           {achados.map((achado, i) => (
             <li key={i}>
-              <button onClick={() => setSelection(achado.ids)} title="Selecionar o que está envolvido">
+              <button onClick={() => setSelection(achado.ids)} title={t('interf.selecionar')}>
                 {achado.message}
               </button>
             </li>
@@ -43,7 +44,7 @@ export function InterferencePanel() {
       )}
 
       <p className="note dim">
-        Os avisos são de tela: não saem no PDF nem na impressão.
+        {t('interf.nota')}
       </p>
     </section>
   );

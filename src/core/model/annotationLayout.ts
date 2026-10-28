@@ -1,5 +1,7 @@
 import { formatHeights } from '@core/library/obstacles';
 import type { HeightTable, InfoBox, Obstacle } from './types';
+import { t } from '@core/i18n/i18n';
+import { fieldLabel } from '@core/library/annotations';
 
 /**
  * Leiaute do quadro técnico e da tabela de alturas, em milímetros de papel.
@@ -49,7 +51,7 @@ export function infoBoxLayout(box: InfoBox): BoxLayout {
   const inicioDoValor = new Map<number, number>();
   ativos.forEach((campo, i) => {
     const col = Math.floor(i / porColuna);
-    const largura = campo.label.length * s * 0.56 + s * 0.8;
+    const largura = fieldLabel(campo).length * s * 0.56 + s * 0.8;
     inicioDoValor.set(col, Math.max(inicioDoValor.get(col) ?? 0, largura));
   });
 
@@ -58,7 +60,7 @@ export function infoBoxLayout(box: InfoBox): BoxLayout {
     yMm: pad + (i % porColuna) * alturaLinha,
     widthMm: larguraColuna,
     valueXMm: inicioDoValor.get(Math.floor(i / porColuna)) ?? 0,
-    label: campo.label,
+    label: fieldLabel(campo),
     value: campo.value,
   }));
 
@@ -111,11 +113,11 @@ export function heightTableLayout(table: HeightTable, obstacles: Obstacle[]): Ta
   const alturaLinha = table.style.rowHeightMm;
 
   const larguras: { titulo: string; widthMm: number }[] = [
-    { titulo: 'Nº', widthMm: table.style.sizeMm * 4 },
-    { titulo: 'Altura', widthMm: table.style.sizeMm * 4.5 * Math.max(1, table.elementColumns) },
+    { titulo: t('tabela.numero'), widthMm: table.style.sizeMm * 4 },
+    { titulo: t('tabela.altura'), widthMm: table.style.sizeMm * 4.5 * Math.max(1, table.elementColumns) },
   ];
-  if (table.showSpread) larguras.push({ titulo: 'Largura', widthMm: table.style.sizeMm * 6 });
-  if (table.showNote) larguras.push({ titulo: 'Observação', widthMm: table.style.sizeMm * 12 });
+  if (table.showSpread) larguras.push({ titulo: t('tabela.largura'), widthMm: table.style.sizeMm * 6 });
+  if (table.showNote) larguras.push({ titulo: t('tabela.observacao'), widthMm: table.style.sizeMm * 12 });
 
   let x = pad;
   const columns = larguras.map((c) => {

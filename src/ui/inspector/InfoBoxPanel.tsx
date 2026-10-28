@@ -4,6 +4,8 @@ import type { CourseDocument, InfoBox, Obstacle } from '@core/model/types';
 import { useEffect, useState } from 'react';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
+import { fieldLabel } from '@core/library/annotations';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Valores que o desenho já conhece.
@@ -56,7 +58,7 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
 
   const preencher = () => {
     const valores = doDesenho(doc, box.distanciaCorrigidaM);
-    edita('Preencher do desenho', (b) => {
+    edita(t('quadrop.preencher'), (b) => {
       for (const campo of b.fields) {
         const v = valores[campo.id];
         if (v != null) campo.value = v;
@@ -69,16 +71,16 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
       <div className="row-buttons">
         <button
           disabled={travado}
-          title="Distância do traçado, número de obstáculos e de esforços, lidos do desenho"
+          title={t('quadrop.preencherDica')}
           onClick={preencher}
         >
-          Preencher do desenho
+          {t('quadrop.preencher')}
         </button>
       </div>
 
       <Extensao box={box} medidaM={extensaoDesenho(doc)} travado={travado} edita={edita} />
 
-      <h3>Campos</h3>
+      <h3>{t('quadrop.campos')}</h3>
       <div className="leg-list">
         {box.fields.map((campo, i) => (
           <div className="field-row" key={campo.id}>
@@ -86,15 +88,15 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
               type="checkbox"
               checked={campo.enabled}
               disabled={travado}
-              title={campo.enabled ? 'Esconder este campo' : 'Mostrar este campo'}
+              title={campo.enabled ? t('quadrop.esconder') : t('quadrop.mostrar')}
               onChange={(e) =>
                 edita('Campo do quadro', (b) => {
                   b.fields[i]!.enabled = e.target.checked;
                 })
               }
             />
-            <span className="field-label" title={campo.label}>
-              {campo.label}
+            <span className="field-label" title={fieldLabel(campo)}>
+              {fieldLabel(campo)}
             </span>
             <input
               type="text"
@@ -114,9 +116,9 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
         ))}
       </div>
 
-      <h3>Aparência</h3>
+      <h3>{t('quadrop.aparencia')}</h3>
       <NumberField
-        label="Largura"
+        label={t('campo.largura')}
         unit="mm"
         value={box.widthMm}
         decimals={0}
@@ -127,7 +129,7 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
         onCommit={(v) => edita('Largura do quadro', (b) => { b.widthMm = v; })}
       />
       <NumberField
-        label="Colunas"
+        label={t('quadrop.colunas')}
         value={box.columns}
         decimals={0}
         step={1}
@@ -137,7 +139,7 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
         onCommit={(v) => edita('Colunas do quadro', (b) => { b.columns = Math.round(v); })}
       />
       <NumberField
-        label="Letra"
+        label={t('campo.letra')}
         unit="mm"
         value={box.style.sizeMm}
         decimals={1}
@@ -148,7 +150,7 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
         onCommit={(v) => edita('Letra do quadro', (b) => { b.style.sizeMm = v; })}
       />
       <p className="note dim">
-        O quadro é da folha: mudar a escala do croqui não mexe nele.
+        {t('quadrop.nota')}
       </p>
     </>
   );
@@ -195,14 +197,14 @@ function Extensao({
   const diferenca = corrigida != null && medidaM > 0 ? corrigida - medidaM : null;
   return (
     <>
-      <h3>Extensão do percurso</h3>
+      <h3>{t('quadrop.extensao')}</h3>
       <div className="extensao">
         <p className="field">
-          <span>No desenho</span>
+          <span>{t('quadrop.noDesenho')}</span>
           <strong>{medidaM > 0 ? metros(medidaM) : '—'}</strong>
         </p>
         <label className="field">
-          <span>Corrigida na pista</span>
+          <span>{t('quadrop.corrigida')}</span>
           <span className="input-unit">
             <input
               type="text"
@@ -221,12 +223,13 @@ function Extensao({
         </label>
         {diferenca != null && (
           <p className="note">
-            Diferença: {diferenca > 0 ? '+' : diferenca < 0 ? '−' : ''}
-            {formatDistance(Math.abs(diferenca), 0)} m em relação ao desenho. É a corrigida que vai para a folha.
+            {t('quadrop.diferenca', {
+              d: `${diferenca > 0 ? '+' : diferenca < 0 ? '−' : ''}${formatDistance(Math.abs(diferenca), 0)}`,
+            })}
           </p>
         )}
         {corrigida == null && (
-          <p className="note dim">Depois de armar e medir na pista, informe aqui: vai para a folha e o “Preencher” não a apaga.</p>
+          <p className="note dim">{t('quadrop.corrigidaNota')}</p>
         )}
       </div>
     </>

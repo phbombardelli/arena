@@ -19,6 +19,7 @@ import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { Popover } from '@ui/common/Popover';
 import { newCourse } from '@ui/actions/documentActions';
+import { formatDate, formatDateTime, formatTime, t } from '@core/i18n/i18n';
 
 /**
  * Conta e nuvem na barra de cima (B-36, B-78, B-79). Login opcional: o
@@ -27,7 +28,7 @@ import { newCourse } from '@ui/actions/documentActions';
  * painel com os arquivos dos usuários.
  */
 
-const hora = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '');
+const hora = (iso: string | null) => (iso ? formatTime(new Date(iso)) : '');
 
 export function AccountButton() {
   const { user, status, lastSync, error } = useCloudStore();
@@ -38,14 +39,14 @@ export function AccountButton() {
       <button
         className="cloud-signin"
         disabled={status === 'conectando'}
-        title="Entrar com a conta Google para ter backup na nuvem (opcional)"
+        title={t('nuvem.entrarDica')}
         onClick={() => {
           if (window.localStorage.getItem(ACEITE)) void signIn();
           else setDialog('nuvem');
         }}
       >
         <IconCloud size={17} stroke={1.7} />
-        <span className="cloud-signin-text">{status === 'conectando' ? 'Entrando…' : 'Entrar'}</span>
+        <span className="cloud-signin-text">{t(status === 'conectando' ? 'nuvem.entrando' : 'nuvem.entrar')}</span>
       </button>
     );
   }
@@ -55,7 +56,7 @@ export function AccountButton() {
     <Popover
       align="right"
       className="account-popover"
-      title={status === 'erro' ? 'Backup com problema' : 'Backup na nuvem'}
+      title={t(status === 'erro' ? 'nuvem.backupProblema' : 'nuvem.backup')}
       trigger={
         <span className={`account-trigger ${status}`}>
           {user.photo ? <img src={user.photo} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{user.name.slice(0, 1)}</span>}
@@ -71,13 +72,13 @@ export function AccountButton() {
           </p>
           <p className="note">
             {status === 'sincronizando'
-              ? 'Sincronizando…'
+              ? t('nuvem.sincronizando')
               : status === 'erro'
-                ? (error ?? 'Não foi possível falar com a nuvem.')
-                : `Backup em dia${lastSync ? ` · ${hora(lastSync)}` : ''}`}
+                ? (error ?? t('nuvem.semResposta'))
+                : `${t('nuvem.emDia')}${lastSync ? ` · ${hora(lastSync)}` : ''}`}
           </p>
           <button onClick={() => void syncNow()} disabled={status === 'sincronizando'}>
-            Sincronizar agora
+            {t('nuvem.sincronizar')}
           </button>
           {user.admin && (
             <button
@@ -86,7 +87,7 @@ export function AccountButton() {
                 setDialog('admin');
               }}
             >
-              Painel de admin
+              {t('nuvem.painelAdmin')}
             </button>
           )}
           <button
@@ -95,9 +96,9 @@ export function AccountButton() {
               void signOut();
             }}
           >
-            Sair
+            {t('nuvem.sair')}
           </button>
-          <p className="note dim">Saindo, seus arquivos continuam neste aparelho.</p>
+          <p className="note dim">{t('nuvem.saindo')}</p>
         </div>
       )}
     </Popover>
@@ -110,16 +111,15 @@ export function CloudConsentBody() {
   return (
     <section className="file-dialog">
       <p>
-        Entrando com a sua conta Google, <strong>Minhas pistas</strong> e <strong>Meus percursos</strong> ganham uma
-        cópia na nuvem do Arena e aparecem nos outros aparelhos em que você entrar.
+        {t('nuvem.aceite1')} <strong>{t('nuvem.minhasPistas')}</strong> {t('nuvem.e')} <strong>{t('arq.meusPercursos')}</strong>{' '}
+        {t('nuvem.aceite2')}
       </p>
-      <p>Sem entrar, tudo continua funcionando neste aparelho, como sempre.</p>
+      <p>{t('nuvem.semEntrar')}</p>
       <p className="note">
-        Saiba que o administrador do Arena pode acessar os arquivos guardados na nuvem, para suporte e para melhorar o
-        programa. Seus arquivos não são vendidos nem divulgados. Você pode sair quando quiser.
+        {t('nuvem.admin')}
       </p>
       <div className="row-buttons">
-        <button onClick={fecha}>Agora não</button>
+        <button onClick={fecha}>{t('nuvem.agoraNao')}</button>
         <button
           className="primary"
           onClick={() => {
@@ -128,7 +128,7 @@ export function CloudConsentBody() {
             void signIn();
           }}
         >
-          Concordo e entrar com Google
+          {t('nuvem.concordo')}
         </button>
       </div>
     </section>
@@ -171,21 +171,21 @@ export function AdminPanelBody() {
       if (newCourse(JSON.parse(texto) as ArenaTemplate, 'percurso') !== 'ok') return;
     } else {
       const st = useDocumentStore.getState();
-      if (st.dirty && !window.confirm('O croqui aberto tem alterações não salvas. Abrir mesmo assim?')) return;
+      if (st.dirty && !window.confirm(t('nuvem.abrirMesmoAssim'))) return;
       const { document } = deserialize(texto);
       st.replace(document, { name: `${a.nome} — ${u.email}`, handle: null, libraryId: null });
     }
     useEditorStore.getState().setDialog(null);
   };
 
-  if (erro) return <p className="note">Não foi possível ler a nuvem: {erro}</p>;
-  if (!usuarios) return <p className="note">Carregando…</p>;
+  if (erro) return <p className="note">{t('nuvem.naoLeu', { erro })}</p>;
+  if (!usuarios) return <p className="note">{t('arq.carregando')}</p>;
 
   return (
     <section className="file-dialog">
       {!aberto ? (
         <>
-          <h3>Usuários ({usuarios.length})</h3>
+          <h3>{t('nuvem.usuarios', { n: usuarios.length })}</h3>
           <ul className="file-list">
             {usuarios.map((u) => (
               <li key={u.uid}>
@@ -193,11 +193,11 @@ export function AdminPanelBody() {
                   <strong>{u.nome || u.email}</strong>
                   <em>
                     {u.email}
-                    {u.ultimoAcesso ? ` · último acesso ${u.ultimoAcesso.toLocaleDateString('pt-BR')}` : ''}
+                    {u.ultimoAcesso ? ` · ${t('nuvem.ultimoAcesso', { data: formatDate(u.ultimoAcesso) })}` : ''}
                   </em>
                 </div>
                 <button className="primary" onClick={() => setAberto(u)}>
-                  Arquivos
+                  {t('nuvem.arquivos')}
                 </button>
               </li>
             ))}
@@ -206,13 +206,13 @@ export function AdminPanelBody() {
       ) : (
         <>
           <div className="row-buttons">
-            <button onClick={() => setAberto(null)}>← Usuários</button>
+            <button onClick={() => setAberto(null)}>← {t('nuvem.usuariosVoltar')}</button>
           </div>
           <h3>{aberto.nome || aberto.email}</h3>
           {!arquivos ? (
-            <p className="note">Carregando…</p>
+            <p className="note">{t('arq.carregando')}</p>
           ) : arquivos.length === 0 ? (
-            <p className="note">Nenhum arquivo na nuvem.</p>
+            <p className="note">{t('nuvem.nenhumArquivo')}</p>
           ) : (
             <ul className="file-list">
               {arquivos.map((a) => (
@@ -221,15 +221,15 @@ export function AdminPanelBody() {
                     <strong>
                       {a.nome}
                       <span className="file-tag">
-                        {a.tipo === 'pista' ? 'Pista' : (a.meta.kind as string) === 'ginastica' ? 'Ginástica' : 'Percurso'}
+                        {t(a.tipo === 'pista' ? 'aviso.pista' : (a.meta.kind as string) === 'ginastica' ? 'arq.tagGin' : 'nuvem.percurso')}
                       </span>
                     </strong>
-                    <em>{new Date(a.savedAt).toLocaleString('pt-BR')}</em>
+                    <em>{formatDateTime(new Date(a.savedAt))}</em>
                   </div>
-                  <button className="primary" onClick={() => void abrir(aberto, a)} title="Abre aqui para ver (salvar guarda uma cópia sua)">
-                    Abrir
+                  <button className="primary" onClick={() => void abrir(aberto, a)} title={t('nuvem.abreAqui')}>
+                    {t('arq.abrir')}
                   </button>
-                  <button className="mini" title="Baixar o arquivo" onClick={() => void baixar(aberto, a)}>
+                  <button className="mini" title={t('nuvem.baixar')} onClick={() => void baixar(aberto, a)}>
                     ↓
                   </button>
                 </li>
@@ -237,7 +237,7 @@ export function AdminPanelBody() {
             </ul>
           )}
           <p className="note dim">
-            Para pôr uma pista no banco do programa: baixe o .pista e coloque em public/pistas (com o nome no index.json).
+            {t('nuvem.bancoPrograma')}
           </p>
         </>
       )}

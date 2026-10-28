@@ -9,6 +9,7 @@ import { openFile, saveFile, saveFileAs } from '@platform/fileSystem';
 import { getCourse, saveCourse as gravaNaBiblioteca } from '@platform/courseLibrary';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Ações de arquivo. Ficam fora dos componentes porque a barra superior, os
@@ -22,9 +23,9 @@ export type ActionResult = 'ok' | 'cancelado' | 'erro';
 function confirmDiscard(): boolean {
   const { dirty, fileName } = useDocumentStore.getState();
   if (!dirty) return true;
-  const nome = fileName ?? 'Sem título';
+  const nome = fileName ?? t('aviso.semTitulo');
   return window.confirm(
-    `"${nome}" tem alterações não salvas.\n\nDescartar as alterações e continuar?`,
+    t('aviso.descartar', { nome }),
   );
 }
 
@@ -101,7 +102,7 @@ export function switchKind(kind: DocKind): void {
 export function newKindOnSameArena(kind: DocKind): ActionResult {
   if (!confirmDiscard()) return 'cancelado';
   const atual = useDocumentStore.getState().doc;
-  const pista = buildTemplate(atual, atual.arenaSource?.name || atual.meta.venue || 'Pista', SCHEMA_VERSION);
+  const pista = buildTemplate(atual, atual.arenaSource?.name || atual.meta.venue || t('aviso.pista'), SCHEMA_VERSION);
   const doc = createDocument();
   if (kind === 'ginastica') doc.kind = 'ginastica';
   applyTemplate(doc, pista);
@@ -124,7 +125,7 @@ function nomeSugerido(): string {
     fileName?.replace(/\.pcs$/i, '') ||
     doc.meta.title ||
     [doc.meta.venue, doc.meta.date].filter(Boolean).join(' ') ||
-    'Percurso sem nome'
+    t('aviso.percursoSemNome')
   );
 }
 
@@ -137,7 +138,7 @@ export async function saveCourse(): Promise<ActionResult> {
   const { doc, fileHandle, libraryId, fileName } = useDocumentStore.getState();
   let nome = fileName?.replace(/\.pcs$/i, '') ?? null;
   if (!libraryId || !nome) {
-    const pedido = window.prompt('Nome do percurso em "Meus percursos":', nomeSugerido());
+    const pedido = window.prompt(t('aviso.nomePercurso'), nomeSugerido());
     if (pedido === null) return 'cancelado';
     nome = pedido.trim() || nomeSugerido();
   }
@@ -147,7 +148,7 @@ export async function saveCourse(): Promise<ActionResult> {
     useDocumentStore.getState().markSaved({ name: fileHandle ? fileHandle.name : entry.name, handle: fileHandle, libraryId: entry.id });
     return 'ok';
   } catch (err) {
-    reportError(err, 'Não foi possível salvar o percurso.');
+    reportError(err, t('aviso.naoSalvouPerc'));
     return 'erro';
   }
 }
@@ -163,10 +164,10 @@ export async function openCourseFromLibrary(id: string): Promise<ActionResult> {
     const ed = useEditorStore.getState();
     ed.clearSelection();
     ed.setMode('percurso');
-    if (warnings.length > 0) window.alert(`O percurso foi aberto, com ressalvas:\n\n- ${warnings.join('\n- ')}`);
+    if (warnings.length > 0) window.alert(`${t('aviso.percRessalvas')}\n\n- ${warnings.join('\n- ')}`);
     return 'ok';
   } catch (err) {
-    reportError(err, 'Não foi possível abrir o percurso.');
+    reportError(err, t('aviso.naoAbriuPerc'));
     return 'erro';
   }
 }
@@ -186,12 +187,12 @@ export async function openDocument(): Promise<ActionResult> {
 
     if (warnings.length > 0) {
       window.alert(
-        `O arquivo foi aberto, com ressalvas:\n\n- ${warnings.join('\n- ')}`,
+        `${t('aviso.arqRessalvas')}\n\n- ${warnings.join('\n- ')}`,
       );
     }
     return 'ok';
   } catch (err) {
-    reportError(err, 'Não foi possível abrir o arquivo.');
+    reportError(err, t('aviso.naoAbriuArq'));
     return 'erro';
   }
 }
@@ -204,7 +205,7 @@ export async function saveDocument(): Promise<ActionResult> {
     useDocumentStore.getState().markSaved(saved);
     return 'ok';
   } catch (err) {
-    reportError(err, 'Não foi possível salvar o arquivo.');
+    reportError(err, t('aviso.naoSalvouArq'));
     return 'erro';
   }
 }
@@ -219,7 +220,7 @@ export async function saveDocumentAs(): Promise<ActionResult> {
     useDocumentStore.getState().markSaved({ ...saved, libraryId: entry.id });
     return 'ok';
   } catch (err) {
-    reportError(err, 'Não foi possível salvar o arquivo.');
+    reportError(err, t('aviso.naoSalvouArq'));
     return 'erro';
   }
 }

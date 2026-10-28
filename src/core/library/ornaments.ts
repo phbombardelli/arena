@@ -1,6 +1,7 @@
 import { newId } from '@core/model/ids';
 import type { Ornament, OrnamentType } from '@core/model/types';
 import type { Vec2 } from '@core/geometry/vec';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Elementos de pista. São puramente gráficos: não têm lógica esportiva e
@@ -17,21 +18,23 @@ export interface OrnamentDef {
 }
 
 export const ORNAMENTS: readonly OrnamentDef[] = [
-  { type: 'cone', label: 'Cone', defaultSizeM: 1.5, defaultColor: '#F26A1B', rotatable: false },
-  { type: 'arvore', label: 'Árvore', defaultSizeM: 3, defaultColor: '#3f7d3f', rotatable: false },
-  { type: 'arbusto', label: 'Arbusto', defaultSizeM: 1.6, defaultColor: '#5a9448', rotatable: false },
-  { type: 'vaso', label: 'Vaso', defaultSizeM: 1, defaultColor: '#7a6a52', rotatable: true },
-  { type: 'cerca', label: 'Cerca', defaultSizeM: 4, defaultColor: '#6b6b6b', rotatable: true },
-  { type: 'cronometro', label: 'Cronômetro', defaultSizeM: 1.2, defaultColor: '#111111', rotatable: false },
-  { type: 'seta', label: 'Seta', defaultSizeM: 3, defaultColor: '#d32020', rotatable: true },
-  { type: 'entrada', label: 'Entrada', defaultSizeM: 3, defaultColor: '#2e7d32', rotatable: true },
-  { type: 'saida', label: 'Saída', defaultSizeM: 3, defaultColor: '#d32020', rotatable: true },
+  { type: 'cone', get label() { return t('orn.cone'); }, defaultSizeM: 1.5, defaultColor: '#F26A1B', rotatable: false },
+  { type: 'arvore', get label() { return t('orn.arvore'); }, defaultSizeM: 3, defaultColor: '#3f7d3f', rotatable: false },
+  { type: 'arbusto', get label() { return t('orn.arbusto'); }, defaultSizeM: 1.6, defaultColor: '#5a9448', rotatable: false },
+  { type: 'vaso', get label() { return t('orn.vaso'); }, defaultSizeM: 1, defaultColor: '#7a6a52', rotatable: true },
+  { type: 'cerca', get label() { return t('orn.cerca'); }, defaultSizeM: 4, defaultColor: '#6b6b6b', rotatable: true },
+  { type: 'cronometro', get label() { return t('orn.cronometro'); }, defaultSizeM: 1.2, defaultColor: '#111111', rotatable: false },
+  { type: 'seta', get label() { return t('orn.seta'); }, defaultSizeM: 3, defaultColor: '#d32020', rotatable: true },
+  { type: 'entrada', get label() { return t('orn.entrada'); }, defaultSizeM: 3, defaultColor: '#2e7d32', rotatable: true },
+  { type: 'saida', get label() { return t('orn.saida'); }, defaultSizeM: 3, defaultColor: '#d32020', rotatable: true },
 ] as const;
 
 /** Entrada e saída da pista (B-13, B-21): a mesma seta, com papel próprio. */
 export const isGateArrow = (type: OrnamentType): boolean => type === 'entrada' || type === 'saida';
 
-export const GATE_LABEL: Record<'entrada' | 'saida', string> = { entrada: 'ENTRADA', saida: 'SAÍDA' };
+/** Texto do portão no plano, na língua da tela. */
+export const gateLabel = (type: 'entrada' | 'saida'): string =>
+  t(type === 'entrada' ? 'orn.entradaPlano' : 'orn.saidaPlano');
 
 /**
  * Giro de uma seta de entrada ou saída colocada em `pos`: perpendicular à

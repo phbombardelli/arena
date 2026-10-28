@@ -12,6 +12,7 @@ import { formatMeters } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { NumberField } from './NumberField';
+import { t } from '@core/i18n/i18n';
 
 export function ImagePanel({ image }: { image: BackgroundImage }) {
   const { doc, apply } = useDocumentStore();
@@ -25,14 +26,13 @@ export function ImagePanel({ image }: { image: BackgroundImage }) {
     if (!a || !b) return;
     const medida = distance(a, b);
     const resposta = window.prompt(
-      'Qual é a distância real entre os dois pontos, em metros?\n' +
-        `(a escala atual diz ${formatMeters(medida)} m)`,
+      t('imagemp.pergunta', { m: formatMeters(medida) }),
       formatMeters(medida),
     );
     if (resposta === null) return;
     const valor = Number(resposta.replace(',', '.'));
     if (!Number.isFinite(valor) || valor <= 0) {
-      window.alert('Informe uma distância maior que zero.');
+      window.alert(t('imagemp.maiorZero'));
       return;
     }
     apply('Calibrar escala', (d) => {
@@ -44,12 +44,12 @@ export function ImagePanel({ image }: { image: BackgroundImage }) {
   return (
     <>
       <p className="note">
-        {asset?.name ?? 'arquivo ausente'} · {image.widthPx}×{image.heightPx} px
+        {asset?.name ?? t('imagemp.ausente')} · {image.widthPx}×{image.heightPx} px
       </p>
 
-      <h3>Escala</h3>
+      <h3>{t('imagemp.escala')}</h3>
       <NumberField
-        label="Largura"
+        label={t('campo.largura')}
         unit="m"
         value={imageWidthM(image)}
         decimals={2}
@@ -59,33 +59,32 @@ export function ImagePanel({ image }: { image: BackgroundImage }) {
         onCommit={(v) => apply('Largura da imagem', (d) => setImageWidthM(d, image.id, v))}
       />
       <p className="note">
-        Altura {formatMeters(imageHeightM(image))} m · 1 px ={' '}
-        {formatMeters(image.metersPerPixel, 4)} m
+        {t('imagemp.alturaPx', { altura: formatMeters(imageHeightM(image)), px: formatMeters(image.metersPerPixel, 4) })}
       </p>
 
       {calibrando ? (
         <div className="calibration-box">
           <p className="note">
             {!calibration?.pointA
-              ? 'Clique na primeira ponta da referência (a barra de escala do mapa, por exemplo).'
+              ? t('imagemp.primeiraPonta')
               : !calibration?.pointB
-                ? 'Agora clique na outra ponta.'
-                : `Medida atual: ${formatMeters(distance(calibration.pointA, calibration.pointB))} m.`}
+                ? t('imagemp.outraPonta')
+                : t('imagemp.medidaAtual', { m: formatMeters(distance(calibration.pointA, calibration.pointB)) })}
           </p>
           <div className="row-buttons">
             <button
               disabled={!calibration?.pointA || !calibration?.pointB}
               onClick={confirmar}
             >
-              Informar distância real
+              {t('imagemp.informar')}
             </button>
-            <button onClick={cancelCalibration}>Cancelar</button>
+            <button onClick={cancelCalibration}>{t('imagemp.cancelar')}</button>
           </div>
         </div>
       ) : (
         <div className="row-buttons">
           <button disabled={image.locked} onClick={() => beginCalibration(image.id)}>
-            Calibrar por referência
+            {t('imagemp.calibrar')}
           </button>
         </div>
       )}
@@ -96,9 +95,9 @@ export function ImagePanel({ image }: { image: BackgroundImage }) {
         </p>
       )}
 
-      <h3>Aparência</h3>
+      <h3>{t('imagemp.aparencia')}</h3>
       <label className="field">
-        <span>Transparência</span>
+        <span>{t('imagemp.opacidadeCampo')}</span>
         <input
           type="range"
           min={0}
@@ -114,17 +113,17 @@ export function ImagePanel({ image }: { image: BackgroundImage }) {
           }
         />
       </label>
-      <p className="note">{Math.round(image.opacity * 100)}% de opacidade</p>
+      <p className="note">{t('imagemp.opacidade', { n: Math.round(image.opacity * 100) })}</p>
 
       <div className="row-buttons">
         <button
           className="danger"
           onClick={() => {
-            apply('Remover imagem', (d) => removeImage(d, image.id));
+            apply(t('imagemp.remover'), (d) => removeImage(d, image.id));
             clearSelection();
           }}
         >
-          Remover imagem
+          {t('imagemp.remover')}
         </button>
       </div>
     </>

@@ -5,19 +5,21 @@ import { PAGE_FORMATS, STANDARD_SCALES, formatMeters } from '@core/scale/units';
 import type { Orientation, PageFormat, SheetCorner } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { toggleGrid } from '@ui/actions/viewActions';
+import { t } from '@core/i18n/i18n';
+import type { MessageKey } from '@core/i18n/messages';
 
-const ROTULO_MARGEM = {
-  top: 'Topo',
-  right: 'Direita',
-  bottom: 'Base',
-  left: 'Esquerda',
-} as const;
+const ROTULO_MARGEM: Record<'top' | 'right' | 'bottom' | 'left', MessageKey> = {
+  top: 'folhap.topo',
+  right: 'folhap.direita',
+  bottom: 'folhap.base',
+  left: 'folhap.esquerda',
+};
 
 /**
  * A folha: formato, margens, escala e legenda.
  *
  * Saiu do painel da direita, onde ocupava metade da altura o tempo todo,
- * para o botão "Folha" da barra de cima: é o que se ajusta uma vez por
+ * para o botão t('folhap.folha') da barra de cima: é o que se ajusta uma vez por
  * croqui, e não enquanto se desenha.
  */
 export function SheetSettings() {
@@ -26,8 +28,8 @@ export function SheetSettings() {
   return (
     <div className="settings">
       <section>
-        <h3>Folha</h3>
-        <Field label="Formato">
+        <h3>{t('folhap.folha')}</h3>
+        <Field label={t('folhap.formato')}>
           <select
             value={doc.page.format}
             onChange={(e) =>
@@ -39,31 +41,31 @@ export function SheetSettings() {
             {Object.keys(PAGE_FORMATS).map((f) => (
               <option key={f} value={f}>{f}</option>
             ))}
-            <option value="custom">Personalizado</option>
+            <option value="custom">{t('folhap.personalizado')}</option>
           </select>
         </Field>
-        <Field label="Orientação">
+        <Field label={t('folhap.orientacao')}>
           <select
             value={doc.page.orientation}
             onChange={(e) =>
-              apply('Orientação', (d) => {
+              apply(t('folhap.orientacao'), (d) => {
                 d.page.orientation = e.target.value as Orientation;
               })
             }
           >
-            <option value="landscape">Paisagem</option>
-            <option value="portrait">Retrato</option>
+            <option value="landscape">{t('folhap.paisagem')}</option>
+            <option value="portrait">{t('folhap.retrato')}</option>
           </select>
         </Field>
       </section>
 
       <section>
-        <h3>Escala de impressão</h3>
-        <Field label="Escala">
+        <h3>{t('folhap.escalaImpressao')}</h3>
+        <Field label={t('folhap.escala')}>
           <ScaleInput
             value={doc.page.printScale}
             onCommit={(v) =>
-              apply('Escala de impressão', (d) => {
+              apply(t('folhap.escalaImpressao'), (d) => {
                 d.page.printScale = v;
               })
             }
@@ -73,7 +75,7 @@ export function SheetSettings() {
         <div className="row-buttons">
           <button
             className="primary"
-            title="Escolhe a maior escala padrão em que o desenho cabe e centraliza"
+            title={t('folhap.ajustarDica')}
             onClick={() =>
               apply('Ajustar escala ao papel', (d) => {
                 d.page.printScale = fitScaleToPage(d);
@@ -81,18 +83,18 @@ export function SheetSettings() {
               })
             }
           >
-            Ajustar ao papel
+            {t('folhap.ajustar')}
           </button>
-          <button onClick={() => apply('Centralizar na página', centerOnPage)}>Centralizar</button>
+          <button onClick={() => apply('Centralizar na página', centerOnPage)}>{t('folhap.centralizar')}</button>
         </div>
       </section>
 
       <section>
-        <h3>Margens (mm)</h3>
+        <h3>{t('folhap.margens')}</h3>
         <div className="margin-grid">
           {(['top', 'right', 'bottom', 'left'] as const).map((lado) => (
             <label key={lado} className="margin-cell">
-              <span>{ROTULO_MARGEM[lado]}</span>
+              <span>{t(ROTULO_MARGEM[lado])}</span>
               <input
                 type="number"
                 min={0}
@@ -100,7 +102,7 @@ export function SheetSettings() {
                 value={doc.page.marginsMm[lado]}
                 onChange={(e) => {
                   const v = Math.max(0, Number(e.target.value) || 0);
-                  apply(`Margem ${ROTULO_MARGEM[lado].toLowerCase()}`, (d) => {
+                  apply(`Margem ${lado}`, (d) => {
                     d.page.marginsMm[lado] = v;
                   });
                 }}
@@ -110,7 +112,7 @@ export function SheetSettings() {
         </div>
         <div className="row-buttons">
           <button
-            title="Aplica a margem de cima nos quatro lados"
+            title={t('folhap.igualarDica')}
             onClick={() =>
               apply('Margens iguais', (d) => {
                 const v = d.page.marginsMm.top;
@@ -118,29 +120,29 @@ export function SheetSettings() {
               })
             }
           >
-            Igualar as quatro
+            {t('folhap.igualar')}
           </button>
         </div>
       </section>
 
 
       <section>
-        <h3>Legenda de escala</h3>
+        <h3>{t('folhap.legenda')}</h3>
         <label className="check">
           <input
             type="checkbox"
             checked={doc.page.scaleLabel.visible}
             onChange={(e) =>
-              apply('Legenda de escala', (d) => {
+              apply(t('folhap.legenda'), (d) => {
                 d.page.scaleLabel.visible = e.target.checked;
               })
             }
           />
-          Imprimir a escala na folha
+          {t('folhap.imprimirEscala')}
         </label>
         {doc.page.scaleLabel.visible && (
           <>
-            <Field label="Canto">
+            <Field label={t('folhap.canto')}>
               <select
                 value={doc.page.scaleLabel.corner}
                 onChange={(e) =>
@@ -149,13 +151,13 @@ export function SheetSettings() {
                   })
                 }
               >
-                <option value="inferior-direito">Inferior direito</option>
-                <option value="inferior-esquerdo">Inferior esquerdo</option>
-                <option value="superior-direito">Superior direito</option>
-                <option value="superior-esquerdo">Superior esquerdo</option>
+                <option value="inferior-direito">{t('folhap.infDir')}</option>
+                <option value="inferior-esquerdo">{t('folhap.infEsq')}</option>
+                <option value="superior-direito">{t('folhap.supDir')}</option>
+                <option value="superior-esquerdo">{t('folhap.supEsq')}</option>
               </select>
             </Field>
-            <label className="check" title="A barra continua certa mesmo se a folha for copiada reduzida; o número escrito, não.">
+            <label className="check" title={t('folhap.barraDica')}>
               <input
                 type="checkbox"
                 checked={doc.page.scaleLabel.bar}
@@ -165,7 +167,7 @@ export function SheetSettings() {
                   })
                 }
               />
-              Barra gráfica
+              {t('folhap.barra')}
             </label>
           </>
         )}
@@ -181,9 +183,9 @@ export function GridSettings() {
     <div className="settings">
       <label className="check">
         <input type="checkbox" checked={doc.grid.visible} onChange={toggleGrid} />
-        Mostrar a grade <kbd>G</kbd>
+        {t('folhap.mostrarGrade')} <kbd>G</kbd>
       </label>
-      <Field label="Espaçamento">
+      <Field label={t('folhap.espacamento')}>
         <select
           value={doc.grid.stepM}
           onChange={(e) =>
@@ -192,13 +194,13 @@ export function GridSettings() {
             })
           }
         >
-          <option value={0}>Automático</option>
+          <option value={0}>{t('folhap.automatico')}</option>
           {GRID_STEPS.map((s) => (
             <option key={s} value={s}>{formatMeters(s, s < 1 ? 2 : 0)} m</option>
           ))}
         </select>
       </Field>
-      <Field label="Linha forte a cada">
+      <Field label={t('folhap.linhaForte')}>
         <input
           type="number"
           min={2}
@@ -248,7 +250,7 @@ function ScaleInput({ value, onCommit }: { value: number; onCommit: (v: number) 
       <input
         type="text"
         inputMode="numeric"
-        aria-label="Denominador da escala"
+        aria-label={t('folhap.denominador')}
         value={texto}
         onFocus={() => {
           editando.current = true;
@@ -264,8 +266,8 @@ function ScaleInput({ value, onCommit }: { value: number; onCommit: (v: number) 
         }}
       />
       <select
-        aria-label="Escalas comuns"
-        title="Escalas comuns"
+        aria-label={t('folhap.comuns')}
+        title={t('folhap.comuns')}
         value=""
         onChange={(e) => {
           if (e.target.value) onCommit(Number(e.target.value));

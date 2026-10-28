@@ -1,5 +1,6 @@
 import type { CourseDocument } from '@core/model/types';
 import { buildPaperSvg } from './paperSvg';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Impressão direta pelo navegador, também vetorial. Rota secundária ao
@@ -25,7 +26,7 @@ export function printDocument(doc: CourseDocument): void {
 
   docFrame.open();
   docFrame.write(`<!doctype html><html><head><meta charset="utf-8">
-<title>Croqui</title>
+<title>${t('aviso.croqui')}</title>
 <style>
   @page { size: ${handle.widthMm}mm ${handle.heightMm}mm; margin: 0; }
   html, body { margin: 0; padding: 0; }

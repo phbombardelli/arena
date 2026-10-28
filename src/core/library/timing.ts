@@ -2,6 +2,7 @@ import { add, fromAngle, scale, type Vec2 } from '@core/geometry/vec';
 import { newId } from '@core/model/ids';
 import { courseOrder } from '@core/assist/courseRide';
 import type { CourseDocument, Obstacle, TimingLine, WingsAppearance } from '@core/model/types';
+import { localizeDefault, t } from '@core/i18n/i18n';
 
 /**
  * Linhas de partida e chegada.
@@ -13,8 +14,18 @@ import type { CourseDocument, Obstacle, TimingLine, WingsAppearance } from '@cor
  */
 
 export const TIMING_ROLES = [
-  { role: 'start' as const, label: 'Partida', defaultText: 'Partida' },
-  { role: 'finish' as const, label: 'Chegada', defaultText: 'Chegada' },
+  {
+    role: 'start' as const,
+    get label() {
+      return t('tim.partida');
+    },
+  },
+  {
+    role: 'finish' as const,
+    get label() {
+      return t('tim.chegada');
+    },
+  },
 ];
 
 const defaultWings = (): WingsAppearance => ({
@@ -42,7 +53,7 @@ export function createTimingLine(
     pos,
     rotation: 0,
     widthM: 8,
-    label: label ?? (role === 'start' ? 'Partida' : 'Chegada'),
+    label: label ?? t(role === 'start' ? 'tim.partida' : 'tim.chegada'),
     labelVisible: true,
     wings: defaultWings(),
     // Vermelha, como nos croquis: distingue a cronometragem do percurso.
@@ -50,6 +61,10 @@ export function createTimingLine(
     style: { dash: 'dotted', strokeMm: 0.35, color: '#d32020' },
   };
 }
+
+/** Rótulo da linha como sai no croqui: o padrão segue a língua da tela. */
+export const timingLabel = (line: TimingLine): string =>
+  localizeDefault(line.label, line.role === 'start' ? 'tim.partida' : 'tim.chegada');
 
 /** Extensão local, em metros — a base da envoltória e da seta. */
 export function timingExtent(line: TimingLine): {

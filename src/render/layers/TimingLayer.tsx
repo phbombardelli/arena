@@ -3,6 +3,7 @@ import type { Vec2 } from '@core/geometry/vec';
 import type { TimingLine } from '@core/model/types';
 import { mmPerMeter } from '@core/scale/units';
 import { color, dashPattern, font, stroke, text } from '@render/style/tokens';
+import { timingLabel } from '@core/library/timing';
 
 interface Props {
   line: TimingLine;
@@ -94,7 +95,7 @@ export function TimingLayer({ line, printScale, originMm, labelAt, onPointerDown
           dominantBaseline="middle"
           pointerEvents="none"
         >
-          {line.label}
+          {timingLabel(line)}
         </text>
       )}
     </g>

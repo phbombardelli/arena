@@ -6,6 +6,7 @@ import { obstacleLabel } from '@core/library/obstacles';
 import { isWater, structureDef } from '@core/library/structures';
 import { decorBodies } from './decor';
 import type { Arena, CourseDocument, CoursePath, ObjectId, Obstacle } from '@core/model/types';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Detecção de interferência.
@@ -60,8 +61,11 @@ export interface Interference {
  */
 const nomeDe = (o: Obstacle): string => {
   const rotulo = obstacleLabel(o);
-  return rotulo === '' ? 'obstáculo sem número' : `obstáculo ${rotulo}`;
+  return rotulo === '' ? t('interf.semNumero') : t('interf.obstaculo', { n: rotulo });
 };
+
+/** Em inglês a frase começa pelo obstáculo, sem artigo: vai maiúscula. */
+const frase = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
  * A partir de quantos graus o cruzamento deixa de ser tentativa de salto.
@@ -190,7 +194,7 @@ export function findInterferences(doc: CourseDocument): Interference[] {
         kind: 'obstaculos-sobrepostos',
         ids: [a.id, b.id],
         at: { x: (a.pos.x + b.pos.x) / 2, y: (a.pos.y + b.pos.y) / 2 },
-        message: `O ${nomeDe(a)} e o ${nomeDe(b)} se sobrepõem no chão`,
+        message: frase(t('interf.sobrepoem', { a: nomeDe(a), b: nomeDe(b) })),
       });
     }
   }
@@ -204,7 +208,7 @@ export function findInterferences(doc: CourseDocument): Interference[] {
         kind: 'obstaculo-fora-da-pista',
         ids: [o.id],
         at: o.pos,
-        message: `O ${nomeDe(o)} está fora da pista, ou pisando no alambrado`,
+        message: frase(t('interf.foraDaPista', { a: nomeDe(o) })),
       });
     }
   }
@@ -221,7 +225,7 @@ export function findInterferences(doc: CourseDocument): Interference[] {
         kind: 'obstaculo-na-agua',
         ids: [o.id, agua.id],
         at: o.pos,
-        message: `O ${nomeDe(o)} está sobre uma massa d'água`,
+        message: frase(t('interf.sobreAgua', { a: nomeDe(o) })),
       });
     }
   }
@@ -242,7 +246,7 @@ export function findInterferences(doc: CourseDocument): Interference[] {
         kind: 'tracado-cruza-ornamento',
         ids: [path.id, corpo.id],
         at: onde,
-        message: corpo.kind === 'ilha' ? 'O traçado passa por cima de uma ilha' : 'O traçado passa por cima de um vaso',
+        message: t(corpo.kind === 'ilha' ? 'interf.sobreIlha' : 'interf.sobreVaso'),
       });
     }
   }
@@ -263,7 +267,7 @@ export function findInterferences(doc: CourseDocument): Interference[] {
             kind: 'tracado-cruza-obstaculo',
             ids: [o.id, path.id],
             at: entrada,
-            message: `O traçado passa pelo ${nomeDe(o)} sem saltá-lo`,
+            message: t('interf.semSaltar', { a: nomeDe(o) }),
           });
         }
         continue;

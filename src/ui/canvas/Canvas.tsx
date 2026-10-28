@@ -60,6 +60,10 @@ import { useObjectGestures } from './useObjectGestures';
 
 const ZOOM_STEP = 1.12;
 
+// Enquadra a folha só na primeira vez que a tela abre. Trocar a língua
+// remonta a interface (App), e o zoom do usuário tem de ficar.
+let jaEnquadrou = false;
+
 export function Canvas() {
   const doc = useDocumentStore((s) => s.doc);
   const {
@@ -191,10 +195,9 @@ export function Canvas() {
     if (size.width > 0) setViewport(fitToRect(pageRectMm(doc), size));
   }, [doc, size, setViewport]);
 
-  const didFit = useRef(false);
   useEffect(() => {
-    if (!didFit.current && size.width > 0 && size.height > 0 && wrapSize.width > 0) {
-      didFit.current = true;
+    if (!jaEnquadrou && size.width > 0 && size.height > 0 && wrapSize.width > 0) {
+      jaEnquadrou = true;
       fitPage();
     }
   }, [size, wrapSize.width, fitPage]);

@@ -5,6 +5,7 @@ import {
 } from '@core/library/arenaTemplate';
 import { idbAll, idbDelete, idbPut } from './idb';
 import { notifyLocalChange } from './localChanges';
+import { t } from '@core/i18n/i18n';
 
 /**
  * "Minhas pistas" (B-77, decisão 88).
@@ -158,7 +159,7 @@ export async function saveTemplate(template: ArenaTemplate): Promise<void> {
     for (const t of mesmoNome) await idbDelete('pistas', t.id);
   } catch {
     throw new TemplateStoreError(
-      'Não coube no armazenamento do navegador. Use "Exportar" para guardar a pista em arquivo.',
+      t('aviso.semEspaco'),
     );
   }
   locais = [...locais.filter((t) => t.name !== template.name), template];
@@ -222,7 +223,7 @@ export function importTemplateFile(): Promise<ArenaTemplate | null> {
         .then((texto) => {
           const valor = JSON.parse(texto);
           if (!isArenaTemplate(valor)) {
-            throw new TemplateStoreError('Este arquivo não é um modelo de pista.');
+            throw new TemplateStoreError(t('aviso.naoEPista'));
           }
           resolve(valor);
         })
@@ -230,7 +231,7 @@ export function importTemplateFile(): Promise<ArenaTemplate | null> {
           reject(
             err instanceof TemplateStoreError
               ? err
-              : new TemplateStoreError('Não foi possível ler o modelo de pista.'),
+              : new TemplateStoreError(t('aviso.lerPista')),
           ),
         );
     });

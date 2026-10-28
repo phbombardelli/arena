@@ -1,6 +1,7 @@
 import type { TextLabel } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Propriedades do texto livre.
@@ -26,19 +27,19 @@ export function TextPanel({ label }: { label: TextLabel }) {
   return (
     <>
       <label className="field">
-        <span>Texto</span>
+        <span>{t('campo.texto')}</span>
       </label>
       <textarea
         className="full"
         rows={Math.min(6, Math.max(2, label.text.split('\n').length))}
         value={label.text}
         disabled={travado}
-        placeholder="Entrada, aquecimento, observação..."
-        onChange={(e) => edita('Texto', (t) => { t.text = e.target.value; }, `txt-${label.id}`)}
+        placeholder={t('textop.exemplo')}
+        onChange={(e) => edita(t('campo.texto'), (t) => { t.text = e.target.value; }, `txt-${label.id}`)}
       />
 
       <NumberField
-        label="Tamanho"
+        label={t('campo.tamanho')}
         unit="mm"
         value={label.sizeMm}
         decimals={1}
@@ -50,24 +51,24 @@ export function TextPanel({ label }: { label: TextLabel }) {
       />
 
       <label className="field">
-        <span>Alinhamento</span>
+        <span>{t('textop.alinhamento')}</span>
         <select
           value={label.align}
           disabled={travado}
           onChange={(e) =>
-            edita('Alinhamento', (t) => {
+            edita(t('textop.alinhamento'), (t) => {
               t.align = e.target.value as TextLabel['align'];
             })
           }
         >
-          <option value="start">À esquerda</option>
-          <option value="middle">Centralizado</option>
-          <option value="end">À direita</option>
+          <option value="start">{t('textop.esquerda')}</option>
+          <option value="middle">{t('textop.centro')}</option>
+          <option value="end">{t('textop.direita')}</option>
         </select>
       </label>
 
       <label className="field">
-        <span>Cor</span>
+        <span>{t('campo.cor')}</span>
         <input
           type="color"
           value={label.color}
@@ -81,9 +82,9 @@ export function TextPanel({ label }: { label: TextLabel }) {
           type="checkbox"
           checked={label.bold}
           disabled={travado}
-          onChange={(e) => edita('Negrito', (t) => { t.bold = e.target.checked; })}
+          onChange={(e) => edita(t('textop.negrito'), (t) => { t.bold = e.target.checked; })}
         />
-        Negrito
+        {t('textop.negrito')}
       </label>
     </>
   );

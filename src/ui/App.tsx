@@ -9,12 +9,17 @@ import { StatusBar } from './StatusBar';
 import { Toolbar } from './toolbar/Toolbar';
 import { ExerciseDialog } from './gym/ExerciseDialog';
 import { applyUpdate, usePwa } from '@platform/pwa';
+import { useLang } from './i18n/useLang';
+import { t } from '@core/i18n/i18n';
 
 export function App() {
   useEffect(installUnloadGuard, []);
+  // Trocar a língua remonta a interface inteira: todo texto sai de novo do
+  // catálogo. O croqui e o estado do editor moram nos stores e ficam.
+  const lang = useLang();
 
   return (
-    <div className="app">
+    <div className="app" key={lang}>
       <Toolbar />
       <div className="workspace">
         <Sidebar />
@@ -36,9 +41,9 @@ function UpdateNotice() {
   if (!atualizacao) return null;
   return (
     <div className="update-notice" role="status">
-      <span>Há uma versão nova do Arena. Salve o croqui e recarregue quando quiser.</span>
+      <span>{t('aviso.versaoNova')}</span>
       <button className="primary" onClick={applyUpdate}>
-        Recarregar agora
+        {t('aviso.recarregar')}
       </button>
     </div>
   );

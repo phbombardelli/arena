@@ -4,6 +4,7 @@ import { placeTimingLine, TIMING_DISTANCE } from '@core/library/timing';
 import type { Obstacle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Coloca a partida ou a chegada em relação ao percurso.
@@ -25,9 +26,7 @@ export function insertTimingLine(role: 'start' | 'finish'): void {
   );
   if (stops.length === 0) {
     window.alert(
-      'Numere ao menos um obstáculo antes.\n\n' +
-        'A partida se coloca em relação ao primeiro obstáculo, e a chegada ' +
-        'em relação ao último — por isso é preciso saber quais são.',
+      t('aviso.numereUm'),
     );
     return;
   }

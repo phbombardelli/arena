@@ -10,6 +10,7 @@ import { formatDistance } from '@core/model/path';
 import type { MeasureLine } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Trena (B-64). Comprimento e ângulo se ajustam a partir da primeira
@@ -24,10 +25,10 @@ export function MeasurePanel({ measure }: { measure: MeasureLine }) {
     desvio === null
       ? null
       : desvio < 0.05
-        ? 'paralela à cerca'
+        ? t('trenap.paralela')
         : desvio > 89.95
-          ? 'perpendicular à cerca'
-          : `${formatDistance(desvio, 1)}° da cerca`;
+          ? t('trenap.perpendicular')
+          : t('trenap.grausCerca', { graus: formatDistance(desvio, 1) });
 
   const edita = (rotulo: string, recipe: (m: MeasureLine) => void) =>
     apply(rotulo, (d) => {
@@ -38,7 +39,7 @@ export function MeasurePanel({ measure }: { measure: MeasureLine }) {
   return (
     <>
       <NumberField
-        label="Comprimento"
+        label={t('campo.comprimento')}
         unit="m"
         value={Math.round(measureLength(measure) * 1000) / 1000}
         decimals={2}
@@ -48,7 +49,7 @@ export function MeasurePanel({ measure }: { measure: MeasureLine }) {
         onCommit={(v) => apply('Comprimento da trena', (d) => setMeasureLength(d, measure.id, v))}
       />
       <NumberField
-        label="Ângulo"
+        label={t('campo.angulo')}
         unit="°"
         value={Math.round(measureAngle(measure) * 10) / 10}
         decimals={1}
@@ -60,21 +61,21 @@ export function MeasurePanel({ measure }: { measure: MeasureLine }) {
       <div className="row-buttons stacked">
         <button
           disabled={travado || desvio === null}
-          title="Gira em torno da primeira ponta até ficar a 90° da cerca mais próxima"
+          title={t('trenap.perpDica')}
           onClick={() => apply('Trena perpendicular', (d) => alignMeasureToFence(d, measure.id, 'perpendicular'))}
         >
-          Perpendicular à borda
+          {t('trenap.perp')}
         </button>
         <button
           disabled={travado || desvio === null}
-          title="Gira em torno da primeira ponta até ficar ao longo da cerca mais próxima"
+          title={t('trenap.paraDica')}
           onClick={() => apply('Trena paralela', (d) => alignMeasureToFence(d, measure.id, 'paralela'))}
         >
-          Paralela à borda
+          {t('trenap.para')}
         </button>
       </div>
       <NumberField
-        label="Casas decimais"
+        label={t('trenap.casas')}
         value={measure.decimals}
         decimals={0}
         step={1}
@@ -84,7 +85,7 @@ export function MeasurePanel({ measure }: { measure: MeasureLine }) {
         onCommit={(v) => edita('Casas da trena', (m) => { m.decimals = Math.round(v); })}
       />
       <NumberField
-        label="Texto"
+        label={t('campo.texto')}
         unit="mm"
         value={measure.sizeMm}
         decimals={1}
@@ -95,7 +96,7 @@ export function MeasurePanel({ measure }: { measure: MeasureLine }) {
         onCommit={(v) => edita('Tamanho da trena', (m) => { m.sizeMm = v; })}
       />
       <label className="field">
-        <span>Cor</span>
+        <span>{t('campo.cor')}</span>
         <input
           type="color"
           value={measure.color}
@@ -113,8 +114,7 @@ export function MeasurePanel({ measure }: { measure: MeasureLine }) {
         />
       </label>
       <p className="note dim">
-        Ao desenhar, segure Shift para a trena sair perpendicular ou paralela à
-        cerca mais próxima.
+        {t('trenap.shiftNota')}
       </p>
     </>
   );

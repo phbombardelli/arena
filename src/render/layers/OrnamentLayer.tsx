@@ -2,7 +2,7 @@ import type { Vec2 } from '@core/geometry/vec';
 import type { Ornament } from '@core/model/types';
 import { mmPerMeter } from '@core/scale/units';
 import { OrnamentShape } from '@render/symbols/ornamentShapes';
-import { GATE_LABEL } from '@core/library/ornaments';
+import { gateLabel } from '@core/library/ornaments';
 import { font, text } from '@render/style/tokens';
 
 interface Props {
@@ -29,7 +29,7 @@ export function OrnamentLayer({ ornament, printScale, originMm, onPointerDown }:
           const lado = ornament.type === 'entrada' ? -1 : 1;
           // Afastamento pelo tamanho do próprio texto na direção da seta: com
           // a seta deitada, ENTRADA é comprido e encostava na cauda (B-66).
-          const texto = GATE_LABEL[ornament.type];
+          const texto = gateLabel(ornament.type);
           const meiaLargura = (texto.length * text.small * 0.74) / 2;
           const meiaAltura = (text.small * 0.75) / 2;
           const alcance = Math.abs(Math.cos(a)) * meiaLargura + Math.abs(Math.sin(a)) * meiaAltura;
@@ -37,7 +37,7 @@ export function OrnamentLayer({ ornament, printScale, originMm, onPointerDown }:
           return {
             x: x + Math.cos(a) * d * lado,
             y: y + Math.sin(a) * d * lado,
-            texto: GATE_LABEL[ornament.type],
+            texto: gateLabel(ornament.type),
           };
         })()
       : null;

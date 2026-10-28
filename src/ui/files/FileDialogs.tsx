@@ -15,6 +15,7 @@ import {
 } from '@platform/templateStore';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
+import { formatDate, t } from '@core/i18n/i18n';
 import { newCourse, newKindOnSameArena, openCourseFromLibrary, openDocument, type DocKind } from '@ui/actions/documentActions';
 
 /**
@@ -25,7 +26,7 @@ import { newCourse, newKindOnSameArena, openCourseFromLibrary, openDocument, typ
 
 type Origem = 'programa' | 'minhas' | 'arquivo';
 
-const data = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
+const data = (iso: string) => formatDate(new Date(iso));
 const fecha = () => useEditorStore.getState().setDialog(null);
 
 /** As listas de pistas, recarregadas quando o banco local ou o do programa chegam. */
@@ -50,7 +51,7 @@ function usePistas(versao = 0) {
  * Escolher uma pista nas três origens. `acao` é o rótulo do botão de cada
  * linha ("Usar", "Aplicar").
  */
-function PistaPicker({ acao, onPick, versao }: { acao: string; onPick: (t: ArenaTemplate) => void; versao?: number }) {
+function PistaPicker({ acao, onPick, versao }: { acao: string; onPick: (tpl: ArenaTemplate) => void; versao?: number }) {
   const { lista, recarrega } = usePistas(versao);
   const [origem, setOrigem] = useState<Origem>('programa');
   const [guardarImportada, setGuardarImportada] = useState(true);
@@ -60,15 +61,15 @@ function PistaPicker({ acao, onPick, versao }: { acao: string; onPick: (t: Arena
 
   const importar = async () => {
     try {
-      const t = await importTemplateFile();
-      if (!t) return;
+      const tpl = await importTemplateFile();
+      if (!tpl) return;
       if (guardarImportada) {
-        await saveTemplate(t);
+        await saveTemplate(tpl);
         recarrega();
       }
-      onPick(t);
+      onPick(tpl);
     } catch (err) {
-      window.alert(err instanceof TemplateStoreError ? err.message : 'Falha ao ler o arquivo.');
+      window.alert(err instanceof TemplateStoreError ? err.message : t('arq.falhaLer'));
     }
   };
 
@@ -77,9 +78,9 @@ function PistaPicker({ acao, onPick, versao }: { acao: string; onPick: (t: Arena
       <div className="file-tabs" role="tablist">
         {(
           [
-            ['programa', `Do programa (${doPrograma.length})`],
-            ['minhas', `Minhas pistas (${minhas.length})`],
-            ['arquivo', 'Arquivo'],
+            ['programa', t('arq.doPrograma', { n: doPrograma.length })],
+            ['minhas', t('arq.minhasN', { n: minhas.length })],
+            ['arquivo', t('arq.arquivo')],
           ] as [Origem, string][]
         ).map(([id, rotulo]) => (
           <button key={id} role="tab" aria-selected={origem === id} className={origem === id ? 'active' : ''} onClick={() => setOrigem(id)}>
@@ -91,18 +92,18 @@ function PistaPicker({ acao, onPick, versao }: { acao: string; onPick: (t: Arena
       {origem === 'arquivo' ? (
         <div className="file-upload">
           <button className="primary" onClick={() => void importar()}>
-            Escolher arquivo .pista…
+            {t('arq.escolherPista')}
           </button>
           <label className="check">
             <input type="checkbox" checked={guardarImportada} onChange={(e) => setGuardarImportada(e.target.checked)} />
-            Guardar também em Minhas pistas
+            {t('arq.guardarTambem')}
           </label>
         </div>
       ) : mostradas.length === 0 ? (
         <p className="note">
           {origem === 'minhas'
-            ? 'Nenhuma pista guardada ainda. Monte o cenário no modo Pista e use "Salvar pista…".'
-            : 'O banco de pistas do programa não carregou (sem internet?).'}
+            ? t('arq.nenhumaPista')
+            : t('arq.bancoFalhou')}
         </p>
       ) : (
         <ul className="file-list">
@@ -118,18 +119,18 @@ function PistaPicker({ acao, onPick, versao }: { acao: string; onPick: (t: Arena
               <button
                 className="primary"
                 onClick={() => {
-                  const t = getTemplate(m.id);
-                  if (t) onPick(t);
+                  const tpl = getTemplate(m.id);
+                  if (tpl) onPick(tpl);
                 }}
               >
                 {acao}
               </button>
               <button
                 className="mini"
-                title="Exportar em arquivo .pista"
+                title={t('arq.exportarPista')}
                 onClick={() => {
-                  const t = getTemplate(m.id);
-                  if (t) exportTemplateFile(t);
+                  const tpl = getTemplate(m.id);
+                  if (tpl) exportTemplateFile(tpl);
                 }}
               >
                 ↓
@@ -137,9 +138,9 @@ function PistaPicker({ acao, onPick, versao }: { acao: string; onPick: (t: Arena
               {!m.builtin && (
                 <button
                   className="mini"
-                  title="Apagar de Minhas pistas"
+                  title={t('arq.apagarPista')}
                   onClick={() => {
-                    if (window.confirm(`Apagar "${m.name}" de Minhas pistas?`)) void deleteTemplate(m.id).then(recarrega);
+                    if (window.confirm(t('arq.confirmaApagarPista', { nome: m.name }))) void deleteTemplate(m.id).then(recarrega);
                   }}
                 >
                   ×
@@ -163,18 +164,18 @@ export function NewCourseDialogBody({ kind = 'percurso' }: { kind?: 'percurso' |
           if (newCourse(null, kind) === 'ok') fecha();
         }}
       >
-        <strong>Em branco</strong>
-        <em>pista retangular padrão, para desenhar do zero</em>
+        <strong>{t('arq.emBranco')}</strong>
+        <em>{t('arq.emBrancoDica')}</em>
       </button>
-      <h3>Ou comece sobre uma pista</h3>
+      <h3>{t('arq.ouComece')}</h3>
       <PistaPicker
-        acao="Usar"
-        onPick={(t) => {
-          if (newCourse(t, kind) === 'ok') fecha();
+        acao={t('arq.usar')}
+        onPick={(tpl) => {
+          if (newCourse(tpl, kind) === 'ok') fecha();
         }}
       />
       <p className="note dim">
-        A pista entra copiada {kind === 'ginastica' ? 'na ginástica' : 'no percurso'}: mudar a pista depois não altera este croqui.
+        {t(kind === 'ginastica' ? 'arq.copiadaGin' : 'arq.copiadaPerc')}
       </p>
     </section>
   );
@@ -193,14 +194,12 @@ export function OtherKindDialogBody({ kind }: { kind: DocKind }) {
       () => setLista([]),
     );
   }, [kind]);
-  const aberto = kind === 'ginastica' ? 'o percurso aberto' : 'a ginástica aberta';
-  const voltar = kind === 'ginastica' ? 'ao percurso' : 'à ginástica';
 
   return (
     <section className="file-dialog">
       <p className="note">
-        Percurso e ginástica são arquivos separados: {aberto} não muda.
-        {useDocumentStore.getState().dirty ? ' Salve antes, se quiser guardar as alterações.' : ''}
+        {t(kind === 'ginastica' ? 'arq.separadosPerc' : 'arq.separadosGin')}
+        {useDocumentStore.getState().dirty ? ' ' + t('arq.salveAntes') : ''}
       </p>
       <button
         className="file-blank"
@@ -208,14 +207,14 @@ export function OtherKindDialogBody({ kind }: { kind: DocKind }) {
           if (newKindOnSameArena(kind) === 'ok') fecha();
         }}
       >
-        <strong>{kind === 'ginastica' ? 'Nova ginástica' : 'Novo percurso'} nesta mesma pista</strong>
-        <em>{kind === 'ginastica' ? 'a pista do percurso aberto' : 'a pista da ginástica aberta'}, com a mesma folha e escala</em>
+        <strong>{t(kind === 'ginastica' ? 'arq.novaGinMesma' : 'arq.novoPercMesma')}</strong>
+        <em>{t(kind === 'ginastica' ? 'arq.mesmaDoPerc' : 'arq.mesmaDaGin')}</em>
       </button>
-      <h3>Ou abra {kind === 'ginastica' ? 'uma ginástica guardada' : 'um percurso guardado'}</h3>
+      <h3>{t(kind === 'ginastica' ? 'arq.ouAbraGin' : 'arq.ouAbraPerc')}</h3>
       {lista === null ? (
-        <p className="note">Carregando…</p>
+        <p className="note">{t('arq.carregando')}</p>
       ) : lista.length === 0 ? (
-        <p className="note dim">{kind === 'ginastica' ? 'Nenhuma ginástica guardada' : 'Nenhum percurso guardado'} ainda.</p>
+        <p className="note dim">{t(kind === 'ginastica' ? 'arq.nenhumaGin' : 'arq.nenhumPerc')}</p>
       ) : (
         <ul className="file-list">
           {lista.map((c) => (
@@ -235,7 +234,7 @@ export function OtherKindDialogBody({ kind }: { kind: DocKind }) {
                   })
                 }
               >
-                Abrir
+                {t('arq.abrir')}
               </button>
             </li>
           ))}
@@ -243,10 +242,10 @@ export function OtherKindDialogBody({ kind }: { kind: DocKind }) {
       )}
       <div className="row-buttons">
         <button onClick={() => useEditorStore.getState().setDialog(kind === 'ginastica' ? 'nova-ginastica' : 'novo')}>
-          {kind === 'ginastica' ? 'Nova ginástica' : 'Novo percurso'} sobre outra pista…
+          {t(kind === 'ginastica' ? 'arq.novaGinOutra' : 'arq.novoPercOutra')}
         </button>
       </div>
-      <p className="note dim">Para voltar {voltar} depois, abra em Arquivo › Abrir (Meus percursos).</p>
+      <p className="note dim">{t(kind === 'ginastica' ? 'arq.voltarPerc' : 'arq.voltarGin')}</p>
     </section>
   );
 }
@@ -259,11 +258,11 @@ export function OpenCourseDialogBody() {
 
   return (
     <section className="file-dialog">
-      <h3>Meus percursos</h3>
+      <h3>{t('arq.meusPercursos')}</h3>
       {lista === null ? (
-        <p className="note">Carregando…</p>
+        <p className="note">{t('arq.carregando')}</p>
       ) : lista.length === 0 ? (
-        <p className="note">Nenhum percurso guardado ainda. "Salvar percurso" (Ctrl+S) guarda aqui.</p>
+        <p className="note">{t('arq.nenhumPercDica')}</p>
       ) : (
         <ul className="file-list">
           {lista.map((c) => (
@@ -271,11 +270,11 @@ export function OpenCourseDialogBody() {
               <div className="file-name">
                 <strong>
                   {c.name}
-                  {c.kind === 'ginastica' && <span className="file-tag">Ginástica</span>}
+                  {c.kind === 'ginastica' && <span className="file-tag">{t('arq.tagGin')}</span>}
                 </strong>
                 <em>
                   {c.arenaName ? `${c.arenaName} · ` : ''}
-                  {c.obstacleCount} obstáculo{c.obstacleCount === 1 ? '' : 's'} · {data(c.savedAt)}
+                  {t(c.obstacleCount === 1 ? 'arq.umObstaculo' : 'arq.nObstaculos', { n: c.obstacleCount })} · {data(c.savedAt)}
                 </em>
               </div>
               <button
@@ -286,13 +285,13 @@ export function OpenCourseDialogBody() {
                   })
                 }
               >
-                Abrir
+                {t('arq.abrir')}
               </button>
               <button
                 className="mini"
-                title="Apagar de Meus percursos"
+                title={t('arq.apagarPerc')}
                 onClick={() => {
-                  if (window.confirm(`Apagar "${c.name}" de Meus percursos?`)) void deleteCourse(c.id).then(recarrega);
+                  if (window.confirm(t('arq.confirmaApagarPerc', { nome: c.name }))) void deleteCourse(c.id).then(recarrega);
                 }}
               >
                 ×
@@ -309,7 +308,7 @@ export function OpenCourseDialogBody() {
             })
           }
         >
-          Abrir arquivo .pcs…
+          {t('arq.abrirPcs')}
         </button>
       </div>
     </section>
@@ -327,50 +326,50 @@ export function PistasDialogBody() {
   const [versao, setVersao] = useState(0);
 
   const montar = () => {
-    const escolhido = nome.trim() || doc.arenaSource?.name || doc.meta.venue || 'Pista sem nome';
+    const escolhido = nome.trim() || doc.arenaSource?.name || doc.meta.venue || t('arq.pistaSemNome');
     const template = buildTemplate(doc, escolhido, SCHEMA_VERSION);
     if (template.objects.length === 0) {
-      window.alert('Não há nada no cenário para salvar.');
+      window.alert(t('arq.nadaSalvar'));
       return null;
     }
     return template;
   };
 
   const salvar = async () => {
-    const t = montar();
-    if (!t) return;
+    const tpl = montar();
+    if (!tpl) return;
     try {
-      await saveTemplate(t);
-      setSalvo(t.name);
+      await saveTemplate(tpl);
+      setSalvo(tpl.name);
       setNome('');
       setVersao((v) => v + 1);
     } catch (err) {
-      if (err instanceof TemplateStoreError && window.confirm(`${err.message}\n\nExportar agora em arquivo?`)) exportTemplateFile(t);
+      if (err instanceof TemplateStoreError && window.confirm(`${err.message}\n\n${t('arq.exportarAgora')}`)) exportTemplateFile(tpl);
     }
   };
 
-  const aplicar = (t: ArenaTemplate) => {
+  const aplicar = (tpl: ArenaTemplate) => {
     if (
       arenaScopeObjects(doc).length > 0 &&
-      !window.confirm(`Trocar o cenário atual por "${t.name}"?\n\nO percurso (obstáculos e traçado) é mantido.`)
+      !window.confirm(t('arq.confirmaTrocar', { nome: tpl.name }))
     ) {
       return;
     }
-    apply('Aplicar pista', (d) => applyTemplate(d, t));
+    apply('Aplicar pista', (d) => applyTemplate(d, tpl));
     useEditorStore.getState().clearSelection();
     fecha();
   };
 
   return (
     <section className="file-dialog">
-      <h3>Salvar a pista atual</h3>
-      <p className="note">Só o cenário: contorno, construções, água, ornamentos e imagem de fundo.</p>
+      <h3>{t('arq.salvarAtual')}</h3>
+      <p className="note">{t('arq.soCenario')}</p>
       <div className="file-save">
         <input
           type="text"
           className="full"
           value={nome}
-          placeholder={doc.arenaSource?.name || doc.meta.venue || 'nome do local'}
+          placeholder={doc.arenaSource?.name || doc.meta.venue || t('arq.nomeLocal')}
           onChange={(e) => {
             setNome(e.target.value);
             setSalvo(null);
@@ -378,23 +377,23 @@ export function PistasDialogBody() {
         />
         <div className="row-buttons">
           <button className="primary" onClick={() => void salvar()}>
-            Salvar em Minhas pistas
+            {t('arq.salvarMinhas')}
           </button>
           <button
             onClick={() => {
-              const t = montar();
-              if (t) exportTemplateFile(t);
+              const tpl = montar();
+              if (tpl) exportTemplateFile(tpl);
             }}
           >
-            Exportar arquivo .pista
+            {t('arq.exportarArquivoPista')}
           </button>
         </div>
-        {salvo && <p className="note ok-text">"{salvo}" guardada em Minhas pistas.</p>}
+        {salvo && <p className="note ok-text">{t('arq.guardada', { nome: salvo })}</p>}
       </div>
 
-      <h3>Abrir uma pista</h3>
-      <p className="note">Troca só o cenário; o percurso aberto continua.</p>
-      <PistaPicker acao="Aplicar" onPick={aplicar} versao={versao} />
+      <h3>{t('arq.abrirUma')}</h3>
+      <p className="note">{t('arq.trocaSo')}</p>
+      <PistaPicker acao={t('arq.aplicar')} onPick={aplicar} versao={versao} />
     </section>
   );
 }

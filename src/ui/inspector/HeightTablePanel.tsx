@@ -3,6 +3,7 @@ import type { HeightTable, Obstacle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { NumberField } from './NumberField';
+import { t } from '@core/i18n/i18n';
 
 export function HeightTablePanel({ table }: { table: HeightTable }) {
   const { doc, apply } = useDocumentStore();
@@ -20,18 +21,17 @@ export function HeightTablePanel({ table }: { table: HeightTable }) {
     <>
       <p className="note total-distance">
         {linhas.length === 0 ? (
-          <>Nenhum obstáculo numerado ainda — a tabela nasce vazia.</>
+          <>{t('tabelap.vazia')}</>
         ) : (
           <>
-            <strong>{linhas.length}</strong> linha{linhas.length === 1 ? '' : 's'}, lida
-            {linhas.length === 1 ? '' : 's'} do desenho
+            {t(linhas.length === 1 ? 'tabelap.umaLinha' : 'tabelap.nLinhas', { n: linhas.length })}
           </>
         )}
       </p>
 
       <div className="row-buttons">
         <button className="primary" onClick={() => setDialog('alturas')}>
-          Alturas dos obstáculos…
+          {t('tabelap.alturas')}
         </button>
       </div>
 
@@ -40,22 +40,22 @@ export function HeightTablePanel({ table }: { table: HeightTable }) {
           type="checkbox"
           checked={table.showSpread}
           disabled={travado}
-          onChange={(e) => edita('Coluna de largura', (t) => { t.showSpread = e.target.checked; })}
+          onChange={(e) => edita(t('tabelap.colLargura'), (t) => { t.showSpread = e.target.checked; })}
         />
-        Coluna de largura
+        {t('tabelap.colLargura')}
       </label>
       <label className="check">
         <input
           type="checkbox"
           checked={table.showNote}
           disabled={travado}
-          onChange={(e) => edita('Coluna de observação', (t) => { t.showNote = e.target.checked; })}
+          onChange={(e) => edita(t('tabelap.colObs'), (t) => { t.showNote = e.target.checked; })}
         />
-        Coluna de observação
+        {t('tabelap.colObs')}
       </label>
 
       <NumberField
-        label="Letra"
+        label={t('campo.letra')}
         unit="mm"
         value={table.style.sizeMm}
         decimals={1}
@@ -66,7 +66,7 @@ export function HeightTablePanel({ table }: { table: HeightTable }) {
         onCommit={(v) => edita('Letra da tabela', (t) => { t.style.sizeMm = v; })}
       />
       <NumberField
-        label="Altura da linha"
+        label={t('tabelap.alturaLinha')}
         unit="mm"
         value={table.style.rowHeightMm}
         decimals={1}
@@ -74,7 +74,7 @@ export function HeightTablePanel({ table }: { table: HeightTable }) {
         min={3}
         max={15}
         disabled={travado}
-        onCommit={(v) => edita('Altura da linha', (t) => { t.style.rowHeightMm = v; })}
+        onCommit={(v) => edita(t('tabelap.alturaLinha'), (t) => { t.style.rowHeightMm = v; })}
       />
 
     </>

@@ -1,4 +1,5 @@
 import type { ImportedImage } from '@core/commands/imageOps';
+import { formatDecimal, t } from '@core/i18n/i18n';
 
 /**
  * Importação de imagem de referência. O arquivo é embutido no projeto como
@@ -43,13 +44,12 @@ function chooseFile(): Promise<File | null> {
 export async function readImage(file: File): Promise<ImportedImage> {
   if (!ACCEPTED_IMAGE_TYPES.split(',').includes(file.type)) {
     throw new ImageImportError(
-      `Formato não suportado (${file.type || 'desconhecido'}). Use PNG, JPG ou WEBP.`,
+      t('aviso.formatoImagem', { tipo: file.type || '?' }),
     );
   }
   if (file.size > MAX_IMAGE_BYTES) {
     throw new ImageImportError(
-      `A imagem tem ${(file.size / 1024 / 1024).toFixed(1)} MB. ` +
-        `O limite é ${MAX_IMAGE_BYTES / 1024 / 1024} MB, porque ela fica embutida no projeto.`,
+      t('aviso.imagemGrande', { mb: formatDecimal(file.size / 1024 / 1024, 1), limite: MAX_IMAGE_BYTES / 1024 / 1024 }),
     );
   }
 
@@ -67,7 +67,7 @@ function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new ImageImportError('Não foi possível ler o arquivo.'));
+    reader.onerror = () => reject(new ImageImportError(t('aviso.lerArquivo')));
     reader.readAsDataURL(file);
   });
 }
@@ -76,7 +76,7 @@ function measureImage(dataUrl: string): Promise<{ width: number; height: number 
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
-    img.onerror = () => reject(new ImageImportError('O arquivo não é uma imagem válida.'));
+    img.onerror = () => reject(new ImageImportError(t('aviso.imagemInvalida')));
     img.src = dataUrl;
   });
 }

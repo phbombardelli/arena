@@ -19,6 +19,8 @@ import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { placeAsBackground } from '@ui/actions/imageActions';
 import { Dialog } from '@ui/common/Popover';
+import { formatDecimal, t } from '@core/i18n/i18n';
+import type { MessageKey } from '@core/i18n/messages';
 
 /**
  * Assistente "Montar pista pelo mapa" (decisões 64 e 66).
@@ -55,9 +57,9 @@ interface Item {
   origem: 'sugestao' | 'manual';
 }
 
-const ROTULO: Record<string, string> = { ilha: 'Ilha', edificacao: 'Construção', outra: 'Construção' };
+const ROTULO: Record<string, MessageKey> = { ilha: 'estr.ilha', edificacao: 'mapa.construcao', outra: 'mapa.construcao' };
 const PASSOS: Passo[] = ['girar', 'medida', 'pista', 'sugestoes', 'extras'];
-const NOMES = ['Girar', 'Medida', 'Pista', 'Sugestões', 'Outros elementos'];
+const NOMES: MessageKey[] = ['mapa.passoGirar', 'mapa.passoMedida', 'aviso.pista', 'mapa.passoSugestoes', 'mapa.passoOutros'];
 
 export function MapWizardHost() {
   const img = useEditorStore((s) => s.mapWizard);
@@ -550,7 +552,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
       setLivre([]);
       return;
     }
-    if (passo === 'inicio' || window.confirm('Sair do assistente? O que foi feito até aqui se perde.')) fecha();
+    if (passo === 'inicio' || window.confirm(t('mapa.sair'))) fecha();
   };
 
   // Contorno livre pelo teclado, como no editor: Enter fecha, Backspace
@@ -576,12 +578,12 @@ function MapWizard({ image }: { image: ImportedImage }) {
   const desenhaLivre = ferramenta === 'construcao-livre' || ferramenta === 'ilha-livre';
 
   return (
-    <Dialog title="Montar pista pelo mapa" onClose={pedeParaFechar}>
+    <Dialog title={t('mapa.titulo')} onClose={pedeParaFechar}>
       <div className="map-wizard">
         {passo !== 'inicio' && (
           <ol className="wizard-steps">
             {NOMES.map((n, i) => (
-              <li key={n} className={i === indice ? 'atual' : i < indice ? 'feito' : ''}>{n}</li>
+              <li key={n} className={i === indice ? 'atual' : i < indice ? 'feito' : ''}>{t(n)}</li>
             ))}
           </ol>
         )}
@@ -589,10 +591,10 @@ function MapWizard({ image }: { image: ImportedImage }) {
         <div className="wizard-preview">
           {trabalho && (
             <div className="wizard-zoom">
-              <button onClick={() => zoomEm(1 / 1.5)} disabled={vista.z <= 1} title="Afastar">−</button>
+              <button onClick={() => zoomEm(1 / 1.5)} disabled={vista.z <= 1} title={t('mapa.afastar')}>−</button>
               <span className="mono">{Math.round(vista.z * 100)}%</span>
-              <button onClick={() => zoomEm(1.5)} disabled={vista.z >= 10} title="Aproximar (ou roda do mouse)">+</button>
-              <button onClick={() => setVista({ z: 1, ox: 0, oy: 0 })} disabled={vista.z === 1} title="Ver o print inteiro">Ajustar</button>
+              <button onClick={() => zoomEm(1.5)} disabled={vista.z >= 10} title={t('mapa.aproximar')}>+</button>
+              <button onClick={() => setVista({ z: 1, ox: 0, oy: 0 })} disabled={vista.z === 1} title={t('mapa.verInteiro')}>{t('mapa.ajustar')}</button>
             </div>
           )}
           {trabalho ? (
@@ -612,25 +614,24 @@ function MapWizard({ image }: { image: ImportedImage }) {
               }}
             />
           ) : (
-            <p className="note">Abrindo o print…</p>
+            <p className="note">{t('mapa.abrindo')}</p>
           )}
         </div>
 
         {passo === 'inicio' && (
           <>
             <p className="note">
-              Com a medida do <strong>Medir distância</strong> do Google Maps no print, o assistente
-              acerta a escala e propõe o contorno da pista.
+              {t('mapa.intro1')} <strong>{t('mapa.medirDistancia')}</strong> {t('mapa.intro2')}
             </p>
             <div className="row-buttons">
-              <button className="primary" onClick={() => setPasso('girar')}>Montar pista pelo mapa</button>
+              <button className="primary" onClick={() => setPasso('girar')}>{t('mapa.titulo')}</button>
               <button
                 onClick={() => {
                   placeAsBackground(image);
                   fecha();
                 }}
               >
-                Só usar como imagem de fundo
+                {t('mapa.soFundo')}
               </button>
             </div>
           </>
@@ -638,14 +639,14 @@ function MapWizard({ image }: { image: ImportedImage }) {
 
         {passo === 'girar' && (
           <>
-            <p className="note">Gire até a cerca da pista ficar paralela ao quadriculado.</p>
+            <p className="note">{t('mapa.gire')}</p>
             <div className="wizard-rotate">
-              <button onClick={() => setAngulo((a) => a - 90)} title="90° para a esquerda">⟲ 90°</button>
+              <button onClick={() => setAngulo((a) => a - 90)} title={t('mapa.esquerda')}>⟲ 90°</button>
               <button onClick={() => setAngulo((a) => Math.round((a - 1) * 10) / 10)}>−1°</button>
               <input
                 type="range"
                 className="rotation-slider"
-                aria-label="Giro do print"
+                aria-label={t('mapa.giro')}
                 min={-180}
                 max={180}
                 step={0.5}
@@ -653,8 +654,8 @@ function MapWizard({ image }: { image: ImportedImage }) {
                 onChange={(e) => setAngulo(Number(e.target.value))}
               />
               <button onClick={() => setAngulo((a) => Math.round((a + 1) * 10) / 10)}>+1°</button>
-              <button onClick={() => setAngulo((a) => a + 90)} title="90° para a direita">⟳ 90°</button>
-              <span className="mono">{(((angulo + 540) % 360) - 180).toFixed(1).replace('.', ',')}°</span>
+              <button onClick={() => setAngulo((a) => a + 90)} title={t('mapa.direita')}>⟳ 90°</button>
+              <span className="mono">{formatDecimal(((angulo + 540) % 360) - 180, 1)}°</span>
             </div>
           </>
         )}
@@ -663,29 +664,29 @@ function MapWizard({ image }: { image: ImportedImage }) {
           <>
             <p className="note">
               {marcas
-                ? 'Os pontos vermelhos são as pontas da medida. Arraste se estiverem fora do lugar.'
-                : 'Não achei a medida do Maps. Clique numa ponta e arraste até a outra.'}
+                ? t('mapa.pontosVermelhos')
+                : t('mapa.naoAchei')}
             </p>
             <label className="field">
               <span>
                 {ocr === 'lendo'
-                  ? 'Lendo a distância…'
+                  ? t('mapa.lendo')
                   : ocr === 'lido'
-                    ? 'A distância é esta? Corrija se não for.'
-                    : 'Distância da medida'}
+                    ? t('mapa.confere')
+                    : t('mapa.distanciaMedida')}
               </span>
               <span className="input-unit">
                 <input
                   type="text"
                   inputMode="decimal"
                   value={metros}
-                  placeholder="ex.: 27,03"
+                  placeholder={t('mapa.exemplo', { n: formatDecimal(27.03, 2) })}
                   onChange={(e) => setMetros(e.target.value)}
                 />
                 <em>m</em>
               </span>
             </label>
-            {ocr === 'falhou' && <p className="note dim-always">Não consegui ler o número: digite o que aparece no print.</p>}
+            {ocr === 'falhou' && <p className="note dim-always">{t('mapa.naoLeu')}</p>}
           </>
         )}
 
@@ -693,8 +694,8 @@ function MapWizard({ image }: { image: ImportedImage }) {
           <>
             <p className="note">
               {palpite || pista.length >= 3
-                ? `Contorno sugerido${tamanho ? ` · ${tamanho}` : ''}. Arraste os pontos amarelos; duplo clique numa aresta acrescenta um ponto, num ponto o remove.`
-                : 'Não reconheci a pista a partir da medida. Clique em "Escolher um ponto da pista".'}
+                ? t('mapa.sugerido', { tamanho: tamanho ? ` · ${tamanho}` : '' })
+                : t('mapa.naoReconheci')}
             </p>
             <div className="row-buttons">
               <button
@@ -705,7 +706,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
                   if (palpite) setPista(palpite.outline);
                 }}
               >
-                Contorno livre
+                {t('mapa.contornoLivre')}
               </button>
               <button
                 className={retangulo ? 'active' : ''}
@@ -715,10 +716,10 @@ function MapWizard({ image }: { image: ImportedImage }) {
                   setPista(fitRectangle(pista));
                 }}
               >
-                Ajustar a retângulo
+                {t('mapa.retangulo')}
               </button>
               <button className={escolhendoPonto ? 'active' : ''} onClick={() => setEscolhendoPonto((v) => !v)}>
-                Escolher um ponto da pista
+                {t('mapa.escolherPonto')}
               </button>
             </div>
           </>
@@ -727,10 +728,10 @@ function MapWizard({ image }: { image: ImportedImage }) {
         {passo === 'sugestoes' && (
           <>
             {itens.filter((i) => i.origem === 'sugestao').length === 0 ? (
-              <p className="note">Não encontrei ilhas nem construções vizinhas.</p>
+              <p className="note">{t('mapa.nadaVizinho')}</p>
             ) : (
               <>
-                <p className="note">Encontrei estes elementos. Marque os que entram.</p>
+                <p className="note">{t('mapa.encontrei')}</p>
                 <ul className="wizard-list">
                   {itens.map((it, i) =>
                     it.origem !== 'sugestao' ? null : (
@@ -741,7 +742,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
                             checked={it.on}
                             onChange={(e) => setItens((l) => l.map((x, k) => (k === i ? { ...x, on: e.target.checked } : x)))}
                           />
-                          {ROTULO[it.type]} {i + 1}
+                          {t(ROTULO[it.type]!)} {i + 1}
                         </label>
                       </li>
                     ),
@@ -756,17 +757,17 @@ function MapWizard({ image }: { image: ImportedImage }) {
           <>
             <p className="note">
               {desenhaLivre
-                ? 'Clique cada ponto do contorno. Enter (ou duplo clique) fecha; Backspace tira o último ponto; Esc cancela.'
-                : 'Inclua o que faltou: escolha o tipo e desenhe no print.'}
+                ? t('mapa.cliqueCada')
+                : t('mapa.inclua')}
             </p>
             <div className="row-buttons wrap">
               {(
                 [
-                  ['construcao', 'Construção ▭'],
-                  ['construcao-livre', 'Construção livre'],
-                  ['ilha', 'Ilha ▭'],
-                  ['ilha-livre', 'Ilha livre'],
-                  ['arvore', 'Árvore'],
+                  ['construcao', `${t('mapa.construcao')} ▭`],
+                  ['construcao-livre', t('mapa.construcaoLivre')],
+                  ['ilha', `${t('estr.ilha')} ▭`],
+                  ['ilha-livre', t('mapa.ilhaLivre')],
+                  ['arvore', t('mapa.arvore')],
                 ] as const
               ).map(([f, n]) => (
                 <button
@@ -780,22 +781,22 @@ function MapWizard({ image }: { image: ImportedImage }) {
                   {n}
                 </button>
               ))}
-              {desenhaLivre && livre.length >= 3 && <button onClick={fechaLivre}>Fechar contorno</button>}
-              {desenhaLivre && livre.length > 0 && <button onClick={() => setLivre((l) => l.slice(0, -1))}>Desfazer ponto</button>}
+              {desenhaLivre && livre.length >= 3 && <button onClick={fechaLivre}>{t('mapa.fecharContorno')}</button>}
+              {desenhaLivre && livre.length > 0 && <button onClick={() => setLivre((l) => l.slice(0, -1))}>{t('mapa.desfazerPonto')}</button>}
             </div>
             {(itens.some((i) => i.origem === 'manual') || arvores.length > 0) && (
               <ul className="wizard-list">
                 {itens.map((it, i) =>
                   it.origem !== 'manual' ? null : (
                     <li key={i}>
-                      {ROTULO[it.type]}
+                      {t(ROTULO[it.type]!)}
                       <button className="mini" onClick={() => setItens((l) => l.filter((_, k) => k !== i))}>×</button>
                     </li>
                   ),
                 )}
                 {arvores.map((_, i) => (
                   <li key={`t${i}`}>
-                    Árvore
+                    {t('mapa.arvore')}
                     <button className="mini" onClick={() => setArvores((l) => l.filter((_, k) => k !== i))}>×</button>
                   </li>
                 ))}
@@ -806,7 +807,7 @@ function MapWizard({ image }: { image: ImportedImage }) {
 
         {passo !== 'inicio' && (
           <div className="row-buttons wizard-nav">
-            <button onClick={() => setPasso(indice > 0 ? PASSOS[indice - 1]! : 'inicio')}>Voltar</button>
+            <button onClick={() => setPasso(indice > 0 ? PASSOS[indice - 1]! : 'inicio')}>{t('mapa.voltar')}</button>
             {passo !== 'extras' ? (
               <button
                 className="primary"
@@ -818,11 +819,11 @@ function MapWizard({ image }: { image: ImportedImage }) {
                   setPasso(PASSOS[indice + 1]!);
                 }}
               >
-                Próximo
+                {t('mapa.proximo')}
               </button>
             ) : (
               <button className="primary" disabled={!mpp || pista.length < 3} onClick={confirma}>
-                Confirmar e montar a pista
+                {t('mapa.confirmar')}
               </button>
             )}
           </div>

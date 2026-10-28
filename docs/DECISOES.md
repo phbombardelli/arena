@@ -2007,3 +2007,32 @@ os objetos da Pista ficam travados: depois de posto, não se movia mais.
 Agora todo ornamento colocado no modo Percurso (ou na ginástica) é da
 prova, como a ilha decorativa (decisão 74), e o cone é sempre da prova,
 como o vaso. Colocado na aba Pista, o ornamento continua do local.
+
+## 98. Três línguas: catálogo, seletor e língua do aparelho (B-10)
+
+O Arena fala português (padrão), inglês e espanhol da América do Sul. Os
+termos seguem docs/GLOSSARIO.md, revisado pelo usuário em 27/10/2026.
+
+- Todo texto sai de `src/core/i18n/messages.ts`, chave → `{pt, en, es}`.
+  Faltar uma língua é erro de tipo; um teste confere que as três têm os
+  mesmos valores `{nome}`. Termo novo entra no glossário antes do catálogo.
+- `t(chave, valores)` dá o texto na língua atual. O separador decimal muda
+  com a língua (ponto em inglês), via `formatDecimal`, que `formatMeters` e
+  `formatDistance` já usam.
+- A língua é do aparelho, não do croqui: fica guardada no navegador
+  (`arena.lingua`) e o mesmo arquivo abre em qualquer língua. A folha
+  impressa segue a língua da tela.
+- Seletor na barra de cima, ao lado da conta (PT / EN / ES). Trocar
+  remonta a interface: cada texto sai de novo do catálogo; o croqui, a
+  seleção e o zoom moram nos stores e ficam.
+- Rótulo que o croqui guarda (campo do quadro técnico, linha de partida,
+  nome de construção) é gravado na língua de quem criou. Ao desenhar,
+  `localizeDefault` troca: se o texto guardado é o padrão do programa em
+  qualquer das três línguas, sai na língua atual; se o usuário o
+  reescreveu, sai como está. Assim a folha segue a tela sem mexer no
+  arquivo. Os rótulos da biblioteca (obstáculos, ornamentos, construções)
+  são lidos do catálogo na hora (getters), não na carga do módulo.
+- Ficam em português, de propósito: os nomes do histórico de desfazer
+  (não aparecem na tela), mensagens de erro internas de programador e a
+  página de diagnóstico do PDF.
+- A aba do navegador e o atributo `lang` da página também seguem a língua.

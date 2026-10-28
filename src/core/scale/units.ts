@@ -11,6 +11,8 @@
  * o que torna a tela WYSIWYG em relação ao papel.
  */
 
+import { formatDecimal } from '@core/i18n/i18n';
+
 export type Meters = number;
 export type Millimeters = number;
 export type Pixels = number;
@@ -128,7 +130,7 @@ export function usableArea(page: PageSetup): {
   };
 }
 
-/** Formata metros para exibição, com vírgula decimal. */
+/** Formata metros para exibição, com o separador decimal da língua. */
 export function formatMeters(m: Meters, decimals = 2): string {
-  return m.toFixed(decimals).replace('.', ',');
+  return formatDecimal(m, decimals);
 }

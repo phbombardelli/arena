@@ -4,6 +4,7 @@ import type { Vec2 } from '@core/geometry/vec';
 import { mmPerMeter } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
+import { t } from '@core/i18n/i18n';
 
 /**
  * O traçado por trechos, enquanto se escolhe.
@@ -61,7 +62,7 @@ export function GuidedOverlay({ zoom }: { zoom: number }) {
             }}
           >
             <title>
-              {`Opção ${i + 1}: giro ${opcao.turnDeg.toFixed(0)} graus`}
+              {t('guiado.opcaoTitulo', { n: i + 1, giro: opcao.turnDeg.toFixed(0) })}
             </title>
           </path>
         );

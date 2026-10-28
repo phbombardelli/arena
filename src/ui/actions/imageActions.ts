@@ -5,6 +5,7 @@ import type { ImportedImage } from '@core/commands/imageOps';
 import { ImageImportError, pickImage, readImage } from '@platform/imageImport';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Importa a imagem de referência e já a posiciona cobrindo a pista, com
@@ -101,5 +102,5 @@ function avisarFalha(err: unknown): void {
     return;
   }
   console.error(err);
-  window.alert('Não foi possível importar a imagem.');
+  window.alert(t('aviso.naoImportou'));
 }

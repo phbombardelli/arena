@@ -1,0 +1,30 @@
+import type { Texto } from '../messages';
+
+/** Rótulos de campo que se repetem em vários painéis. */
+export const COMMON = {
+  'campo.tipo': { pt: 'Tipo', en: 'Type', es: 'Tipo' },
+  'campo.angulo': { pt: 'Ângulo', en: 'Angle', es: 'Ángulo' },
+  'campo.rotulo': { pt: 'Rótulo', en: 'Label', es: 'Etiqueta' },
+  'campo.semRotulo': { pt: 'sem rótulo', en: 'no label', es: 'sin etiqueta' },
+  'campo.letra': { pt: 'Letra', en: 'Text size', es: 'Tamaño de letra' },
+  'campo.giro': { pt: 'Giro', en: 'Rotation', es: 'Giro' },
+  'campo.largura': { pt: 'Largura', en: 'Width', es: 'Ancho' },
+  'campo.comprimento': { pt: 'Comprimento', en: 'Length', es: 'Largo' },
+  'campo.espessura': { pt: 'Espessura', en: 'Thickness', es: 'Grosor' },
+  'campo.cor': { pt: 'Cor', en: 'Colour', es: 'Color' },
+  'campo.traco': { pt: 'Traço', en: 'Stroke', es: 'Trazo' },
+  'campo.girarRotulo': { pt: 'Girar o rótulo', en: 'Rotate the label', es: 'Girar la etiqueta' },
+  'campo.giroAuto': { pt: 'Volta a acompanhar a aresta mais longa', en: 'Back to following the longest edge', es: 'Vuelve a seguir el lado más largo' },
+  'campo.numero': { pt: 'Número', en: 'Number', es: 'Número' },
+  'campo.letraObst': { pt: 'Letra', en: 'Letter', es: 'Letra' },
+  'campo.profundidade': { pt: 'Profundidade', en: 'Depth', es: 'Profundidad' },
+  'campo.posicao': { pt: 'Posição', en: 'Position', es: 'Posición' },
+  'campo.observacao': { pt: 'Observação', en: 'Notes', es: 'Observaciones' },
+  'campo.rotulos': { pt: 'Rótulos', en: 'Labels', es: 'Etiquetas' },
+  'campo.estilo': { pt: 'Estilo', en: 'Style', es: 'Estilo' },
+  'campo.mostrarCroqui': { pt: 'Mostrar no croqui', en: 'Show on the plan', es: 'Mostrar en el plano' },
+  'campo.distancia': { pt: 'Distância', en: 'Distance', es: 'Distancia' },
+  'campo.texto': { pt: 'Texto', en: 'Text', es: 'Texto' },
+  'campo.tamanho': { pt: 'Tamanho', en: 'Size', es: 'Tamaño' },
+  'comum.fechar': { pt: 'Fechar (Esc)', en: 'Close (Esc)', es: 'Cerrar (Esc)' },
+} satisfies Record<string, Texto>;

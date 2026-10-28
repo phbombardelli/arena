@@ -20,6 +20,7 @@ import { useDocumentStore } from '@store/documentStore';
 import { ArcGapPreview } from './ArcGapPreview';
 import { LinkRow } from './LinkRow';
 import { NumberField } from './NumberField';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Composto ou linha (decisões 71 e 80).
@@ -100,12 +101,12 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
     );
   };
 
-  const nome = (o: Obstacle, i: number) => obstacleLabel(o) || `elemento ${i + 1}`;
+  const nome = (o: Obstacle, i: number) => obstacleLabel(o) || t('comb.elemento', { n: i + 1 });
   const podeComposto = ordenados.length >= 2 && ordenados.length <= 3;
 
   return (
     <section className="object-panel">
-      <h3>Composto ou linha</h3>
+      <h3>{t('comb.titulo')}</h3>
 
       <div className="row-buttons">
         <button
@@ -113,45 +114,45 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
           disabled={travado || !podeComposto}
           title={
             podeComposto
-              ? `Mesmo número e letras na ordem do salto (${ordenados.map((_, i) => `${numeroProposto}${'ABC'[i]}`).join(', ')})`
-              : 'Composto tem 2 ou 3 elementos'
+              ? t('comb.compostoDica', { letras: ordenados.map((_, i) => `${numeroProposto}${'ABC'[i]}`).join(', ') })
+              : t('comb.compostoLimite')
           }
-          onClick={() => !jaComposto && apply('Composto', (d) => confirmCombination(d, ids))}
+          onClick={() => !jaComposto && apply(t('comb.composto'), (d) => confirmCombination(d, ids))}
         >
-          Composto
+          {t('comb.composto')}
         </button>
         <button
           className={!jaComposto ? 'active' : ''}
           disabled={travado}
-          title="Números próprios, em linha reta ou curva"
-          onClick={() => jaComposto && apply('Linha', (d) => splitCombination(d, ids))}
+          title={t('comb.linhaDica')}
+          onClick={() => jaComposto && apply(t('comb.linha'), (d) => splitCombination(d, ids))}
         >
-          Linha
+          {t('comb.linha')}
         </button>
       </div>
 
       {!jaComposto && (
         <div className="row-buttons">
           <button className={!curva ? 'active' : ''} onClick={() => setCurva(false)}>
-            Reta
+            {t('comb.reta')}
           </button>
           <button className={curva ? 'active' : ''} onClick={() => setCurva(true)}>
-            Curva
+            {t('comb.curva')}
           </button>
         </div>
       )}
 
-      <p className="note">Na ordem do percurso: {ordenados.map(nome).join(' - ')}</p>
+      <p className="note">{t('comb.naOrdem', { lista: ordenados.map(nome).join(' - ') })}</p>
 
       {ordenados.slice(1).map((o, i) => {
         const composto = sameCombination(ordenados[i]!, o);
-        const t = peloTracado(i);
+        const pelo = peloTracado(i);
         const arco = curvas[i] ? arcos[i] : undefined;
-        const metros = t ? t.d.meters : arco ? arco.gapM : (vaos[i] ?? 0);
+        const metros = pelo ? pelo.d.meters : arco ? arco.gapM : (vaos[i] ?? 0);
         return (
           <div key={o.id} className={arco ? 'arc-gap' : undefined}>
             <NumberField
-              label={`${nome(ordenados[i]!, i)} - ${nome(o, i + 1)}${arco ? ' (na curva)' : ''}`}
+              label={`${nome(ordenados[i]!, i)} - ${nome(o, i + 1)}${arco ? t('comb.naCurva') : ''}`}
               unit="m"
               value={Math.round(metros * 100) / 100}
               decimals={2}
@@ -163,7 +164,7 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
             />
             {arco && (
               <NumberField
-                label="Abertura"
+                label={t('comb.abertura')}
                 unit="°"
                 value={Math.round(arco.angleDeg)}
                 decimals={0}
@@ -192,10 +193,10 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
         <div className="row-buttons">
           <button
             disabled={travado}
-            title="Todos no eixo do primeiro e na mesma inclinação, sem mudar as distâncias"
-            onClick={() => apply('Alinhar em reta', (d) => alignCombination(d, ids, vaos))}
+            title={t('comb.alinharDica')}
+            onClick={() => apply(t('comb.alinhar'), (d) => alignCombination(d, ids, vaos))}
           >
-            Alinhar em reta
+            {t('comb.alinhar')}
           </button>
         </div>
       )}
@@ -203,12 +204,7 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
       <LinkRow ids={ids} />
 
       <p className="note dim">
-        Da vara de saída de um até a vara de entrada do seguinte. O primeiro
-        elemento não se move. No composto (5A, 5B...) o vão fica entre{' '}
-        {COMBINATION_GAP.min} e {COMBINATION_GAP.max} m; na linha é livre. Na
-        curva, a medida é sobre o arco que sai do anterior na direção do
-        salto, ou sobre o traçado quando ele passa pelos dois; abertura
-        negativa vira à esquerda.
+        {t('comb.nota', { min: COMBINATION_GAP.min, max: COMBINATION_GAP.max })}
       </p>
     </section>
   );

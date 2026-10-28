@@ -2,7 +2,7 @@ import type { Vec2 } from '@core/geometry/vec';
 import { arenaExtent, arenaPoints } from '@core/model/arena';
 import { outlinePolygon, polygonPathD } from '@core/geometry/outline';
 import { hatchSegments, longestEdgeAngle, polygonCentroid } from '@core/geometry/hatch';
-import { STRUCTURE_LABEL_MM, structureDef, structureLabelAngle } from '@core/library/structures';
+import { STRUCTURE_LABEL_MM, structureDef, structureLabel, structureLabelAngle } from '@core/library/structures';
 import { mmPerMeter } from '@core/scale/units';
 import type { Arena } from '@core/model/types';
 import { color, font, stroke, text } from '@render/style/tokens';
@@ -110,7 +110,7 @@ function StructureDetails({ arena, toPaper }: { arena: Arena; toPaper: (p: Vec2)
           textAnchor="middle"
           dominantBaseline="middle"
         >
-          {info.label}
+          {structureLabel(info)}
         </text>
       )}
     </g>

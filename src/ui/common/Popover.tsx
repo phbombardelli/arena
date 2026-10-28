@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { t } from '@core/i18n/i18n';
 
 interface PopoverProps {
   /** Conteúdo do botão que abre. */
@@ -94,7 +95,7 @@ export function Dialog({ title, onClose, children }: DialogProps) {
       <div className="dialog" role="dialog" aria-modal="true" aria-label={title}>
         <header>
           <h2>{title}</h2>
-          <button className="icon-button" onClick={onClose} title="Fechar (Esc)">
+          <button className="icon-button" onClick={onClose} title={t('comum.fechar')}>
             ✕
           </button>
         </header>

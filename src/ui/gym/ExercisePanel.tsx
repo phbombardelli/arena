@@ -1,9 +1,17 @@
 import type { ExerciseParams } from '@core/library/exercises';
+import type { ExerciseKind } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { LinkRow } from '@ui/inspector/LinkRow';
+import { t } from '@core/i18n/i18n';
+import type { MessageKey } from '@core/i18n/messages';
 
-const NOMES = { cavaletes: 'Cavaletes', relogio: 'Relógio', 'pe-de-galinha': 'Pé de galinha', leque: 'Leque de varas' } as const;
+const NOMES: Record<ExerciseKind, MessageKey> = {
+  cavaletes: 'rail.cavaletes',
+  relogio: 'rail.relogio',
+  'pe-de-galinha': 'rail.peDeGalinha',
+  leque: 'rail.leque',
+};
 
 /**
  * Exercício de ginástica selecionado (B-37): reabrir o configurador com os
@@ -17,20 +25,20 @@ export function ExercisePanel({ id }: { id: string }) {
   if (!tag) return null;
   const params = tag.params as ExerciseParams;
   const completo = tag.kind === 'pe-de-galinha' && (params as { completo?: boolean }).completo;
-  const nome = `${NOMES[tag.kind]}${tag.kind === 'pe-de-galinha' ? (completo ? ' completo' : ' simples') : ''}`;
+  const nome = `${t(NOMES[tag.kind])}${tag.kind === 'pe-de-galinha' ? t(completo ? 'ginp.completo' : 'ginp.simples') : ''}`;
 
   return (
     <section className="object-panel">
-      <h3>Ginástica</h3>
+      <h3>{t('ginp.titulo')}</h3>
       <p className="note">
-        <strong>{nome}</strong> · {objs.filter((o) => o.kind === 'obstacle').length} elementos
+        <strong>{nome}</strong> · {t('ginp.nElementos', { n: objs.filter((o) => o.kind === 'obstacle').length })}
       </p>
       <div className="row-buttons">
         <button
           className="primary"
           onClick={() => useEditorStore.getState().setExerciseEditor({ kind: tag.kind, params, editingId: id })}
         >
-          Editar ginástica
+          {t('ginp.editar')}
         </button>
         <button
           onClick={() => {
@@ -40,13 +48,12 @@ export function ExercisePanel({ id }: { id: string }) {
             useEditorStore.getState().clearSelection();
           }}
         >
-          Apagar
+          {t('ginp.apagar')}
         </button>
       </div>
       <LinkRow ids={objs.map((o) => o.id)} />
       <p className="note dim">
-        Arraste ou gire o conjunto como qualquer vinculado; "Editar" redesenha no lugar em que ele estiver. Alt + clique
-        pega um elemento só.
+        {t('ginp.nota')}
       </p>
     </section>
   );

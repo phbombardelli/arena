@@ -2,6 +2,7 @@ import { deepClone } from '@core/model/clone';
 import { newId } from '@core/model/ids';
 import { objectScope } from '@core/model/transform';
 import type { Asset, CourseDocument, SceneObject } from '@core/model/types';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Modelo de pista: o cenário de um local, guardado para reuso.
@@ -52,7 +53,7 @@ export function buildTemplate(
     format: TEMPLATE_FORMAT,
     schemaVersion,
     id: newId('tpl'),
-    name: name.trim() || 'Pista sem nome',
+    name: name.trim() || t('arq.pistaSemNome'),
     savedAt: new Date().toISOString(),
     objects,
     assets,

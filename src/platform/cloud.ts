@@ -16,6 +16,7 @@ import {
   putTemplateFromCloud,
   removeTemplateFromCloud,
 } from './templateStore';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Nuvem do Arena (B-36, B-78, decisão 90).
@@ -178,10 +179,10 @@ export function syncNow(): Promise<void> {
       };
       // Os dois mudaram: guarda a versão perdedora como cópia, com outro id.
       const copiaLocal = async (id: string) => {
-        const t = pistas.find((x) => x.id === id);
-        if (t) await putTemplateFromCloud({ ...t, id: newId('tpl'), name: `${t.name} (cópia deste aparelho)` });
+        const tpl = pistas.find((x) => x.id === id);
+        if (tpl) await putTemplateFromCloud({ ...tpl, id: newId('tpl'), name: t('nuvem.copiaAparelho', { nome: tpl.name }) });
         const c = percursos.find((x) => x.id === id);
-        if (c) await putCourseFromCloud({ ...c, id: newId('pcs'), name: `${c.name} (cópia deste aparelho)` });
+        if (c) await putCourseFromCloud({ ...c, id: newId('pcs'), name: t('nuvem.copiaAparelho', { nome: c.name }) });
       };
 
       for (const acao of planSync(locais, remotos, sinc)) {
@@ -197,8 +198,8 @@ export function syncNow(): Promise<void> {
           await baixar(r);
         } else if (acao.faz === 'copiar-remota-e-enviar' && r) {
           const texto = await readRemoteContent(user.uid, r);
-          if (r.tipo === 'pista') await putTemplateFromCloud({ ...(JSON.parse(texto) as ArenaTemplate), id: newId('tpl'), name: `${r.nome} (cópia da nuvem)` });
-          else await putCourseFromCloud({ ...(r.meta as object), id: newId('pcs'), name: `${r.nome} (cópia da nuvem)`, savedAt: r.savedAt, text: texto } as CourseEntry);
+          if (r.tipo === 'pista') await putTemplateFromCloud({ ...(JSON.parse(texto) as ArenaTemplate), id: newId('tpl'), name: t('nuvem.copiaNuvem', { nome: r.nome }) });
+          else await putCourseFromCloud({ ...(r.meta as object), id: newId('pcs'), name: t('nuvem.copiaNuvem', { nome: r.nome }), savedAt: r.savedAt, text: texto } as CourseEntry);
           await subir(acao.id);
         }
       }
@@ -243,7 +244,7 @@ async function aoMudar(m: LocalChange): Promise<void> {
   } catch (err) {
     // Sem rede: fica para a próxima sincronização, que acerta tudo.
     console.warn('Envio para a nuvem falhou; vai na próxima sincronização.', err);
-    useCloudStore.setState({ status: 'erro', error: 'Sem conexão com a nuvem; o arquivo está salvo neste aparelho.' });
+    useCloudStore.setState({ status: 'erro', error: t('nuvem.semConexao') });
   }
 }
 
@@ -253,7 +254,7 @@ function aoEntrar(f: Fb, u: import('firebase/auth').User): void {
   const user: CloudUser = {
     uid: u.uid,
     email: u.email ?? '',
-    name: u.displayName ?? u.email ?? 'Usuário',
+    name: u.displayName ?? u.email ?? t('nuvem.usuario'),
     photo: u.photoURL,
     admin: u.email === ADMIN_EMAIL && u.emailVerified,
   };
@@ -290,7 +291,7 @@ export async function signIn(): Promise<void> {
     const cancelado = codigo === 'auth/popup-closed-by-user' || codigo === 'auth/cancelled-popup-request';
     useCloudStore.setState({
       status: 'desligado',
-      error: cancelado ? null : 'Não foi possível entrar. Verifique a conexão e tente de novo.',
+      error: cancelado ? null : t('nuvem.naoEntrou'),
     });
   }
 }

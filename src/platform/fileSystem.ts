@@ -1,4 +1,5 @@
 import { FILE_EXTENSION, FILE_MIME } from '@core/persistence/format';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Acesso a arquivos. Usa a File System Access API quando existe (Chrome,
@@ -33,7 +34,7 @@ const pickerOptions = (suggestedName?: string) => ({
   ...(suggestedName ? { suggestedName: `${suggestedName}${FILE_EXTENSION}` } : {}),
   types: [
     {
-      description: 'Croqui de percurso',
+      description: t('aviso.assuntoArquivo'),
       accept: { [FILE_MIME]: [FILE_EXTENSION] },
     },
   ],

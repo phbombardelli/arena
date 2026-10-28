@@ -2,6 +2,7 @@ import type { Logo } from '@core/model/types';
 import { logoHeightMm } from '@core/model/transform';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
+import { formatDecimal, t } from '@core/i18n/i18n';
 
 /** Logo na folha: só o tamanho. A proporção é sempre a do arquivo. */
 export function LogoPanel({ logo }: { logo: Logo }) {
@@ -10,7 +11,7 @@ export function LogoPanel({ logo }: { logo: Logo }) {
   return (
     <>
       <NumberField
-        label="Largura"
+        label={t('campo.largura')}
         unit="mm"
         value={logo.widthMm}
         decimals={1}
@@ -25,12 +26,10 @@ export function LogoPanel({ logo }: { logo: Logo }) {
         }
       />
       <p className="note">
-        Altura {logoHeightMm(logo).toFixed(1).replace('.', ',')} mm, na proporção do arquivo
-        {asset ? ` (${asset.name})` : ''}.
+        {t('logop.altura', { mm: formatDecimal(logoHeightMm(logo), 1), arquivo: asset ? ` (${asset.name})` : '' })}
       </p>
       <p className="note dim">
-        Fica na folha, em milímetros: não muda quando a escala do desenho muda. Arraste para
-        posicionar.
+        {t('logop.nota')}
       </p>
     </>
   );

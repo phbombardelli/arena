@@ -12,6 +12,7 @@ import { insertTimingLine } from '@ui/actions/timingActions';
 import { startMapWizard } from '@ui/actions/imageActions';
 import { GuidedPanel } from './GuidedPanel';
 import { ObjectPanel } from './ObjectPanel';
+import { formatDate, t } from '@core/i18n/i18n';
 
 /**
  * Painel da direita: SÓ o que está selecionado.
@@ -36,7 +37,7 @@ export function DocumentPanel() {
         <button
           className={showHints ? 'hint-toggle active' : 'hint-toggle'}
           onClick={toggleHints}
-          title={showHints ? 'Esconder as explicações' : 'Mostrar as explicações de cada campo'}
+          title={showHints ? t('resumo.esconderExplicacoes') : t('resumo.mostrarExplicacoes')}
           aria-pressed={showHints}
         >
           ?
@@ -60,23 +61,23 @@ function ResumoGinastica() {
   const exercicios = new Set(doc.objects.map((o) => o.exercise?.id).filter(Boolean)).size;
   return (
     <section className="summary">
-      <h2>Ginástica</h2>
+      <h2>{t('resumo.ginastica')}</h2>
       {doc.arenaSource && (
         <p className="note arena-source">
-          Pista: <strong>{doc.arenaSource.name}</strong>
+          {t('resumo.pista')} <strong>{doc.arenaSource.name}</strong>
         </p>
       )}
       <div className="stat-row">
         <div className="stat">
           <strong>{exercicios}</strong>
-          <span>exercícios</span>
+          <span>{t('resumo.exercicios')}</span>
         </div>
         <div className="stat">
           <strong>{elementos}</strong>
-          <span>elementos</span>
+          <span>{t('resumo.elementos')}</span>
         </div>
       </div>
-      <p className="note">Os exercícios ficam à esquerda: escolha, ajuste as distâncias e insira. Selecionado, um exercício se edita inteiro.</p>
+      <p className="note">{t('resumo.ginasticaNota')}</p>
     </section>
   );
 }
@@ -96,53 +97,51 @@ function ResumoProva() {
 
   return (
     <section className="summary">
-      <h2>Prova</h2>
+      <h2>{t('resumo.prova')}</h2>
       {doc.arenaSource && (
-        <p className="note arena-source" title="A pista vai copiada no percurso: mudar a pista-modelo depois não altera este croqui.">
-          Pista: <strong>{doc.arenaSource.name}</strong>
-          <span> · {new Date(doc.arenaSource.savedAt).toLocaleDateString('pt-BR')}</span>
+        <p className="note arena-source" title={t('resumo.pistaCopiada')}>
+          {t('resumo.pista')} <strong>{doc.arenaSource.name}</strong>
+          <span> · {formatDate(new Date(doc.arenaSource.savedAt))}</span>
         </p>
       )}
       <div className="stat-row">
         <div className="stat">
           <b>{degraus.length}</b>
-          <span>obstáculos</span>
+          <span>{t('resumo.obstaculos')}</span>
         </div>
         <div className="stat">
           <b>{esforcos}</b>
-          <span>esforços</span>
+          <span>{t('resumo.esforcos')}</span>
         </div>
         <div className="stat">
           <b>{distancia === null ? '—' : `${formatDistance(distancia, 0)} m`}</b>
-          <span>traçado</span>
+          <span>{t('resumo.tracado')}</span>
         </div>
       </div>
 
       {achados.length === 0 ? (
-        <p className="state ok">Sem interferências</p>
+        <p className="state ok">{t('resumo.semInterferencias')}</p>
       ) : (
         <button className="state warn" onClick={() => setSelection(achados[0]!.ids)}>
-          {achados.length} {achados.length === 1 ? 'interferência' : 'interferências'} · ver a primeira
+          {t(achados.length === 1 ? 'resumo.umaInterferencia' : 'resumo.nInterferencias', { n: achados.length })}
         </button>
       )}
 
-      <h3>Partida e chegada</h3>
+      <h3>{t('resumo.partidaChegada')}</h3>
       <div className="row-buttons">
         <button onClick={() => insertTimingLine('start')}>
-          {temPartida ? 'Recolocar partida' : 'Colocar partida'}
+          {temPartida ? t('resumo.recolocarPartida') : t('resumo.colocarPartida')}
         </button>
         <button onClick={() => insertTimingLine('finish')}>
-          {temChegada ? 'Recolocar chegada' : 'Colocar chegada'}
+          {temChegada ? t('resumo.recolocarChegada') : t('resumo.colocarChegada')}
         </button>
       </div>
       <p className="note dim">
-        A partida fica no eixo do primeiro obstáculo e a chegada no do último, a 12 m da
-        vara. Depois de colocada, a distância se ajusta no painel da própria linha.
+        {t('resumo.partidaNota')}
       </p>
 
       <p className="note dim">
-        Selecione um objeto para ver as propriedades dele. Folha e escala ficam no botão
-        Folha, em cima; a grade, na barra de baixo.
+        {t('resumo.selecioneNota')}
       </p>
     </section>
   );
@@ -155,7 +154,7 @@ function ResumoPista() {
 
   return (
     <section className="summary">
-      <h2>Pista</h2>
+      <h2>{t('resumo.pistaTitulo')}</h2>
       {arena ? (
         <p className="note">
           {formatMeters(arenaExtent(arena).widthM, 0)} × {formatMeters(arenaExtent(arena).heightM, 0)} m ·{' '}
@@ -163,17 +162,15 @@ function ResumoPista() {
         </p>
       ) : (
         <p className="note">
-          Ainda sem contorno. Cole um print do Google Maps com uma medida marcada (Ctrl+V), ou
-          use a ferramenta Contorno, à esquerda.
+          {t('resumo.semContorno')}
         </p>
       )}
       <div className="row-buttons">
-        <button onClick={() => void startMapWizard()}>Pista pelo mapa…</button>
-        <button onClick={() => setDialog('modelos')}>Modelos de pista…</button>
+        <button onClick={() => void startMapWizard()}>{t('resumo.pistaPeloMapa')}</button>
+        <button onClick={() => setDialog('modelos')}>{t('resumo.modelos')}</button>
       </div>
       <p className="note dim">
-        Modelos guardam o cenário do local (contorno, imagem, árvores) para reusar em
-        outras provas. O percurso fica esmaecido enquanto você configura a pista.
+        {t('resumo.modelosNota')}
       </p>
     </section>
   );

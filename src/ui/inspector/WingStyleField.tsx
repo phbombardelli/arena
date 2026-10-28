@@ -1,5 +1,6 @@
 import type { WingsAppearance, WingStyle } from '@core/model/types';
 import { NumberField } from './NumberField';
+import { t } from '@core/i18n/i18n';
 
 interface Props {
   wings: WingsAppearance;
@@ -17,22 +18,22 @@ export function WingStyleField({ wings, disabled, onChange, showDepth = true }: 
   return (
     <>
       <label className="field">
-        <span>Suporte</span>
+        <span>{t('obstp.suporte')}</span>
         <select
           value={wings.style}
           disabled={disabled}
           onChange={(e) => onChange({ style: e.target.value as WingStyle }, 'Suporte das varas')}
         >
-          <option value="paraflanco">Paraflanco</option>
-          <option value="pilar">Só o montante</option>
-          <option value="nenhum">Vara no chão</option>
+          <option value="paraflanco">{t('obstp.paraflanco')}</option>
+          <option value="pilar">{t('obstp.soMontante')}</option>
+          <option value="nenhum">{t('obstp.varaNoChao')}</option>
         </select>
       </label>
 
       {wings.style === 'paraflanco' && (
         <>
           <NumberField
-            label="Espessura"
+            label={t('campo.espessura')}
             unit="m"
             value={wings.widthM}
             decimals={2}
@@ -43,7 +44,7 @@ export function WingStyleField({ wings, disabled, onChange, showDepth = true }: 
           />
           {showDepth && (
             <NumberField
-              label="Profundidade"
+              label={t('campo.profundidade')}
               unit="m"
               value={wings.depthM}
               decimals={2}
@@ -54,7 +55,7 @@ export function WingStyleField({ wings, disabled, onChange, showDepth = true }: 
             />
           )}
           <label className="field">
-            <span>Cor</span>
+            <span>{t('campo.cor')}</span>
             <input
               type="color"
               value={wings.color}

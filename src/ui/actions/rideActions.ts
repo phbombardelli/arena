@@ -5,12 +5,14 @@ import type { CurveWarning } from '@core/assist/legCurve';
 import { formatDistance, pathLength } from '@core/model/path';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
+import { t } from '@core/i18n/i18n';
+import type { MessageKey } from '@core/i18n/messages';
 
-const MOTIVO: Record<CurveWarning, string> = {
-  'fora-da-pista': 'a volta não cabe dentro da pista',
-  'passa-por-obstaculo': 'a volta passa por cima de outro obstáculo, ilha ou vaso',
-  'curva-fechada': 'a curva fecha mais do que se galopa',
-  'giro-excessivo': 'a volta gira mais de 300 graus',
+const MOTIVO: Record<CurveWarning, MessageKey> = {
+  'fora-da-pista': 'ride.foraDaPista',
+  'passa-por-obstaculo': 'ride.passaPorObstaculo',
+  'curva-fechada': 'ride.curvaFechada',
+  'giro-excessivo': 'ride.giroExcessivo',
 };
 
 /**
@@ -27,9 +29,7 @@ export function traceCourse(params: RideParams = DEFAULT_RIDE): void {
 
   if (!resultado) {
     window.alert(
-      'Não há o que traçar ainda.\n\n' +
-        'O assistente segue a numeração dos obstáculos: numere pelo menos ' +
-        'dois deles, ou acrescente partida e chegada.',
+      t('ride.nadaTracar'),
     );
     return;
   }
@@ -44,11 +44,10 @@ export function traceCourse(params: RideParams = DEFAULT_RIDE): void {
     const lista = porFora.map((l) => `  ${l.where}`).join('\n');
     window.alert(
       [
-        `Traçado desenhado: ${resultado.stops.join(' - ')}`,
+        t('ride.desenhado', { ordem: resultado.stops.join(' - ') }),
         `${formatDistance(pathLength(resultado.path))} m`,
         '',
-        'Estas voltas foram feitas por fora (curva para trás), porque não',
-        'havia ligação direta possível:',
+        t('ride.porFora'),
         lista,
       ].join('\n'),
     );
@@ -57,13 +56,13 @@ export function traceCourse(params: RideParams = DEFAULT_RIDE): void {
 
   if (resultado.problems.length > 0) {
     const lista = resultado.problems
-      .map((p) => `  ${p.where}: ${MOTIVO[p.warning]}`)
+      .map((p) => `  ${p.where}: ${t(MOTIVO[p.warning])}`)
       .join('\n');
     window.alert(
-      `Traçado desenhado: ${resultado.stops.join(' - ')}\n` +
+      `${t('ride.desenhado', { ordem: resultado.stops.join(' - ') })}\n` +
         `${formatDistance(pathLength(resultado.path))} m\n\n` +
-        `Estas voltas não fecham como estão:\n${lista}\n\n` +
-        'O traçado foi desenhado assim mesmo, para você ver onde está o aperto.',
+        `${t('ride.naoFecham')}\n${lista}\n\n` +
+        t('ride.assimMesmo'),
     );
   }
 }

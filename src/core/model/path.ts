@@ -8,6 +8,7 @@ import {
 } from '@core/geometry/bezier';
 import { add, distance, type Vec2 } from '@core/geometry/vec';
 import { newId } from '@core/model/ids';
+import { formatDecimal } from '@core/i18n/i18n';
 import type { CoursePath, PathNode } from './types';
 
 /**
@@ -229,9 +230,9 @@ export function closestOnPath(
   return melhor;
 }
 
-/** Distância formatada como no croqui: vírgula decimal. */
+/** Distância formatada como no croqui, com o separador decimal da língua. */
 export function formatDistance(meters: number, decimals = 2): string {
-  return meters.toFixed(decimals).replace('.', ',');
+  return formatDecimal(meters, decimals);
 }
 
 const fmt = (p: Vec2): string => `${round(p.x)} ${round(p.y)}`;

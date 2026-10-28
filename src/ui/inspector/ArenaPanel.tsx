@@ -9,18 +9,20 @@ import {
   setStructure,
   setStructureAngle,
 } from '@core/commands/arenaOps';
-import { STRUCTURES, STRUCTURE_LABEL_MM, structureAngle, structureDef, structureLabelAngle } from '@core/library/structures';
+import { STRUCTURES, STRUCTURE_LABEL_MM, structureAngle, structureDef, structureLabel, structureLabelAngle } from '@core/library/structures';
 import { arenaArea, arenaPerimeter } from '@core/model/arena';
 import type { Arena, CornerStyle, StructureType } from '@core/model/types';
 import { formatMeters } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { NumberField } from './NumberField';
+import type { MessageKey } from '@core/i18n/messages';
+import { t } from '@core/i18n/i18n';
 
-const CORNER_LABEL: Record<CornerStyle, string> = {
-  square: 'Reto',
-  chamfer: 'Chanfrado',
-  rounded: 'Arredondado',
+const CORNER_LABEL: Record<CornerStyle, MessageKey> = {
+  square: 'pista.cantoReto',
+  chamfer: 'pista.cantoChanfrado',
+  rounded: 'pista.cantoArredondado',
 };
 
 export function ArenaPanel({ arena }: { arena: Arena }) {
@@ -35,7 +37,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
       {obra && (
         <>
           <label className="field">
-            <span>Tipo</span>
+            <span>{t('campo.tipo')}</span>
             <select
               value={obra.type}
               disabled={arena.locked}
@@ -47,7 +49,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
                   const padraoAntigo = structureDef(obra.type).label;
                   setStructure(d, arena.id, {
                     type: tipo,
-                    ...(obra.label === padraoAntigo ? { label: structureDef(tipo).label } : {}),
+                    ...(structureLabel(obra) === padraoAntigo ? { label: structureDef(tipo).label } : {}),
                   });
                   setArenaStyle(d, arena.id, { fill: structureDef(tipo).fill });
                 });
@@ -59,7 +61,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
             </select>
           </label>
           <NumberField
-            label="Ângulo"
+            label={t('campo.angulo')}
             unit="°"
             value={structureAngle(arena)}
             decimals={1}
@@ -71,12 +73,12 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
           />
           <AnguloObra arena={arena} />
           <label className="field">
-            <span>Rótulo</span>
+            <span>{t('campo.rotulo')}</span>
             <input
               type="text"
-              value={obra.label}
+              value={structureLabel(obra)}
               disabled={arena.locked}
-              placeholder="sem rótulo"
+              placeholder={t('campo.semRotulo')}
               onChange={(e) =>
                 apply('Rótulo da construção', (d) => setStructure(d, arena.id, { label: e.target.value }), `rotulo-${arena.id}`)
               }
@@ -86,7 +88,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
             <>
               <div className="field-pair">
                 <NumberField
-                  label="Letra"
+                  label={t('campo.letra')}
                   unit="mm"
                   value={obra.labelSizeMm ?? STRUCTURE_LABEL_MM}
                   decimals={1}
@@ -97,7 +99,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
                   onCommit={(v) => apply('Letra do rótulo', (d) => setStructure(d, arena.id, { labelSizeMm: v }))}
                 />
                 <NumberField
-                  label="Giro"
+                  label={t('campo.giro')}
                   unit="°"
                   value={structureLabelAngle(arena)}
                   decimals={0}
@@ -110,7 +112,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
               {/* Afastar o texto de outra escrita sem mexer na construção. */}
               <div className="field-pair">
                 <NumberField
-                  label="Texto ↔"
+                  label={t('pista.textoHoriz')}
                   unit="m"
                   value={obra.labelOffsetM?.x ?? 0}
                   decimals={1}
@@ -143,7 +145,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
       {arena.shape === 'rectangle' ? (
         <>
           <NumberField
-            label="Largura"
+            label={t('campo.largura')}
             unit="m"
             value={arena.widthM}
             decimals={2}
@@ -153,7 +155,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
             onCommit={(v) => apply(`Largura ${nome}`, (d) => setArenaSize(d, arena.id, v, arena.heightM))}
           />
           <NumberField
-            label="Comprimento"
+            label={t('campo.comprimento')}
             unit="m"
             value={arena.heightM}
             decimals={2}
@@ -165,27 +167,26 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
         </>
       ) : (
         <>
-          <p className="note">{arena.points.length} vértices.</p>
+          <p className="note">{t('pista.nVertices', { n: arena.points.length })}</p>
           <div className="row-buttons">
             <button
               className={editingVertices ? 'active' : ''}
               onClick={() => setEditingVertices(!editingVertices)}
             >
-              {editingVertices ? 'Concluir vértices' : 'Editar vértices'}
+              {editingVertices ? t('pista.concluirVertices') : t('pista.editarVertices')}
             </button>
           </div>
           {editingVertices && (
             <p className="note dim">
-              Arraste um vértice para movê-lo. Duplo clique no meio de uma aresta
-              insere um vértice novo.
+              {t('pista.verticesNota')}
             </p>
           )}
         </>
       )}
 
-      <h3>Cantos</h3>
+      <h3>{t('pista.cantos')}</h3>
       <label className="field">
-        <span>Tipo</span>
+        <span>{t('campo.tipo')}</span>
         <select
           value={arena.corner.style}
           disabled={arena.locked}
@@ -196,13 +197,13 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
           }
         >
           {(Object.keys(CORNER_LABEL) as CornerStyle[]).map((s) => (
-            <option key={s} value={s}>{CORNER_LABEL[s]}</option>
+            <option key={s} value={s}>{t(CORNER_LABEL[s])}</option>
           ))}
         </select>
       </label>
       {arena.corner.style !== 'square' && (
         <NumberField
-          label="Corte"
+          label={t('pista.corte')}
           unit="m"
           value={arena.corner.radiusM}
           decimals={2}
@@ -215,23 +216,23 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
 
       {!obra && (
         <>
-      <h3>Régua de perímetro</h3>
+      <h3>{t('pista.regua')}</h3>
       <label className="check">
         <input
           type="checkbox"
           checked={ruler.visible}
           onChange={() =>
-            apply('Régua de perímetro', (d) =>
+            apply(t('pista.regua'), (d) =>
               setPerimeterRuler(d, arena.id, { visible: !ruler.visible }),
             )
           }
         />
-        Mostrar no croqui
+        {t('pista.mostrarCroqui')}
       </label>
       {ruler.visible && (
         <>
           <NumberField
-            label="Marca a cada"
+            label={t('pista.marcaCada')}
             unit="m"
             value={ruler.stepM}
             decimals={1}
@@ -240,7 +241,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
             onCommit={(v) => apply('Passo da régua', (d) => setPerimeterRuler(d, arena.id, { stepM: v }))}
           />
           <NumberField
-            label="Número a cada"
+            label={t('pista.numeroCada')}
             unit="m"
             value={ruler.labelEveryM}
             decimals={1}
@@ -264,7 +265,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
                     )
                   }
                 />
-                {SIDE_LABEL[side]}
+                {t(SIDE_LABEL[side])}
               </label>
             ))}
           </div>
@@ -274,9 +275,9 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
         </>
       )}
 
-      <h3>Traço</h3>
+      <h3>{t('campo.traco')}</h3>
       <NumberField
-        label="Espessura"
+        label={t('campo.espessura')}
         unit="mm"
         value={arena.style.strokeMm}
         decimals={2}
@@ -296,11 +297,11 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
             )
           }
         />
-        Preenchimento
+        {t('pista.preenchimento')}
       </label>
       {arena.style.fill !== 'none' && (
         <label className="field">
-          <span>Cor</span>
+          <span>{t('campo.cor')}</span>
           <input
             type="color"
             value={arena.style.fill}
@@ -312,25 +313,27 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
         </label>
       )}
       <p className="note dim">
-        Desligue o preenchimento para a imagem de fundo aparecer sob a pista.
+        {t('pista.preenchimentoNota')}
       </p>
 
       <p className="note">
-        Perímetro {formatMeters(arenaPerimeter(arena), 1)} m · área{' '}
-        {formatMeters(arenaArea(arena), 0)} m²
+        {t('pista.perimetroArea', {
+          perimetro: formatMeters(arenaPerimeter(arena), 1),
+          area: formatMeters(arenaArea(arena), 0),
+        })}
       </p>
 
       {arena.shape === 'rectangle' && (
         <div className="row-buttons">
           <button
             disabled={arena.locked}
-            title="Materializa os quatro vértices para edição livre. Não tem volta."
+            title={t('pista.converterDica')}
             onClick={() => {
-              apply('Converter em contorno livre', (d) => convertArenaToPolygon(d, arena.id));
+              apply(t('pista.converter'), (d) => convertArenaToPolygon(d, arena.id));
               setEditingVertices(true);
             }}
           >
-            Converter em contorno livre
+            {t('pista.converter')}
           </button>
         </div>
       )}
@@ -343,7 +346,7 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
               })
             }
           >
-            Remover último vértice
+            {t('pista.removerUltimo')}
           </button>
         </div>
       )}
@@ -351,12 +354,12 @@ export function ArenaPanel({ arena }: { arena: Arena }) {
   );
 }
 
-const SIDE_LABEL = {
-  top: 'Cima',
-  left: 'Esq.',
-  right: 'Dir.',
-  bottom: 'Baixo',
-} as const;
+const SIDE_LABEL: Record<'top' | 'left' | 'right' | 'bottom', MessageKey> = {
+  top: 'pista.ladoCima',
+  left: 'pista.ladoEsq',
+  right: 'pista.ladoDir',
+  bottom: 'pista.ladoBaixo',
+};
 
 /**
  * Barra de giro do rótulo da construção e a volta ao automático (que
@@ -372,7 +375,7 @@ function RotuloGiro({ arena }: { arena: Arena }) {
       <input
         type="range"
         className="rotation-slider"
-        aria-label="Girar o rótulo"
+        aria-label={t('campo.girarRotulo')}
         min={-90}
         max={90}
         step={1}
@@ -392,7 +395,7 @@ function RotuloGiro({ arena }: { arena: Arena }) {
       {manual && (
         <button
           className="mini neutral"
-          title="Volta a acompanhar a aresta mais longa"
+          title={t('campo.giroAuto')}
           disabled={arena.locked}
           onClick={() =>
             apply('Giro automático do rótulo', (d) => {
@@ -416,7 +419,7 @@ function AnguloObra({ arena }: { arena: Arena }) {
     <input
       type="range"
       className="rotation-slider"
-      aria-label="Girar a construção"
+      aria-label={t('pista.girarConstrucao')}
       min={-90}
       max={90}
       step={1}

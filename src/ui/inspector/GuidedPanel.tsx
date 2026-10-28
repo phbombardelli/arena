@@ -3,6 +3,7 @@ import { buildFromChoices } from '@core/assist/guidedRide';
 import { formatDistance, pathLength } from '@core/model/path';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
+import { formatDecimal, t } from '@core/i18n/i18n';
 
 /**
  * Escolha do traçado, pernada a pernada.
@@ -34,14 +35,14 @@ export function GuidedPanel() {
   return (
     <section className="object-panel">
       <h3>
-        Trecho {guidedLeg + 1} de {guided.legs.length}
+        {t('guiado.trecho', { n: guidedLeg + 1, total: guided.legs.length })}
       </h3>
       <p className="note total-distance">
         <strong>{perna?.where}</strong>
       </p>
 
       {perna && perna.options.length === 1 ? (
-        <p className="note">Só há uma forma de fazer esta pernada.</p>
+        <p className="note">{t('guiado.umaForma')}</p>
       ) : (
         <ul className="option-list">
           {perna?.options.map((o, i) => (
@@ -52,10 +53,12 @@ export function GuidedPanel() {
               >
                 <span className="option-mark">{i === perna.chosen ? '●' : '○'}</span>
                 <span>
-                  giro {o.turnDeg.toFixed(0)}° · raio{' '}
-                  {o.minRadiusM === Infinity ? 'reto' : `${o.minRadiusM.toFixed(1)} m`}
-                  {o.lead.after > 0 || o.lead.before > 0 ? ' · por fora' : ''}
-                  {o.warnings.length > 0 ? ' · aperta' : ''}
+                  {t('guiado.opcao', {
+                    giro: o.turnDeg.toFixed(0),
+                    raio: o.minRadiusM === Infinity ? t('guiado.reto') : `${formatDecimal(o.minRadiusM, 1)} m`,
+                  })}
+                  {o.lead.after > 0 || o.lead.before > 0 ? t('guiado.porFora') : ''}
+                  {o.warnings.length > 0 ? t('guiado.aperta') : ''}
                 </span>
               </button>
             </li>
@@ -65,27 +68,26 @@ export function GuidedPanel() {
 
       <div className="row-buttons">
         <button disabled={guidedLeg === 0} onClick={() => setGuidedLeg(guidedLeg - 1)}>
-          ← Anterior
+          {t('guiado.anterior')}
         </button>
         <button disabled={ultima} onClick={() => setGuidedLeg(guidedLeg + 1)}>
-          Próximo →
+          {t('guiado.proximo')}
         </button>
       </div>
 
       <p className="note">
-        Traçado até aqui: <strong>{total ? formatDistance(pathLength(total), 1) : '0'} m</strong>
+        {t('guiado.ateAqui')} <strong>{total ? formatDistance(pathLength(total), 1) : '0'} m</strong>
       </p>
 
       <div className="row-buttons">
-        <button onClick={aplicar}>Aplicar traçado</button>
+        <button onClick={aplicar}>{t('guiado.aplicar')}</button>
         <button className="danger" onClick={endGuided}>
-          Cancelar
+          {t('guiado.cancelar')}
         </button>
       </div>
 
       <p className="note dim">
-        Clicar na linha do desenho escolhe também. A opção forte é a
-        escolhida; as finas são as outras formas de fazer.
+        {t('guiado.nota')}
       </p>
     </section>
   );

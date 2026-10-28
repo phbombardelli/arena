@@ -1,6 +1,7 @@
 import { hasLinked } from '@core/commands/groupOps';
 import { useDocumentStore } from '@store/documentStore';
 import { linkSelection, unlinkSelection } from '@ui/actions/editActions';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Vincular e desvincular (decisão 61). Aparece com dois ou mais objetos
@@ -14,16 +15,16 @@ export function LinkRow({ ids }: { ids: string[] }) {
     <div className="link-row">
       {vinculado ? (
         <>
-          <span className="note dim-always" title="Alt + clique pega um elemento só, para editar">
-            🔗 Movem-se juntos
+          <span className="note dim-always" title={t('vinculo.altDica')}>
+            {t('vinculo.juntos')}
           </span>
           <button className="mini neutral" onClick={unlinkSelection} title="Ctrl+Shift+G">
-            Desvincular
+            {t('vinculo.desvincular')}
           </button>
         </>
       ) : (
         <button className="mini neutral" onClick={linkSelection} title="Ctrl+G">
-          🔗 Vincular
+          {t('vinculo.vincular')}
         </button>
       )}
     </div>

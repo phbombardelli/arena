@@ -23,6 +23,8 @@ import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { Dialog } from '@ui/common/Popover';
 import { NumberField } from '@ui/inspector/NumberField';
+import { t } from '@core/i18n/i18n';
+import type { MessageKey } from '@core/i18n/messages';
 
 /**
  * Configurador dos exercícios de ginástica (B-37, decisão 89): o desenho
@@ -30,12 +32,14 @@ import { NumberField } from '@ui/inspector/NumberField';
  * arrasta de lado na prévia, sobre o arco que a distância permite.
  */
 
-const TITULOS: Record<ExerciseKind, string> = {
-  cavaletes: 'Cavaletes',
-  relogio: 'Relógio',
-  'pe-de-galinha': 'Pé de galinha',
-  leque: 'Leque de varas',
+const TITULOS: Record<ExerciseKind, MessageKey> = {
+  cavaletes: 'rail.cavaletes',
+  relogio: 'rail.relogio',
+  'pe-de-galinha': 'rail.peDeGalinha',
+  leque: 'rail.leque',
 };
+
+const LADO: Record<LadoCurva, MessageKey> = { esquerda: 'gin.esquerda', direita: 'gin.direita' };
 
 const PREVIA_ESCALA = 250;
 
@@ -51,7 +55,7 @@ function Configurador({ kind, params: iniciais, editingId }: { kind: ExerciseKin
   const [ultimo, setUltimo] = useState<LadoCurva>('direita');
   const fecha = () => useEditorStore.getState().setExerciseEditor(null);
   const pg = kind === 'pe-de-galinha' ? (params as PeDeGalinhaParams) : null;
-  const titulo = pg ? `${TITULOS[kind]} ${pg.completo ? 'completo' : 'simples'}` : TITULOS[kind];
+  const titulo = pg ? `${t(TITULOS[kind])}${t(pg.completo ? 'ginp.completo' : 'ginp.simples')}` : t(TITULOS[kind]);
 
   const aplicar = () => {
     const st = useDocumentStore.getState();
@@ -76,7 +80,7 @@ function Configurador({ kind, params: iniciais, editingId }: { kind: ExerciseKin
   };
 
   return (
-    <Dialog title={editingId ? `Editar ginástica — ${titulo}` : titulo} onClose={fecha}>
+    <Dialog title={editingId ? t('gin.editarTitulo', { nome: titulo }) : titulo} onClose={fecha}>
       <div className="gym-config">
         <div className="gym-form">
           {kind === 'cavaletes' && <FormCavaletes p={params as CavaletesParams} set={setParams} />}
@@ -87,9 +91,9 @@ function Configurador({ kind, params: iniciais, editingId }: { kind: ExerciseKin
         <Previa kind={kind} params={params} set={setParams} ultimo={ultimo} onLado={setUltimo} />
       </div>
       <div className="row-buttons">
-        <button onClick={fecha}>Cancelar</button>
+        <button onClick={fecha}>{t('gin.cancelar')}</button>
         <button className="primary" onClick={aplicar}>
-          {editingId ? 'Aplicar' : 'Inserir'}
+          {editingId ? t('gin.aplicar') : t('gin.inserir')}
         </button>
       </div>
     </Dialog>
@@ -225,13 +229,13 @@ function Previa({
                     onLado(lado);
                   }}
                 >
-                  <title>Arraste para abrir ou fechar a curva; a distância fica a mesma</title>
+                  <title>{t('gin.arrasteArco')}</title>
                 </circle>
               </g>
             );
           })}
       </svg>
-      {pg && <p className="note">Arraste os círculos para abrir ou fechar as curvas: a distância sobre a linha não muda.</p>}
+      {pg && <p className="note">{t('gin.arrasteCirculos')}</p>}
       {pg && <IgualarAngulos p={pg} set={set} ultimo={ultimo} />}
     </div>
   );
@@ -251,7 +255,7 @@ function IgualarAngulos({ p, set, ultimo }: { p: PeDeGalinhaParams; set: (p: Exe
     <div className="row-buttons gym-equalize">
       <button
         disabled={iguais}
-        title={iguais ? 'Os dois lados já têm o mesmo ângulo' : `Leva os ${Math.round(base)}° da ${ultimo} para a ${outro}`}
+        title={iguais ? t('gin.mesmoAngulo') : t('gin.leva', { graus: Math.round(base), de: t(LADO[ultimo]), para: t(LADO[outro]) })}
         onClick={() =>
           set({
             ...p,
@@ -259,7 +263,7 @@ function IgualarAngulos({ p, set, ultimo }: { p: PeDeGalinhaParams; set: (p: Exe
           })
         }
       >
-        {iguais ? 'Ângulos iguais' : `Igualar ângulos (${Math.round(base)}°, da ${ultimo})`}
+        {iguais ? t('gin.angulosIguais') : t('gin.igualar', { graus: Math.round(base), de: t(LADO[ultimo]) })}
       </button>
     </div>
   );
@@ -305,12 +309,12 @@ function Metros({ label, value, onChange, min = 0.5 }: { label: string; value: n
 function SentidoCampo({ value, onChange }: { value: Sentido; onChange: (s: Sentido) => void }) {
   return (
     <label className="field">
-      <span>Sentido</span>
+      <span>{t('gin.sentido')}</span>
       <select value={value} onChange={(e) => onChange(e.target.value as Sentido)}>
-        <option value="ida">→ Indo</option>
-        <option value="volta">← Voltando</option>
-        <option value="duplo">↔ Duplo</option>
-        <option value="sem">Sem seta</option>
+        <option value="ida">{t('gin.indo')}</option>
+        <option value="volta">{t('gin.voltando')}</option>
+        <option value="duplo">{t('gin.duplo')}</option>
+        <option value="sem">{t('gin.semSeta')}</option>
       </select>
     </label>
   );
@@ -319,14 +323,14 @@ function SentidoCampo({ value, onChange }: { value: Sentido; onChange: (s: Senti
 function FormCavaletes({ p, set }: { p: CavaletesParams; set: (p: CavaletesParams) => void }) {
   return (
     <>
-      <NumberField label="Quantidade" value={p.count} decimals={0} step={1} min={1} max={20} onCommit={(v) => set({ ...p, count: Math.round(v) })} />
-      <Metros label="Distância entre eles" value={p.spacingM} onChange={(v) => set({ ...p, spacingM: v })} />
+      <NumberField label={t('gin.quantidade')} value={p.count} decimals={0} step={1} min={1} max={20} onCommit={(v) => set({ ...p, count: Math.round(v) })} />
+      <Metros label={t('gin.entreEles')} value={p.spacingM} onChange={(v) => set({ ...p, spacingM: v })} />
       <label className="field">
-        <span>Tipo</span>
-        <Tipo value={p.type} opcoes={TIPOS_CHAO} onChange={(t) => set({ ...p, type: t as CavaletesParams['type'] })} />
+        <span>{t('campo.tipo')}</span>
+        <Tipo value={p.type} opcoes={TIPOS_CHAO} onChange={(tipo) => set({ ...p, type: tipo as CavaletesParams['type'] })} />
       </label>
-      <Check label="Mostrar cotas" value={p.cotas} onChange={(v) => set({ ...p, cotas: v })} />
-      <Check label="Numerar" value={p.numerar} onChange={(v) => set({ ...p, numerar: v })} />
+      <Check label={t('gin.mostrarCotas')} value={p.cotas} onChange={(v) => set({ ...p, cotas: v })} />
+      <Check label={t('gin.numerar')} value={p.numerar} onChange={(v) => set({ ...p, numerar: v })} />
     </>
   );
 }
@@ -334,20 +338,20 @@ function FormCavaletes({ p, set }: { p: CavaletesParams; set: (p: CavaletesParam
 function FormRelogio({ p, set }: { p: RelogioParams; set: (p: RelogioParams) => void }) {
   return (
     <>
-      <Metros label="Diâmetro (centro das varas)" value={p.diameterM} min={4} onChange={(v) => set({ ...p, diameterM: v })} />
+      <Metros label={t('gin.diametro')} value={p.diameterM} min={4} onChange={(v) => set({ ...p, diameterM: v })} />
       <label className="field">
-        <span>Sentido</span>
+        <span>{t('gin.sentido')}</span>
         <select value={p.sentido} onChange={(e) => set({ ...p, sentido: e.target.value as RelogioParams['sentido'] })}>
-          <option value="horario">Horário</option>
-          <option value="antihorario">Anti-horário</option>
-          <option value="duplo">Duplo</option>
+          <option value="horario">{t('gin.horario')}</option>
+          <option value="antihorario">{t('gin.antihorario')}</option>
+          <option value="duplo">{t('gin.duploSentido')}</option>
         </select>
       </label>
       <label className="field">
-        <span>Tipo</span>
-        <Tipo value={p.type} opcoes={OBSTACLES as typeof TIPOS_SALTO} onChange={(t) => set({ ...p, type: t })} />
+        <span>{t('campo.tipo')}</span>
+        <Tipo value={p.type} opcoes={OBSTACLES as typeof TIPOS_SALTO} onChange={(tipo) => set({ ...p, type: tipo })} />
       </label>
-      <Check label="Mostrar o diâmetro" value={p.cotas} onChange={(v) => set({ ...p, cotas: v })} />
+      <Check label={t('gin.mostrarDiametro')} value={p.cotas} onChange={(v) => set({ ...p, cotas: v })} />
     </>
   );
 }
@@ -355,24 +359,24 @@ function FormRelogio({ p, set }: { p: RelogioParams; set: (p: RelogioParams) => 
 function FormLeque({ p, set }: { p: LequeParams; set: (p: LequeParams) => void }) {
   return (
     <>
-      <NumberField label="Quantidade" value={p.count} decimals={0} step={1} min={2} max={16} onCommit={(v) => set({ ...p, count: Math.round(v) })} />
-      <Metros label="Espaçamento (pelo centro)" value={p.spacingM} onChange={(v) => set({ ...p, spacingM: v })} />
-      <Metros label="Raio do arco" value={p.radiusM} min={2} onChange={(v) => set({ ...p, radiusM: v })} />
+      <NumberField label={t('gin.quantidade')} value={p.count} decimals={0} step={1} min={2} max={16} onCommit={(v) => set({ ...p, count: Math.round(v) })} />
+      <Metros label={t('gin.espacamento')} value={p.spacingM} onChange={(v) => set({ ...p, spacingM: v })} />
+      <Metros label={t('gin.raio')} value={p.radiusM} min={2} onChange={(v) => set({ ...p, radiusM: v })} />
       <label className="field">
-        <span>Sentido</span>
+        <span>{t('gin.sentido')}</span>
         <select value={p.sentido} onChange={(e) => set({ ...p, sentido: e.target.value as LequeParams['sentido'] })}>
-          <option value="horario">Horário</option>
-          <option value="antihorario">Anti-horário</option>
-          <option value="duplo">Duplo</option>
-          <option value="sem">Sem seta</option>
+          <option value="horario">{t('gin.horario')}</option>
+          <option value="antihorario">{t('gin.antihorario')}</option>
+          <option value="duplo">{t('gin.duploSentido')}</option>
+          <option value="sem">{t('gin.semSeta')}</option>
         </select>
       </label>
       <label className="field">
-        <span>Tipo</span>
-        <Tipo value={p.type} opcoes={OBSTACLES as typeof TIPOS_SALTO} onChange={(t) => set({ ...p, type: t })} />
+        <span>{t('campo.tipo')}</span>
+        <Tipo value={p.type} opcoes={OBSTACLES as typeof TIPOS_SALTO} onChange={(tipo) => set({ ...p, type: tipo })} />
       </label>
-      <Check label="Mostrar as cotas" value={p.cotas} onChange={(v) => set({ ...p, cotas: v })} />
-      <p className="note">Raio menor abre mais o leque; o espaçamento é medido sobre o arco, no centro das varas.</p>
+      <Check label={t('gin.mostrarAsCotas')} value={p.cotas} onChange={(v) => set({ ...p, cotas: v })} />
+      <p className="note">{t('gin.raioMenor')}</p>
     </>
   );
 }
@@ -389,13 +393,13 @@ function FormPeDeGalinha({ p, set, onLado }: { p: PeDeGalinhaParams; set: (p: Pe
         {s.on && (
           <>
             <label className="field">
-              <span>Tipo</span>
-              <Tipo value={s.type} onChange={(t) => muda({ type: t })} />
+              <span>{t('campo.tipo')}</span>
+              <Tipo value={s.type} onChange={(tipo) => muda({ type: tipo })} />
             </label>
-            <Metros label={lado === 'reta' ? 'Distância' : 'Distância na curva'} value={s.distM} onChange={(v) => muda({ distM: v })} />
+            <Metros label={lado === 'reta' ? t('campo.distancia') : t('gin.distanciaCurva')} value={s.distM} onChange={(v) => muda({ distM: v })} />
             {lado !== 'reta' && (
               <NumberField
-                label="Abertura"
+                label={t('gin.abertura')}
                 unit="°"
                 value={Math.abs(s.angleDeg)}
                 decimals={0}
@@ -419,10 +423,10 @@ function FormPeDeGalinha({ p, set, onLado }: { p: PeDeGalinhaParams; set: (p: Pe
     <>
       <div className="row-buttons">
         <button className={p.completo ? 'active' : ''} onClick={() => set({ ...p, completo: true })}>
-          Completo
+          {t('gin.completo')}
         </button>
         <button className={!p.completo ? 'active' : ''} onClick={() => set({ ...p, completo: false })}>
-          Simples
+          {t('gin.simples')}
         </button>
       </div>
 
@@ -430,12 +434,12 @@ function FormPeDeGalinha({ p, set, onLado }: { p: PeDeGalinhaParams; set: (p: Pe
         <>
           <fieldset className="gym-group">
             <legend>
-              <Check label="Cavaletes" value={p.cavaletes.on} onChange={(v) => set({ ...p, cavaletes: { ...p.cavaletes, on: v } })} />
+              <Check label={t('gin.cavaletes')} value={p.cavaletes.on} onChange={(v) => set({ ...p, cavaletes: { ...p.cavaletes, on: v } })} />
             </legend>
             {p.cavaletes.on && (
               <>
                 <NumberField
-                  label="Quantidade"
+                  label={t('gin.quantidade')}
                   value={p.cavaletes.count}
                   decimals={0}
                   step={1}
@@ -443,13 +447,13 @@ function FormPeDeGalinha({ p, set, onLado }: { p: PeDeGalinhaParams; set: (p: Pe
                   max={12}
                   onCommit={(v) => set({ ...p, cavaletes: { ...p.cavaletes, count: Math.round(v) } })}
                 />
-                <Metros label="Entre eles" value={p.cavaletes.spacingM} onChange={(v) => set({ ...p, cavaletes: { ...p.cavaletes, spacingM: v } })} />
+                <Metros label={t('gin.entreElesCurto')} value={p.cavaletes.spacingM} onChange={(v) => set({ ...p, cavaletes: { ...p.cavaletes, spacingM: v } })} />
                 <label className="field">
-                  <span>Tipo</span>
+                  <span>{t('campo.tipo')}</span>
                   <Tipo
                     value={p.cavaletes.type}
                     opcoes={TIPOS_CHAO}
-                    onChange={(t) => set({ ...p, cavaletes: { ...p.cavaletes, type: t as PeDeGalinhaParams['cavaletes']['type'] } })}
+                    onChange={(tipo) => set({ ...p, cavaletes: { ...p.cavaletes, type: tipo as PeDeGalinhaParams['cavaletes']['type'] } })}
                   />
                 </label>
               </>
@@ -457,21 +461,21 @@ function FormPeDeGalinha({ p, set, onLado }: { p: PeDeGalinhaParams; set: (p: Pe
           </fieldset>
           <fieldset className="gym-group">
             <legend>
-              <Check label="X" value={p.x.on} onChange={(v) => set({ ...p, x: { ...p.x, on: v } })} />
+              <Check label={t('obst.x')} value={p.x.on} onChange={(v) => set({ ...p, x: { ...p.x, on: v } })} />
             </legend>
-            {p.x.on && <Metros label="Distância do anterior" value={p.x.distM} onChange={(v) => set({ ...p, x: { ...p.x, distM: v } })} />}
+            {p.x.on && <Metros label={t('gin.doAnterior')} value={p.x.distM} onChange={(v) => set({ ...p, x: { ...p.x, distM: v } })} />}
           </fieldset>
           <fieldset className="gym-group">
             <legend>
-              <Check label="Salto" value={p.salto.on} onChange={(v) => set({ ...p, salto: { ...p.salto, on: v } })} />
+              <Check label={t('gin.salto')} value={p.salto.on} onChange={(v) => set({ ...p, salto: { ...p.salto, on: v } })} />
             </legend>
             {p.salto.on && (
               <>
                 <label className="field">
-                  <span>Tipo</span>
-                  <Tipo value={p.salto.type} onChange={(t) => set({ ...p, salto: { ...p.salto, type: t } })} />
+                  <span>{t('campo.tipo')}</span>
+                  <Tipo value={p.salto.type} onChange={(tipo) => set({ ...p, salto: { ...p.salto, type: tipo } })} />
                 </label>
-                <Metros label="Distância do anterior" value={p.salto.distM} onChange={(v) => set({ ...p, salto: { ...p.salto, distM: v } })} />
+                <Metros label={t('gin.doAnterior')} value={p.salto.distM} onChange={(v) => set({ ...p, salto: { ...p.salto, distM: v } })} />
               </>
             )}
           </fieldset>
@@ -479,27 +483,27 @@ function FormPeDeGalinha({ p, set, onLado }: { p: PeDeGalinhaParams; set: (p: Pe
       )}
 
       <fieldset className="gym-group">
-        <legend>Salto central</legend>
+        <legend>{t('gin.central')}</legend>
         <label className="field">
-          <span>Tipo</span>
-          <Tipo value={p.central.type} onChange={(t) => set({ ...p, central: { ...p.central, type: t } })} />
+          <span>{t('campo.tipo')}</span>
+          <Tipo value={p.central.type} onChange={(tipo) => set({ ...p, central: { ...p.central, type: tipo } })} />
         </label>
         {p.completo && (
-          <Metros label="Distância do anterior" value={p.central.distM} onChange={(v) => set({ ...p, central: { ...p.central, distM: v } })} />
+          <Metros label={t('gin.doAnterior')} value={p.central.distM} onChange={(v) => set({ ...p, central: { ...p.central, distM: v } })} />
         )}
         <Check
-          label="Duplo"
+          label={t('gin.duploSalto')}
           value={p.central.duplo.on}
           onChange={(v) => set({ ...p, central: { ...p.central, duplo: { ...p.central.duplo, on: v } } })}
         />
         {p.central.duplo.on && (
           <>
             <label className="field">
-              <span>2º salto</span>
-              <Tipo value={p.central.duplo.type} onChange={(t) => set({ ...p, central: { ...p.central, duplo: { ...p.central.duplo, type: t } } })} />
+              <span>{t('gin.segundo')}</span>
+              <Tipo value={p.central.duplo.type} onChange={(tipo) => set({ ...p, central: { ...p.central, duplo: { ...p.central.duplo, type: tipo } } })} />
             </label>
             <Metros
-              label="Entre os dois"
+              label={t('gin.entreOsDois')}
               value={p.central.duplo.distM}
               onChange={(v) => set({ ...p, central: { ...p.central, duplo: { ...p.central.duplo, distM: v } } })}
             />
@@ -507,12 +511,12 @@ function FormPeDeGalinha({ p, set, onLado }: { p: PeDeGalinhaParams; set: (p: Pe
         )}
       </fieldset>
 
-      {saida('esquerda', 'Saída em curva à esquerda')}
-      {saida('reta', 'Saída reta')}
-      {saida('direita', 'Saída em curva à direita')}
+      {saida('esquerda', t('gin.saidaEsq'))}
+      {saida('reta', t('gin.saidaReta'))}
+      {saida('direita', t('gin.saidaDir'))}
 
-      <Check label="Mostrar cotas e linhas" value={p.cotas} onChange={(v) => set({ ...p, cotas: v })} />
-      <Check label="Numerar os saltos" value={p.numerar} onChange={(v) => set({ ...p, numerar: v })} />
+      <Check label={t('gin.cotasLinhas')} value={p.cotas} onChange={(v) => set({ ...p, cotas: v })} />
+      <Check label={t('gin.numerarSaltos')} value={p.numerar} onChange={(v) => set({ ...p, numerar: v })} />
     </>
   );
 }

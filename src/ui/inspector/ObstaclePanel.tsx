@@ -23,6 +23,7 @@ import type { BarStyle, Obstacle, ObstacleType } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
 import { WingStyleField } from './WingStyleField';
+import { t } from '@core/i18n/i18n';
 
 const LETRAS: Obstacle['letter'][] = ['', 'A', 'B', 'C'];
 
@@ -41,7 +42,7 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
   return (
     <>
       <label className="field" title={def.hint}>
-        <span>Tipo</span>
+        <span>{t('campo.tipo')}</span>
         <select
           value={obstacle.type}
           disabled={travado}
@@ -59,7 +60,7 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
 
       <div className="field-pair">
         <label className="field">
-          <span>Número</span>
+          <span>{t('campo.numero')}</span>
           <input
             type="text"
             value={obstacle.number}
@@ -74,8 +75,8 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
             }
           />
         </label>
-        <label className="field" title="A letra marca a combinação: 4A, 4B.">
-          <span>Letra</span>
+        <label className="field" title={t('obstp.letraDica')}>
+          <span>{t('campo.letraObst')}</span>
           <select
             value={obstacle.letter}
             disabled={travado}
@@ -94,7 +95,7 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
 
       <div className="field-pair">
         <NumberField
-          label="Frente"
+          label={t('obstp.frente')}
           unit="m"
           value={obstacle.faceWidthM}
           decimals={2}
@@ -107,7 +108,7 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
             vertical e plano, não. */}
         {obstacle.spreadM !== null && (
           <NumberField
-            label="Largura"
+            label={t('campo.largura')}
             unit="m"
             value={obstacle.spreadM}
             decimals={2}
@@ -119,8 +120,8 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
         )}
       </div>
 
-      <label className="field" title="A seta é perpendicular à frente e gira junto com o obstáculo.">
-        <span>Sentido</span>
+      <label className="field" title={t('obstp.setaDica')}>
+        <span>{t('obstp.sentido')}</span>
         <select
           value={!obstacle.arrow.visible ? 'sem' : obstacle.arrow.both ? 'duplo' : obstacle.arrow.reversed ? 'inverso' : 'frente'}
           disabled={travado}
@@ -135,10 +136,10 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
             );
           }}
         >
-          <option value="frente">→ Para a frente</option>
-          <option value="inverso">← Invertido</option>
-          <option value="duplo">↔ Duplo</option>
-          <option value="sem">Sem seta</option>
+          <option value="frente">{t('obstp.paraFrente')}</option>
+          <option value="inverso">{t('obstp.invertido')}</option>
+          <option value="duplo">{t('obstp.duplo')}</option>
+          <option value="sem">{t('obstp.semSeta')}</option>
         </select>
       </label>
     </>
@@ -157,7 +158,7 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
           {/* Vara no chão e cavalete não têm suporte para escolher. */}
           {!semParaflanco(obstacle.type) && (
             <>
-              <h3 title="O paraflanco é o painel lateral que sustenta as varas.">Suporte</h3>
+              <h3 title={t('obstp.paraflancoDica')}>{t('obstp.suporte')}</h3>
               <WingStyleField
                 wings={obstacle.wings}
                 disabled={travado}
@@ -166,9 +167,9 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
             </>
           )}
 
-          <h3>Varas</h3>
+          <h3>{t('obstp.varas')}</h3>
           <label className="field">
-            <span>Estilo</span>
+            <span>{t('campo.estilo')}</span>
             <select
               value={obstacle.bar.style}
               disabled={travado}
@@ -178,14 +179,14 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
                 )
               }
             >
-              <option value="lisa">Lisa</option>
-              <option value="listrada">Listrada</option>
-              <option value="pontas">Faixas nas pontas</option>
+              <option value="lisa">{t('obstp.lisa')}</option>
+              <option value="listrada">{t('obstp.listrada')}</option>
+              <option value="pontas">{t('obstp.faixasPontas')}</option>
             </select>
           </label>
           <div className="color-pair">
             <label className="field">
-              <span>Cor</span>
+              <span>{t('campo.cor')}</span>
               <input
                 type="color"
                 value={obstacle.bar.color}
@@ -201,7 +202,7 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
             </label>
             {obstacle.bar.style !== 'lisa' && (
               <label className="field">
-                <span>Faixa</span>
+                <span>{t('obstp.faixa')}</span>
                 <input
                   type="color"
                   value={obstacle.bar.accent}
@@ -219,7 +220,7 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
           </div>
           {obstacle.bar.style === 'listrada' && (
             <NumberField
-              label="Faixas"
+              label={t('obstp.faixas')}
               value={obstacle.bar.stripes}
               decimals={0}
               step={1}
@@ -238,7 +239,7 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
 
       {acceptsLiverpool(obstacle.type) && (
         <>
-          <h3 title="Deslocamento negativo põe a água antes do obstáculo; positivo, depois.">Liverpool</h3>
+          <h3 title={t('obstp.liverpoolDica')}>Liverpool</h3>
           <label className="check">
             <input
               type="checkbox"
@@ -250,12 +251,12 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
                 )
               }
             />
-            Lâmina de água
+            {t('obstp.lamina')}
           </label>
           {obstacle.liverpool.enabled && (
             <>
               <NumberField
-                label="Profundidade"
+                label={t('campo.profundidade')}
                 unit="m"
                 value={obstacle.liverpool.spreadM}
                 decimals={2}
@@ -269,7 +270,7 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
                 }
               />
               <NumberField
-                label="Posição"
+                label={t('campo.posicao')}
                 unit="m"
                 value={obstacle.liverpool.offsetM}
                 decimals={2}
@@ -282,7 +283,7 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
                 }
               />
               <NumberField
-                label="Comprimento"
+                label={t('campo.comprimento')}
                 unit="m"
                 value={obstacle.liverpool.widthM}
                 decimals={2}
@@ -296,14 +297,14 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
                 }
               />
               <label className="field">
-                <span>Cor da água</span>
+                <span>{t('obstp.corAgua')}</span>
                 <input
                   type="color"
                   value={obstacle.liverpool.color}
                   disabled={travado}
                   onChange={(e) =>
                     apply(
-                      'Cor da água',
+                      t('obstp.corAgua'),
                       (d) => setLiverpool(d, obstacle.id, { color: e.target.value }),
                       `agua-${obstacle.id}`,
                     )
@@ -315,7 +316,7 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
         </>
       )}
 
-      <h3>Rótulos</h3>
+      <h3>{t('campo.rotulos')}</h3>
       <label className="check">
         <input
           type="checkbox"
@@ -327,7 +328,7 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
             )
           }
         />
-        Número no desenho
+        {t('obstp.numeroDesenho')}
       </label>
       <label className="check">
         <input
@@ -340,13 +341,13 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
             )
           }
         />
-        Alturas no desenho
+        {t('obstp.alturasDesenho')}
       </label>
       {(!obstacle.numberLabel.auto || !obstacle.heightLabel.auto) && (
         <div className="row-buttons">
           <button
             disabled={travado}
-            title="Volta a afastar os rótulos automaticamente do corpo e da seta"
+            title={t('obstp.reposicionarDica')}
             onClick={() =>
               apply('Posição automática dos rótulos', (d) => {
                 resetLabel(d, obstacle.id, 'numberLabel');
@@ -354,13 +355,13 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
               })
             }
           >
-            Reposicionar automaticamente
+            {t('obstp.reposicionar')}
           </button>
         </div>
       )}
 
 
-      <h3>Observação</h3>
+      <h3>{t('campo.observacao')}</h3>
       <input
         type="text"
         className="full"
@@ -369,7 +370,7 @@ export function ObstacleMore({ obstacle }: { obstacle: Obstacle }) {
         placeholder="ex.: liverpool"
         onChange={(e) =>
           apply(
-            'Observação',
+            t('campo.observacao'),
             (d) => setObstacleNote(d, obstacle.id, e.target.value),
             `obs-${obstacle.id}`,
           )

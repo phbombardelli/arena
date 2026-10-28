@@ -3,6 +3,7 @@ import { SCHEMA_VERSION } from '@core/model/types';
 import { CourseFileError, FILE_FORMAT, type CourseFile } from './format';
 import { applyMigrations, type RawDocument } from './migrations';
 import { validateDocument, type ValidationResult } from './validate';
+import { t } from '@core/i18n/i18n';
 
 export const APP_VERSION = '0.1.0';
 
@@ -33,27 +34,27 @@ export function deserialize(text: string): ValidationResult {
     parsed = JSON.parse(text);
   } catch (err) {
     throw new CourseFileError(
-      'Este arquivo não é um projeto do Arena.',
+      t('aviso.naoEProjeto'),
       err instanceof Error ? err.message : undefined,
     );
   }
 
   if (typeof parsed !== 'object' || parsed === null) {
-    throw new CourseFileError('Este arquivo não é um projeto do Arena.');
+    throw new CourseFileError(t('aviso.naoEProjeto'));
   }
 
   const envelope = parsed as Partial<CourseFile>;
   if (envelope.format !== FILE_FORMAT) {
     throw new CourseFileError(
-      'Este arquivo não é um projeto do Arena.',
-      `Formato lido: ${String(envelope.format ?? 'ausente')}.`,
+      t('aviso.naoEProjeto'),
+      t('aviso.formatoLido', { formato: String(envelope.format ?? '?') }),
     );
   }
   if (typeof envelope.schemaVersion !== 'number' || !Number.isInteger(envelope.schemaVersion)) {
-    throw new CourseFileError('O arquivo não informa a versão do esquema.');
+    throw new CourseFileError(t('aviso.semVersao'));
   }
   if (typeof envelope.document !== 'object' || envelope.document === null) {
-    throw new CourseFileError('O arquivo não contém um documento.');
+    throw new CourseFileError(t('aviso.semDocumento'));
   }
 
   const migrated = applyMigrations(

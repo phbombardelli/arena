@@ -1,5 +1,6 @@
 import { createPolygonStructure } from '@core/library/structures';
 import { CourseFileError } from './format';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Migrações de esquema. Cada entrada leva um documento da versão `n` para
@@ -275,8 +276,8 @@ export function applyMigrations(
 ): RawDocument {
   if (fromVersion > toVersion) {
     throw new CourseFileError(
-      'Este arquivo foi salvo por uma versão mais nova do Arena.',
-      `Versão do arquivo: ${fromVersion}. Versão suportada: ${toVersion}.`,
+      t('aviso.versaoMaisNova'),
+      t('aviso.versaoDetalhe', { arquivo: String(fromVersion), suportada: String(toVersion) }),
     );
   }
 
@@ -285,8 +286,8 @@ export function applyMigrations(
     const migrate = table[v];
     if (!migrate) {
       throw new CourseFileError(
-        'Não foi possível atualizar este arquivo.',
-        `Falta a migração da versão ${v} para a ${v + 1}.`,
+        t('aviso.naoAtualizou'),
+        t('aviso.faltaMigracao', { de: String(v), para: String(v + 1) }),
       );
     }
     current = migrate(current);

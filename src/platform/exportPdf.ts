@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import 'svg2pdf.js';
 import type { CourseDocument } from '@core/model/types';
 import { buildPaperSvg } from './paperSvg';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Exportação em PDF **vetorial**: texto continua texto, linhas continuam
@@ -35,7 +36,7 @@ async function svgToPdf(svg: SVGSVGElement, widthMm: number, heightMm: number): 
 function marcarFicha(pdf: jsPDF, doc: CourseDocument, fileName: string): void {
   pdf.setProperties({
     title: fileName.replace(/\.pdf$/i, ''),
-    subject: `Croqui de percurso - escala 1:${doc.page.printScale}`,
+    subject: t('aviso.assuntoPdf', { escala: String(doc.page.printScale) }),
     creator: 'Arena',
     keywords: 'salto, percurso, croqui, equitacao',
   });

@@ -3,6 +3,7 @@ import { flattenPath } from '@core/model/path';
 import { obstacleLabel } from '@core/library/obstacles';
 import type { CoursePath, Obstacle, TimingLine } from '@core/model/types';
 import { courseOrder } from './courseRide';
+import { t as tr } from '@core/i18n/i18n';
 
 /**
  * Distâncias entre obstáculos consecutivos, medidas AO LONGO do traçado
@@ -138,7 +139,7 @@ export function courseDistancesAlong(
   });
   const cruzada = (t: TimingLine): Marco => ({
     id: t.id,
-    label: t.role === 'start' ? 'Partida' : 'Chegada',
+    label: tr(t.role === 'start' ? 'tim.partida' : 'tim.chegada'),
     meiaVara: 0,
     s: posicaoDaCruzada(t),
   });

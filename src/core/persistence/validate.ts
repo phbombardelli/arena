@@ -3,6 +3,8 @@ import type { CourseDocument, ObjectKind, SceneObject } from '@core/model/types'
 import { LAYER_ORDER } from '@core/model/types';
 import { PAGE_FORMATS } from '@core/scale/units';
 import { CourseFileError } from './format';
+import { t } from '@core/i18n/i18n';
+import type { MessageKey } from '@core/i18n/messages';
 
 /**
  * Validação da leitura. A postura é deliberada:
@@ -50,42 +52,42 @@ export function validateDocument(raw: unknown): ValidationResult {
   const warnings: string[] = [];
 
   if (!isRecord(raw)) {
-    throw new CourseFileError('O arquivo não contém um documento válido.');
+    throw new CourseFileError(t('val.documento'));
   }
 
   /* ------------------------------------------------------------ página */
 
   const page = raw.page;
   if (!isRecord(page)) {
-    throw new CourseFileError('O arquivo não tem a configuração de página.');
+    throw new CourseFileError(t('val.pagina'));
   }
   if (!isFiniteNumber(page.printScale) || page.printScale <= 0) {
     throw new CourseFileError(
-      'A escala de impressão do arquivo é inválida.',
-      `Valor lido: ${String(page.printScale)}.`,
+      t('val.escala'),
+      t('val.valorLido', { valor: String(page.printScale) }),
     );
   }
   if (page.format !== 'custom' && !(page.format as string in PAGE_FORMATS)) {
     throw new CourseFileError(
-      'O formato de página do arquivo não é reconhecido.',
-      `Valor lido: ${String(page.format)}.`,
+      t('val.formato'),
+      t('val.valorLido', { valor: String(page.format) }),
     );
   }
   if (page.orientation !== 'portrait' && page.orientation !== 'landscape') {
-    throw new CourseFileError('A orientação da página do arquivo é inválida.');
+    throw new CourseFileError(t('val.orientacao'));
   }
   if (!isRecord(page.marginsMm)) {
-    throw new CourseFileError('As margens da página do arquivo são inválidas.');
+    throw new CourseFileError(t('val.margens'));
   }
 
   if (!isPoint(raw.originMm)) {
-    throw new CourseFileError('A posição do desenho na página é inválida.');
+    throw new CourseFileError(t('val.posicaoDesenho'));
   }
 
   /* ------------------------------------------------------------ objetos */
 
   if (!Array.isArray(raw.objects)) {
-    throw new CourseFileError('O arquivo não tem a lista de objetos.');
+    throw new CourseFileError(t('val.semObjetos'));
   }
 
   const objects: SceneObject[] = [];
@@ -93,20 +95,20 @@ export function validateDocument(raw: unknown): ValidationResult {
 
   raw.objects.forEach((obj, index) => {
     if (!isRecord(obj) || typeof obj.kind !== 'string') {
-      warnings.push(`Objeto ${index + 1} ignorado: registro sem tipo.`);
+      warnings.push(t('val.semTipo', { n: String(index + 1) }));
       return;
     }
     if (!KNOWN_KINDS.includes(obj.kind as ObjectKind)) {
       warnings.push(
-        `Objeto ${index + 1} ignorado: tipo "${obj.kind}" desconhecido nesta versão.`,
+        t('val.tipoDesconhecido', { n: String(index + 1), tipo: String(obj.kind) }),
       );
       return;
     }
     if (typeof obj.id !== 'string' || obj.id === '') {
-      throw new CourseFileError(`O objeto ${index + 1} (${obj.kind}) está sem identificador.`);
+      throw new CourseFileError(t('val.semId', { n: String(index + 1), tipo: String(obj.kind) }));
     }
     if (seenIds.has(obj.id)) {
-      throw new CourseFileError(`Há dois objetos com o mesmo identificador: ${obj.id}.`);
+      throw new CourseFileError(t('val.idRepetido', { id: String(obj.id) }));
     }
     seenIds.add(obj.id);
 
@@ -114,7 +116,7 @@ export function validateDocument(raw: unknown): ValidationResult {
 
     if (typeof obj.layer !== 'string' || !LAYER_ORDER.includes(obj.layer as never)) {
       warnings.push(
-        `Objeto ${obj.id}: camada "${String(obj.layer)}" desconhecida, movido para a camada padrão.`,
+        t('val.camada', { id: String(obj.id), camada: String(obj.layer) }),
       );
       obj.layer = defaultLayerFor(obj.kind as ObjectKind);
     }
@@ -128,12 +130,12 @@ export function validateDocument(raw: unknown): ValidationResult {
   /* ------------------------------------------------------------ resto */
 
   if (!isRecord(raw.grid)) {
-    throw new CourseFileError('O arquivo não tem as configurações de grid.');
+    throw new CourseFileError(t('val.grid'));
   }
 
   let layers = raw.layers as CourseDocument['layers'] | undefined;
   if (!Array.isArray(layers) || layers.length === 0) {
-    warnings.push('Camadas ausentes no arquivo: restauradas as padrão.');
+    warnings.push(t('val.camadasAusentes'));
     layers = defaultLayers();
   }
 
@@ -150,57 +152,55 @@ export function validateDocument(raw: unknown): ValidationResult {
 
 /** Geometria é a parte que não pode passar errada em silêncio. */
 function checkGeometry(obj: Record<string, unknown>, index: number): void {
-  const fail = (what: string): never => {
-    throw new CourseFileError(
-      `O objeto ${index + 1} (${String(obj.kind)}) tem ${what} inválida.`,
-    );
+  const fail = (what: MessageKey): never => {
+    throw new CourseFileError(t('val.geometria', { n: String(index + 1), tipo: String(obj.kind), campo: t(what) }));
   };
 
   switch (obj.kind) {
     case 'arena':
-      if (!isPoint(obj.origin)) fail('a origem');
-      if (!isFiniteNumber(obj.widthM) || !isFiniteNumber(obj.heightM)) fail('as dimensões');
-      if (!Array.isArray(obj.points) || !obj.points.every(isPoint)) fail('a lista de vértices');
+      if (!isPoint(obj.origin)) fail('val.c.origem');
+      if (!isFiniteNumber(obj.widthM) || !isFiniteNumber(obj.heightM)) fail('val.c.dimensoes');
+      if (!Array.isArray(obj.points) || !obj.points.every(isPoint)) fail('val.c.vertices');
       break;
     case 'obstacle':
-      if (!isPoint(obj.pos)) fail('a posição');
-      if (!isFiniteNumber(obj.rotation)) fail('a rotação');
-      if (!isFiniteNumber(obj.faceWidthM)) fail('a largura');
-      if (!Array.isArray(obj.elements)) fail('a lista de elementos');
+      if (!isPoint(obj.pos)) fail('val.c.posicao');
+      if (!isFiniteNumber(obj.rotation)) fail('val.c.rotacao');
+      if (!isFiniteNumber(obj.faceWidthM)) fail('val.c.largura');
+      if (!Array.isArray(obj.elements)) fail('val.c.elementos');
       break;
     case 'ornament':
     case 'text':
-      if (!isPoint(obj.pos)) fail('a posição');
-      if (!isFiniteNumber(obj.rotation)) fail('a rotação');
+      if (!isPoint(obj.pos)) fail('val.c.posicao');
+      if (!isFiniteNumber(obj.rotation)) fail('val.c.rotacao');
       break;
     case 'timing':
-      if (!isPoint(obj.pos)) fail('a posição');
-      if (!isFiniteNumber(obj.rotation)) fail('a rotação');
-      if (!isFiniteNumber(obj.widthM) || obj.widthM <= 0) fail('a largura');
+      if (!isPoint(obj.pos)) fail('val.c.posicao');
+      if (!isFiniteNumber(obj.rotation)) fail('val.c.rotacao');
+      if (!isFiniteNumber(obj.widthM) || obj.widthM <= 0) fail('val.c.largura');
       break;
     case 'image':
-      if (!isPoint(obj.origin)) fail('a origem');
-      if (!isFiniteNumber(obj.metersPerPixel) || obj.metersPerPixel <= 0) fail('a escala');
-      if (!isFiniteNumber(obj.widthPx) || !isFiniteNumber(obj.heightPx)) fail('as dimensões');
-      if (typeof obj.assetId !== 'string') fail('a referência ao arquivo');
+      if (!isPoint(obj.origin)) fail('val.c.origem');
+      if (!isFiniteNumber(obj.metersPerPixel) || obj.metersPerPixel <= 0) fail('val.c.escala');
+      if (!isFiniteNumber(obj.widthPx) || !isFiniteNumber(obj.heightPx)) fail('val.c.dimensoes');
+      if (typeof obj.assetId !== 'string') fail('val.c.referencia');
       break;
     case 'path':
-      if (!Array.isArray(obj.nodes) || obj.nodes.length === 0) fail('a lista de nós');
+      if (!Array.isArray(obj.nodes) || obj.nodes.length === 0) fail('val.c.nos');
       if (!(obj.nodes as unknown[]).every((n) => isRecord(n) && isPoint(n.pos))) {
-        fail('a posição de um nó');
+        fail('val.c.posicaoNo');
       }
       break;
     case 'measure':
-      if (!isPoint(obj.a) || !isPoint(obj.b)) fail('a posição das pontas');
+      if (!isPoint(obj.a) || !isPoint(obj.b)) fail('val.c.pontas');
       break;
     case 'infobox':
     case 'heighttable':
-      if (!isPoint(obj.posMm)) fail('a posição no papel');
+      if (!isPoint(obj.posMm)) fail('val.c.papel');
       break;
     case 'logo':
-      if (!isPoint(obj.posMm)) fail('a posição no papel');
-      if (!isFiniteNumber(obj.widthMm) || obj.widthMm <= 0) fail('a largura');
-      if (typeof obj.assetId !== 'string') fail('a referência ao arquivo');
+      if (!isPoint(obj.posMm)) fail('val.c.papel');
+      if (!isFiniteNumber(obj.widthMm) || obj.widthMm <= 0) fail('val.c.largura');
+      if (typeof obj.assetId !== 'string') fail('val.c.referencia');
       break;
   }
 }

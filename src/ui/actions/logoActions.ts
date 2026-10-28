@@ -5,6 +5,7 @@ import { pageSize, usableArea } from '@core/scale/units';
 import { ImageImportError, pickImage } from '@platform/imageImport';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
+import { t } from '@core/i18n/i18n';
 
 /** Largura com que o logo nasce na folha, em mm. Ajusta-se no painel. */
 const LARGURA_INICIAL_MM = 30;
@@ -55,6 +56,6 @@ export async function insertLogo(): Promise<void> {
       return;
     }
     console.error(err);
-    window.alert('Não foi possível inserir a imagem.');
+    window.alert(t('aviso.naoInseriu'));
   }
 }

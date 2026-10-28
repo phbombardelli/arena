@@ -1,6 +1,7 @@
 import type { Vec2 } from '@core/geometry/vec';
 import { newId } from '@core/model/ids';
 import type { Obstacle, ObstacleElement, ObstacleType } from '@core/model/types';
+import { t } from '@core/i18n/i18n';
 
 /**
  * Biblioteca de obstáculos.
@@ -27,59 +28,87 @@ export interface ObstacleDef {
 export const OBSTACLES: readonly ObstacleDef[] = [
   {
     type: 'vertical',
-    label: 'Vertical',
+    get label() {
+      return t('obst.vertical');
+    },
     faceWidthM: 4,
     spreadM: null,
     elements: 1,
-    hint: 'Uma única linha de varas, sem largura.',
+    get hint() {
+      return t('obst.verticalDica');
+    },
   },
   {
     type: 'oxer',
-    label: 'Oxer',
+    get label() {
+      return t('obst.oxer');
+    },
     faceWidthM: 4,
     spreadM: 1.5,
     elements: 2,
-    hint: 'Duas linhas de varas, com largura entre elas.',
+    get hint() {
+      return t('obst.oxerDica');
+    },
   },
   {
     type: 'triplice',
-    label: 'Tríplice',
+    get label() {
+      return t('obst.triplice');
+    },
     faceWidthM: 4,
     spreadM: 2.2,
     elements: 3,
-    hint: 'Três linhas em altura crescente.',
+    get hint() {
+      return t('obst.tripliceDica');
+    },
   },
   {
     type: 'muro',
-    label: 'Muro',
+    get label() {
+      return t('obst.muro');
+    },
     faceWidthM: 4,
     spreadM: 0.6,
     elements: 1,
-    hint: 'Bloco maciço.',
+    get hint() {
+      return t('obst.muroDica');
+    },
   },
   {
     type: 'plano',
-    label: 'Vara no chão',
+    get label() {
+      return t('obst.plano');
+    },
     faceWidthM: 4,
     spreadM: null,
     elements: 1,
-    hint: 'Uma vara deitada no chão.',
+    get hint() {
+      return t('obst.planoDica');
+    },
   },
   {
     type: 'x',
-    label: 'X',
+    get label() {
+      return t('obst.x');
+    },
     faceWidthM: 3.5,
     spreadM: null,
     elements: 1,
-    hint: 'Duas varas cruzadas, com suporte nas pontas.',
+    get hint() {
+      return t('obst.xDica');
+    },
   },
   {
     type: 'cavalete',
-    label: 'Cavalete',
+    get label() {
+      return t('obst.cavalete');
+    },
     faceWidthM: 3,
     spreadM: null,
     elements: 1,
-    hint: 'Vara no chão apoiada num X em cada ponta.',
+    get hint() {
+      return t('obst.cavaleteDica');
+    },
   },
 ] as const;
 

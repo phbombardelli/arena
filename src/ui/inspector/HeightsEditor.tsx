@@ -4,8 +4,9 @@ import { formatHeights, obstacleLabel } from '@core/library/obstacles';
 import type { Obstacle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
+import { t } from '@core/i18n/i18n';
 
-/** Mais que isso não existe em pista: é o teto de "Acrescentar elemento". */
+/** Mais que isso não existe em pista: é o teto de t('alturas.acrescentar'). */
 const MAX_ELEMENTOS = 6;
 
 /**
@@ -24,7 +25,7 @@ export function HeightsEditor() {
   const lista = [...naOrdem, ...semNumero];
 
   if (lista.length === 0) {
-    return <p className="note">Ainda não há obstáculos no croqui.</p>;
+    return <p className="note">{t('alturas.vazio')}</p>;
   }
 
   return (
@@ -34,14 +35,14 @@ export function HeightsEditor() {
         return (
           <section key={o.id} className="heights-row">
             <h4>
-              {obstacleLabel(o) || 'sem número'}
+              {obstacleLabel(o) || t('alturas.semNumero')}
               {formatHeights(o) !== '' && <span className="dim"> · {formatHeights(o)}</span>}
             </h4>
-            {o.elements.length === 0 && <p className="note dim">Sem altura.</p>}
+            {o.elements.length === 0 && <p className="note dim">{t('alturas.semAltura')}</p>}
             {o.elements.map((el, i) => (
               <div className="element-row" key={i}>
                 <NumberField
-                  label={`Elemento ${i + 1}`}
+                  label={t('alturas.elemento', { n: i + 1 })}
                   unit="m"
                   value={el.height ?? 0}
                   decimals={2}
@@ -56,7 +57,7 @@ export function HeightsEditor() {
                 />
                 <button
                   className="mini"
-                  title="Remover este elemento"
+                  title={t('alturas.remover')}
                   disabled={travado}
                   onClick={() => apply('Remover elemento', (d) => removeElement(d, o.id, i))}
                 >
@@ -66,11 +67,11 @@ export function HeightsEditor() {
             ))}
             <button
               className="mini add"
-              title="Acrescentar elemento"
+              title={t('alturas.acrescentar')}
               disabled={travado || o.elements.length >= MAX_ELEMENTOS}
-              onClick={() => apply('Acrescentar elemento', (d) => addElement(d, o.id))}
+              onClick={() => apply(t('alturas.acrescentar'), (d) => addElement(d, o.id))}
             >
-              + elemento
+              {t('alturas.maisElemento')}
             </button>
           </section>
         );
