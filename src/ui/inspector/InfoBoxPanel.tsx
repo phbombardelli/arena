@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
 import { fieldLabel } from '@core/library/annotations';
+import { aplicaTempos, FORMATOS_TEMPO, type FormatoTempo } from '@core/library/courseTimes';
+import type { MessageKey } from '@core/i18n/messages';
 import { t } from '@core/i18n/i18n';
 
 /**
@@ -63,6 +65,7 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
         const v = valores[campo.id];
         if (v != null) campo.value = v;
       }
+      aplicaTempos(b);
     });
   };
 
@@ -79,6 +82,8 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
       </div>
 
       <Extensao box={box} medidaM={extensaoDesenho(doc)} travado={travado} edita={edita} />
+
+      <Tempos box={box} travado={travado} edita={edita} />
 
       <h3>{t('quadrop.campos')}</h3>
       <div className="leg-list">
@@ -107,6 +112,8 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
                   'Valor do quadro',
                   (b) => {
                     b.fields[i]!.value = e.target.value;
+                    // Os tempos acompanham a distância e a velocidade.
+                    if (campo.id === 'distancia' || campo.id === 'velocidade') aplicaTempos(b);
                   },
                   `inf-${box.id}-${campo.id}`,
                 )
@@ -191,6 +198,7 @@ function Extensao({
       if (!campo) return;
       if (valor != null) campo.value = metros(valor);
       else if (medidaM > 0) campo.value = metros(medidaM);
+      aplicaTempos(b);
     });
   };
 
@@ -232,6 +240,71 @@ function Extensao({
           <p className="note dim">{t('quadrop.corrigidaNota')}</p>
         )}
       </div>
+    </>
+  );
+}
+
+const ROTULO_FORMATO: Record<FormatoTempo, MessageKey> = {
+  A: 'quadrop.fmtA',
+  ideal: 'quadrop.fmtIdeal',
+  faixa: 'quadrop.fmtFaixa',
+  C: 'quadrop.fmtC',
+};
+
+/**
+ * Tempos do quadro (B-25), pelas regras da CBH, como a calculadora do
+ * SAPH. Escolher o formato já calcula; depois, mudar a distância ou a
+ * velocidade recalcula sozinho.
+ */
+function Tempos({
+  box,
+  travado,
+  edita,
+}: {
+  box: InfoBox;
+  travado: boolean;
+  edita: (rotulo: string, recipe: (b: InfoBox) => void) => void;
+}) {
+  const formato = box.tempos?.formato ?? 'A';
+  const [falhou, setFalhou] = useState(false);
+
+  const calcula = (f: FormatoTempo) => {
+    // Sem distância ou velocidade não há o que gravar: só avisa.
+    const teste = structuredClone(box);
+    teste.tempos = { formato: f };
+    const ok = aplicaTempos(teste);
+    setFalhou(!ok);
+    edita(t('quadrop.calcular'), (b) => {
+      b.tempos = { formato: f };
+      aplicaTempos(b);
+    });
+  };
+
+  return (
+    <>
+      <h3>{t('quadrop.tempos')}</h3>
+      <label className="field">
+        <span>{t('quadrop.formato')}</span>
+        <select
+          value={formato}
+          disabled={travado}
+          onChange={(e) => calcula(e.target.value as FormatoTempo)}
+        >
+          {FORMATOS_TEMPO.map((f) => (
+            <option key={f} value={f}>
+              {t(ROTULO_FORMATO[f])}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="row-buttons">
+        <button disabled={travado} onClick={() => calcula(formato)}>
+          {t('quadrop.calcular')}
+        </button>
+      </div>
+      <p className={falhou ? 'note' : 'note dim'}>
+        {falhou ? t('quadrop.semTempos') : t('quadrop.temposNota')}
+      </p>
     </>
   );
 }

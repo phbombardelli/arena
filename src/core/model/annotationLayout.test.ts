@@ -21,7 +21,8 @@ describe('quadro técnico', () => {
     box.fields[1]!.enabled = false;
     box.fields[2]!.enabled = false;
     expect(infoBoxLayout(box).heightMm).toBeLessThan(cheio);
-    expect(infoBoxLayout(box).cells).toHaveLength(box.fields.length - 3);
+    const ligados = box.fields.filter((f) => f.enabled).length;
+    expect(infoBoxLayout(box).cells).toHaveLength(ligados);
   });
 
   it('em duas colunas fica mais baixo e as células se dividem', () => {
@@ -40,7 +41,7 @@ describe('quadro técnico', () => {
     const box = createInfoBox({ x: 0, y: 0 });
     box.columns = 2;
     const l = infoBoxLayout(box);
-    const porColuna = Math.ceil(box.fields.length / 2);
+    const porColuna = Math.ceil(box.fields.filter((f) => f.enabled).length / 2);
 
     // O primeiro campo da segunda coluna sobe para o topo, não continua
     // descendo — é a diferença entre ler em bloco e ler em zigue-zague.

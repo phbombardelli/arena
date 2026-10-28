@@ -37,11 +37,11 @@ export function createTextLabel(pos: Vec2, text = t('texto.padrao')): TextLabel 
   };
 }
 
-const campo = (id: string, label: string, value = ''): InfoBoxField => ({
+const campo = (id: string, label: string, value = '', enabled = true): InfoBoxField => ({
   id,
   label,
   value,
-  enabled: true,
+  enabled,
 });
 
 /**
@@ -56,7 +56,7 @@ const campo = (id: string, label: string, value = ''): InfoBoxField => ({
  * esportiva, então o programa não confere nada disso. Quem manda é quem
  * assina o croqui.
  */
-const CAMPOS: [id: string, key: MessageKey, valor?: string][] = [
+const CAMPOS: [id: string, key: MessageKey, valor?: string, enabled?: boolean][] = [
   ['prova', 'quadro.prova'],
   ['tabela', 'quadro.tabela'],
   ['artigo', 'quadro.artigo'],
@@ -64,6 +64,9 @@ const CAMPOS: [id: string, key: MessageKey, valor?: string][] = [
   ['velocidade', 'quadro.velocidade', '350 m/min'],
   ['distancia', 'quadro.distancia'],
   ['tempo', 'quadro.tempo'],
+  // Tempo ideal e faixa só valem nas provas que os usam (B-25).
+  ['ideal', 'quadro.ideal', '', false],
+  ['faixa', 'quadro.faixa', '', false],
   ['limite', 'quadro.limite'],
   ['obstaculos', 'quadro.obstaculos'],
   ['esforcos', 'quadro.esforcos'],
@@ -71,7 +74,7 @@ const CAMPOS: [id: string, key: MessageKey, valor?: string][] = [
 ];
 
 /** Os campos padrão, com o título na língua atual. */
-export const camposPadrao = (): InfoBoxField[] => CAMPOS.map(([id, key, valor]) => campo(id, t(key), valor));
+export const camposPadrao = (): InfoBoxField[] => CAMPOS.map(([id, key, valor, enabled]) => campo(id, t(key), valor, enabled));
 
 /**
  * Título de um campo como sai na folha: o padrão segue a língua da tela;

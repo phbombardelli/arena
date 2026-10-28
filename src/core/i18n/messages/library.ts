@@ -69,6 +69,8 @@ export const LIBRARY = {
   'quadro.velocidade': { pt: 'Velocidade', en: 'Speed', es: 'Velocidad' },
   'quadro.distancia': { pt: 'Distância', en: 'Length', es: 'Longitud' },
   'quadro.tempo': { pt: 'Tempo concedido', en: 'Time allowed', es: 'Tiempo acordado' },
+  'quadro.ideal': { pt: 'Tempo ideal', en: 'Optimum time', es: 'Tiempo ideal' },
+  'quadro.faixa': { pt: 'Faixa de tempo', en: 'Time band', es: 'Franja de tiempo' },
   'quadro.limite': { pt: 'Tempo limite', en: 'Time limit', es: 'Tiempo límite' },
   'quadro.obstaculos': { pt: 'Obstáculos', en: 'Obstacles', es: 'Obstáculos' },
   'quadro.esforcos': { pt: 'Esforços', en: 'Efforts', es: 'Esfuerzos' },

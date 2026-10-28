@@ -355,6 +355,19 @@ export interface InfoBox extends BaseObject {
    * traçado na hora.
    */
   distanciaCorrigidaM?: number;
+  /**
+   * Como os tempos do quadro são calculados (regras da CBH). Sem ele, o
+   * croqui é anterior ao cálculo e vale a Tabela A.
+   */
+  tempos?: TemposDoQuadro;
+}
+
+/**
+ * A: concedido e limite. ideal: com o tempo ideal. faixa: faixa de tempo
+ * (Art. 220.3). C: só o limite, que vem da extensão.
+ */
+export interface TemposDoQuadro {
+  formato: 'A' | 'ideal' | 'faixa' | 'C';
 }
 
 export interface HeightTable extends BaseObject {
