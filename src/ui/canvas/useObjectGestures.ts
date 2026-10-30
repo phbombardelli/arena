@@ -367,6 +367,8 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
     applyPending(shiftHeld.current);
     pending.current = null;
     gesture.current = null;
+    // Dois arrastos seguidos são dois passos de desfazer, não um.
+    useDocumentStore.getState().sealHistory();
     if (useEditorStore.getState().dragging) useEditorStore.getState().setDragging(false);
 
     if (g.kind === 'drag' && g.soEste && Math.abs(g.applied.x) < 1e-9 && Math.abs(g.applied.y) < 1e-9) {

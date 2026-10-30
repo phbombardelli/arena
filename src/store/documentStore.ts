@@ -37,6 +37,8 @@ interface DocumentState {
     doc: CourseDocument,
     file?: { name: string | null; handle: FileHandleLike | null; libraryId?: string | null },
   ) => void;
+  /** Fecha a entrada atual: a próxima mutação não se junta a ela, mesmo com a mesma chave. */
+  sealHistory: () => void;
   undo: () => void;
   redo: () => void;
   canUndo: () => boolean;
@@ -85,6 +87,13 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     if (past.length > HISTORY_LIMIT) past.shift();
 
     set({ doc: nextDoc, past, future: [], dirty: true });
+  },
+
+  sealHistory: () => {
+    const { past } = get();
+    const last = past[past.length - 1];
+    if (!last || last.mergeKey == null) return;
+    set({ past: [...past.slice(0, -1), { ...last, mergeKey: null }] });
   },
 
   replace: (doc, file) =>

@@ -401,6 +401,7 @@ export function Canvas() {
           setSelection([trena.id]);
           setTool('select');
         }
+        st.sealHistory();
       }
       gestures.onPointerUp();
     },
