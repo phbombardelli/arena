@@ -11,9 +11,18 @@ import { ExerciseDialog } from './gym/ExerciseDialog';
 import { applyUpdate, usePwa } from '@platform/pwa';
 import { useLang } from './i18n/useLang';
 import { t } from '@core/i18n/i18n';
+import { publicados } from './help/Tutorials';
+import { boasVindasVistas, marcaBoasVindas } from '@platform/tutorialPrefs';
+import { useEditorStore } from '@store/editorStore';
 
 export function App() {
   useEffect(installUnloadGuard, []);
+  // Primeira abertura neste aparelho: o convite para o vídeo 1, uma vez só.
+  useEffect(() => {
+    if (!publicados || boasVindasVistas()) return;
+    marcaBoasVindas();
+    useEditorStore.getState().setDialog('boas-vindas');
+  }, []);
   // Trocar a língua remonta a interface inteira: todo texto sai de novo do
   // catálogo. O croqui e o estado do editor moram nos stores e ficam.
   const lang = useLang();

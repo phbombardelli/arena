@@ -819,3 +819,48 @@ button.mini.neutral { color: var(--text); }
 .contact-field textarea { resize: vertical; }
 .contact-pair { display: flex; gap: 8px; }
 .contact-aviso { color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 6px 8px; margin: 0; font-size: 12.5px; }
+
+/* ----- tutoriais em vídeo e boas-vindas (B-25) */
+.toolbar .tutorials-button {
+  background: var(--gold-soft); border-color: var(--gold-b); color: var(--text); font-weight: 600;
+  border-radius: 999px; padding: 4px 12px; white-space: nowrap;
+}
+.toolbar .tutorials-button:hover { background: var(--gold-hover); }
+/* Em tela estreita o botão fica só com o ▶: o resto da barra não cabe. */
+@media (max-width: 1360px) { .toolbar .tutorials-button .rotulo { display: none; } .toolbar .tutorials-button { padding: 4px 10px; } }
+.dialog.larga { width: min(1040px, calc(100vw - 32px)); }
+.tut-grid { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.tut-card {
+  width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+  padding: 8px; text-align: left; border: 1px solid var(--border); border-radius: 10px; background: var(--chrome);
+}
+.tut-card:hover { border-color: var(--gold-b); background: var(--gold-soft); }
+.tut-card strong { font-size: 13.5px; }
+.tut-card strong, .tut-card em { white-space: normal; }
+.tut-card em { font-style: normal; font-size: 12px; color: var(--text-dim); line-height: 1.35; }
+.tut-capa { position: relative; display: block; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; background: #1d232b; }
+.tut-capa img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* O ▶ no canto, para não tampar o título que está no meio da capa. */
+.tut-play {
+  position: absolute; left: 6px; bottom: 6px;
+  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(20, 28, 36, 0.75); color: #fff; font-size: 12px; padding-left: 2px;
+}
+.tut-card:hover .tut-play { background: var(--gold-b); }
+.tut-duracao {
+  position: absolute; right: 6px; bottom: 6px; padding: 1px 6px; border-radius: 4px;
+  background: rgba(20, 28, 36, 0.75); color: #fff; font-size: 11px; font-weight: 600;
+}
+.tut-visto { font-size: 11.5px; font-weight: 600; color: var(--ok); }
+.tut-player { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 14px; }
+@media (max-width: 760px) { .tut-player { grid-template-columns: 1fr; } }
+.tut-tela video { width: 100%; aspect-ratio: 16 / 9; display: block; border-radius: 6px; background: #000; }
+.tut-nav { display: flex; gap: 6px; margin-top: 8px; }
+.tut-capitulos h3 { margin: 0 0 2px; font-size: 13.5px; }
+.tut-capitulos ol { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-height: 420px; overflow-y: auto; }
+.tut-capitulos button { width: 100%; text-align: left; border-color: transparent; background: none; padding: 4px 6px; font-size: 12.5px; }
+.tut-capitulos button span { display: inline-block; min-width: 34px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.tut-capitulos button:hover { background: var(--gold-hover); }
+.tut-capitulos button.active { background: var(--act-soft); color: var(--act-ink); font-weight: 600; }
+.welcome .tut-card-unico { margin: 4px 0 10px; padding: 0; border: none; background: none; }
+.welcome .row-buttons { flex-wrap: wrap; }

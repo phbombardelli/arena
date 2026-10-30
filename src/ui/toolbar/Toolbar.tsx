@@ -34,6 +34,7 @@ import { SheetSettings } from '@ui/inspector/SheetSettings';
 import { t } from '@core/i18n/i18n';
 import { LanguageSwitcher } from '@ui/i18n/LanguageSwitcher';
 import { Menu, type MenuEntry } from './Menu';
+import { abrirTutoriais, publicados } from '@ui/help/Tutorials';
 
 /**
  * Barra de cima: o arquivo e a vista.
@@ -178,6 +179,7 @@ export function Toolbar() {
   ];
 
   const ajuda: MenuEntry[] = [
+    ...(publicados ? [{ label: t('tut.menu'), onSelect: () => abrirTutoriais() }] : []),
     { label: t('ajuda.atalhos'), shortcut: '?', onSelect: () => setDialog('atalhos') },
     { label: t('ajuda.contato'), onSelect: () => setDialog('contato') },
     { label: t('ajuda.sobre'), onSelect: () => setDialog('sobre') },
@@ -277,6 +279,11 @@ export function Toolbar() {
         </span>
       </div>
       <div className="toolbar-group">
+        {publicados && (
+          <button className="tutorials-button" onClick={() => abrirTutoriais()} title={t('tut.botaoDica')}>
+            ▶<span className="rotulo"> {t('tut.botao')}</span>
+          </button>
+        )}
         <LanguageSwitcher />
         <AccountButton />
       </div>

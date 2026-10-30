@@ -7,6 +7,7 @@ import { AdminPanelBody, CloudConsentBody } from '@ui/cloud/CloudUI';
 import { t } from '@core/i18n/i18n';
 import { APP_VERSION } from '@core/persistence/serialize';
 import { ContactForm } from '@ui/help/ContactForm';
+import { TutorialsBody, WelcomeBody } from '@ui/help/Tutorials';
 
 /** A lista na língua atual: montada a cada abertura, não no carregamento. */
 const atalhos = (): [string, string][] => [
@@ -135,6 +136,20 @@ export function Dialogs() {
     return (
       <Dialog title={t('dialogo.contato')} onClose={fecha}>
         <ContactForm />
+      </Dialog>
+    );
+  }
+  if (dialog === 'tutoriais') {
+    return (
+      <Dialog title={t('tut.titulo')} onClose={fecha} larga>
+        <TutorialsBody />
+      </Dialog>
+    );
+  }
+  if (dialog === 'boas-vindas') {
+    return (
+      <Dialog title={t('bv.titulo')} onClose={fecha}>
+        <WelcomeBody />
       </Dialog>
     );
   }

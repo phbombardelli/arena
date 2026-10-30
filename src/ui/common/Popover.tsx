@@ -80,13 +80,15 @@ interface DialogProps {
    * (tabela de alturas), arrastada para o lado.
    */
   fundoClaro?: boolean;
+  /** Janela larga: para o que precisa de espaço na horizontal (o player dos tutoriais). */
+  larga?: boolean;
 }
 
 /**
  * Janela modal simples, para o que precisa de mais espaço que um popover.
  * Arrasta-se pelo título, para não esconder o que está no desenho.
  */
-export function Dialog({ title, onClose, children, fundoClaro = false }: DialogProps) {
+export function Dialog({ title, onClose, children, fundoClaro = false, larga = false }: DialogProps) {
   const [desvio, setDesvio] = useState({ x: 0, y: 0 });
   const arraste = useRef<{ x: number; y: number; dx: number; dy: number } | null>(null);
 
@@ -107,7 +109,7 @@ export function Dialog({ title, onClose, children, fundoClaro = false }: DialogP
       onPointerDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="dialog"
+        className={larga ? 'dialog larga' : 'dialog'}
         role="dialog"
         aria-modal="true"
         aria-label={title}
