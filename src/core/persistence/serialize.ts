@@ -5,7 +5,14 @@ import { applyMigrations, type RawDocument } from './migrations';
 import { validateDocument, type ValidationResult } from './validate';
 import { t } from '@core/i18n/i18n';
 
-export const APP_VERSION = '1.0.0';
+import { version } from '../../../package.json';
+
+/**
+ * Versão do Arena (B-94). O número mora só no package.json; cada
+ * publicação que muda o que o usuário vê sobe o número e ganha uma linha
+ * em docs/NOVIDADES.md e uma tag vX.Y.Z no git.
+ */
+export const APP_VERSION: string = version;
 
 /**
  * Serialização do projeto. Indentado com 2 espaços de propósito: o arquivo

@@ -173,7 +173,7 @@ export function Dialogs() {
           </ul>
           <p>{t('sobre.arquivos')}</p>
           <p className="note">Português · English · Español</p>
-          <p className="note dim">{t('sobre.versao', { versao: APP_VERSION.replace(/\.0$/, '') })} · Pedro H Bombardelli</p>
+          <p className="note dim">{t('sobre.versao', { versao: APP_VERSION })} · Pedro H Bombardelli</p>
           <div className="row-buttons">
             <button onClick={() => setDialog('contato')}>{t('dialogo.contato')}</button>
           </div>

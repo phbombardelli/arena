@@ -2095,3 +2095,17 @@ segundo bloco de tempos. O Arena não tinha nada disso.
   conta o "Só desempate", o sentido contrário e o vertical que vira oxer.
   Conferir regra esportiva é o que o §44 evita; aqui é exceção pedida pelo
   desenhador, como o limite do composto. Só informam, nada é bloqueado.
+
+## 100. Versões do Arena (B-94)
+
+- O número da versão mora só no `package.json`. `APP_VERSION`
+  (`serialize.ts`) lê dali, e daí saem o Sobre, o `appVersion` dos
+  arquivos salvos e o campo de versão das sugestões. Antes era uma
+  constante escrita à mão que nunca mudava.
+- Regra `maior.menor.correção`: correção sem função nova sobe o 3º; função
+  nova ou mudança visível sobe o 2º; o 1º só quando um croqui antigo deixar
+  de abrir igual. O formato do arquivo tem a sua própria `schemaVersion`,
+  que continua independente.
+- Cada versão ganha uma entrada em `docs/NOVIDADES.md` e a tag `vX.Y.Z` no
+  git. Marco zero: v1.0.0 é o commit 98e8aed (27/10/2026, "versão 1.0" do
+  Sobre); v1.1.0 é a do desempate.
