@@ -402,7 +402,7 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
     // O croqui mostra só as distâncias entre esforços marcadas no painel;
     // o total fica no painel (o modo de antes não conta mais).
     const temTotal = false;
-    const pares = courseDistancesAlong(p, obstaculos, cruzadas);
+    const pares = courseDistancesAlong(p, obstaculos, cruzadas, doc.desempate);
     // De nó a nó só quando o traçado não liga dois obstáculos (decisão 76).
     const temTrechos = false;
     if (!temTotal && !temTrechos && !Object.values(marcadas).some(Boolean)) continue;

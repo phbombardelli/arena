@@ -1,5 +1,5 @@
 import { placeAssistantPath } from '@core/commands/pathOps';
-import { buildCourseRide } from '@core/assist/courseRide';
+import { buildCourseRide, type Fase } from '@core/assist/courseRide';
 import { DEFAULT_RIDE, type RideParams } from '@core/assist/ridePath';
 import type { CurveWarning } from '@core/assist/legCurve';
 import { formatDistance, pathLength } from '@core/model/path';
@@ -23,18 +23,16 @@ const MOTIVO: Record<CurveWarning, MessageKey> = {
  * desenhada assim mesmo e o problema é dito: o desenhador precisa ver
  * ONDE está o aperto para decidir o que mudar na pista.
  */
-export function traceCourse(params: RideParams = DEFAULT_RIDE): void {
+export function traceCourse(params: RideParams = DEFAULT_RIDE, fase: Fase = 'percurso'): void {
   const { doc, apply } = useDocumentStore.getState();
-  const resultado = buildCourseRide(doc, params);
+  const resultado = buildCourseRide(doc, params, fase);
 
   if (!resultado) {
-    window.alert(
-      t('ride.nadaTracar'),
-    );
+    window.alert(t(fase === 'desempate' ? 'dsp.semOrdem' : 'ride.nadaTracar'));
     return;
   }
 
-  apply('Assistente de traçado', (d) => placeAssistantPath(d, resultado.path));
+  apply('Assistente de traçado', (d) => placeAssistantPath(d, resultado.path, fase));
   useEditorStore.getState().setSelection([resultado.path.id]);
 
   // Curva para trás é decisão visível: o desenhador tem que saber que ali

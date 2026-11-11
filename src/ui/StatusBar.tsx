@@ -20,7 +20,8 @@ import { t } from '@core/i18n/i18n';
  */
 export function StatusBar() {
   const doc = useDocumentStore((s) => s.doc);
-  const { cursorM, viewport, mode, setDialog } = useEditorStore();
+  const { cursorM, viewport, mode, setDialog, vista, setVista } = useEditorStore();
+  const temDesempate = doc.kind !== 'ginastica' && (doc.desempate?.ordem.length ?? 0) > 0;
 
   const mpp = metersPerPixel(viewport, doc.page.printScale);
   const step = doc.grid.stepM > 0 ? doc.grid.stepM : visibleGridStep(mpp, 8);
@@ -35,6 +36,18 @@ export function StatusBar() {
           : 'X — · Y —'}
       </span>
       <span className="spacer" />
+
+      {/* Desempate (B-92): o que a tela mostra. A folha escolhe ao exportar. */}
+      {temDesempate && (
+        <div className="vista-switch" role="group" aria-label={t('vista.grupo')} title={t('vista.dica')}>
+          <span className="vista-rotulo">{t('vista.grupo')}</span>
+          {(['percurso', 'desempate', 'ambos'] as const).map((v) => (
+            <button key={v} className={vista === v ? 'active' : ''} aria-pressed={vista === v} onClick={() => setVista(v)}>
+              {t(`vista.${v}`)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <Popover
         className="chip"

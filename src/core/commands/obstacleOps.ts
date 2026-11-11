@@ -1,6 +1,7 @@
 import { toMillimeterPrecision } from '@core/geometry/snap';
 import type { Vec2 } from '@core/geometry/vec';
 import { acceptsLiverpool, fitElementsToType, obstacleDef } from '@core/library/obstacles';
+import { proximoNumero } from '@core/library/desempate';
 import type {
   BarAppearance,
   CourseDocument,
@@ -45,6 +46,26 @@ export function setObstacleType(doc: CourseDocument, id: ObjectId, type: Obstacl
 export function setObstacleNumber(doc: CourseDocument, id: ObjectId, numero: string): void {
   const obstacle = obstacleOf(doc, id);
   if (obstacle) obstacle.number = numero.trim().slice(0, 6);
+}
+
+/**
+ * Marca ou desmarca o obstáculo como "Só desempate" (B-92). Ao marcar, ele
+ * ganha o número seguinte ao maior do croqui, sem letra, como nos croquis
+ * de referência (14, 15, 16 depois de um percurso de 13).
+ */
+export function setSoDesempate(doc: CourseDocument, id: ObjectId, liga: boolean): void {
+  const obstacle = obstacleOf(doc, id);
+  if (!obstacle) return;
+  if (!liga) {
+    delete obstacle.soDesempate;
+    return;
+  }
+  obstacle.soDesempate = true;
+  obstacle.number = proximoNumero(
+    doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'),
+    id,
+  );
+  obstacle.letter = '';
 }
 
 export function setObstacleLetter(

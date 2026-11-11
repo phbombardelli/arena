@@ -41,9 +41,8 @@ import {
   unlinkSelection,
   selectAll,
 } from '@ui/actions/editActions';
-import { exportCurrentPdf } from '@ui/actions/exportActions';
+import { pedeSaida } from '@ui/actions/exportActions';
 import { toggleGrid } from '@ui/actions/viewActions';
-import { printDocument } from '@platform/print';
 import { useElementSize } from '@ui/hooks/useElementSize';
 import { ArenaDraft, ArenaHandles } from './ArenaHandles';
 import { PathDraft, PathHandles } from './PathHandles';
@@ -82,6 +81,7 @@ export function Canvas() {
     pathDraft,
     activeNode,
     mode,
+    vista,
   } = useEditorStore();
 
   const { ref, size: wrapSize } = useElementSize<HTMLDivElement>();
@@ -487,10 +487,10 @@ export function Canvas() {
         duplicateSelection();
       } else if (ctrl && key === 'e') {
         e.preventDefault();
-        void exportCurrentPdf();
+        pedeSaida('pdf', 'atalho');
       } else if (ctrl && key === 'p') {
         e.preventDefault();
-        printDocument(st.doc);
+        pedeSaida('imprimir', 'atalho');
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         if (sel.length === 0) return;
         e.preventDefault();
@@ -627,6 +627,7 @@ export function Canvas() {
           <RenderDocument
             mode="screen"
             editScope={mode}
+            vista={vista}
             doc={doc}
             selection={selection}
             viewBoxMm={box}

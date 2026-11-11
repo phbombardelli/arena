@@ -864,3 +864,20 @@ button.mini.neutral { color: var(--text); }
 .tut-capitulos button.active { background: var(--act-soft); color: var(--act-ink); font-weight: 600; }
 .welcome .tut-card-unico { margin: 4px 0 10px; padding: 0; border: none; background: none; }
 .welcome .row-buttons { flex-wrap: wrap; }
+
+/* desempate (B-92): o que muda em cada obstáculo, e a vista */
+.dsp-variacoes { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+.dsp-degrau { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--border);
+  border-radius: 6px; padding: 1px 2px 1px 6px; }
+.dsp-degrau strong { margin-right: 2px; font-variant-numeric: tabular-nums; }
+.dsp-degrau button { padding: 0 5px; min-height: 0; line-height: 18px; font-size: 11px; }
+.dsp-degrau button.active { background: #1f6fb2; border-color: #1f6fb2; color: #fff; }
+.vista-switch { display: inline-flex; align-items: center; gap: 1px; border: 1px solid var(--border);
+  border-radius: 999px; padding: 1px; }
+.vista-switch button { border: 0; background: none; border-radius: 999px; padding: 1px 8px; font-size: 11px;
+  min-height: 0; line-height: 18px; color: var(--text-dim); }
+.vista-switch button:hover { color: var(--text); }
+.vista-switch button.active { background: #1f6fb2; color: #fff; }
+.saida-opcoes { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.saida-opcoes label { display: flex; gap: 6px; align-items: flex-start; }
+.vista-rotulo { font-size: 11px; color: var(--text-dim); padding: 0 4px 0 6px; }

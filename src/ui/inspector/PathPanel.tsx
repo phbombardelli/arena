@@ -32,6 +32,7 @@ export function PathPanel({ path }: { path: CoursePath }) {
     path,
     doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'),
     doc.objects.filter((o): o is TimingLine => o.kind === 'timing'),
+    doc.desempate,
   );
   const marcadas = pares.filter((p) => path.obstacleDistances?.[p.key]).length;
 

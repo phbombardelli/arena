@@ -3,6 +3,7 @@ import 'svg2pdf.js';
 import type { CourseDocument } from '@core/model/types';
 import { buildPaperSvg } from './paperSvg';
 import { t } from '@core/i18n/i18n';
+import { paginasDaFolha } from '@core/library/desempate';
 
 /**
  * Exportação em PDF **vetorial**: texto continua texto, linhas continuam
@@ -17,6 +18,26 @@ function makeDoc(widthMm: number, heightMm: number): jsPDF {
     format: [widthMm, heightMm],
     compress: true,
   });
+}
+
+/**
+ * Uma página por vista: o percurso e, se pedido, a página do desempate
+ * (B-92). Cada página é montada, convertida e desmontada em sequência.
+ */
+async function folhaPdf(doc: CourseDocument): Promise<jsPDF> {
+  let pdf: jsPDF | null = null;
+  for (const vista of paginasDaFolha(doc)) {
+    const handle = buildPaperSvg(doc, vista);
+    try {
+      const { widthMm, heightMm } = handle;
+      if (!pdf) pdf = makeDoc(widthMm, heightMm);
+      else pdf.addPage([widthMm, heightMm], widthMm >= heightMm ? 'landscape' : 'portrait');
+      await pdf.svg(handle.svg, { x: 0, y: 0, width: widthMm, height: heightMm });
+    } finally {
+      handle.dispose();
+    }
+  }
+  return pdf!;
 }
 
 async function svgToPdf(svg: SVGSVGElement, widthMm: number, heightMm: number): Promise<jsPDF> {
@@ -43,26 +64,16 @@ function marcarFicha(pdf: jsPDF, doc: CourseDocument, fileName: string): void {
 }
 
 export async function exportDocumentPdf(doc: CourseDocument, fileName: string): Promise<void> {
-  const handle = buildPaperSvg(doc);
-  try {
-    const pdf = await svgToPdf(handle.svg, handle.widthMm, handle.heightMm);
-    marcarFicha(pdf, doc, fileName);
-    pdf.save(fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`);
-  } finally {
-    handle.dispose();
-  }
+  const pdf = await folhaPdf(doc);
+  marcarFicha(pdf, doc, fileName);
+  pdf.save(fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`);
 }
 
 /** Mesma exportação, devolvida como data URL. Usada na verificação. */
 export async function documentPdfDataUrl(doc: CourseDocument): Promise<string> {
-  const handle = buildPaperSvg(doc);
-  try {
-    const pdf = await svgToPdf(handle.svg, handle.widthMm, handle.heightMm);
-    marcarFicha(pdf, doc, 'croqui');
-    return pdf.output('datauristring');
-  } finally {
-    handle.dispose();
-  }
+  const pdf = await folhaPdf(doc);
+  marcarFicha(pdf, doc, 'croqui');
+  return pdf.output('datauristring');
 }
 
 /* ------------------------------------------------------- diagnóstico */

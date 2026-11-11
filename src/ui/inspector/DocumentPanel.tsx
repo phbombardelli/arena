@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
-import { courseOrder } from '@core/assist/courseRide';
+import { useEffect, useMemo, useState } from 'react';
+import { courseOrder, phaseStops, viraOxer } from '@core/assist/courseRide';
+import { avisosDesempate, lerOrdem, limpaVariacoes, marcaVariacao, ordemTexto, variacoesDe } from '@core/library/desempate';
+import { traceCourse } from '@ui/actions/rideActions';
 import { findInterferences } from '@core/assist/interference';
 import { firstArena } from '@core/model/document';
 import { arenaArea, arenaExtent } from '@core/model/arena';
 import { formatDistance, pathLength } from '@core/model/path';
-import type { Obstacle } from '@core/model/types';
+import type { CoursePath, FolhaDesempate, Obstacle } from '@core/model/types';
 import { formatMeters } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
@@ -89,7 +91,7 @@ function ResumoProva() {
   const obstaculos = doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
   const degraus = courseOrder(obstaculos);
   const esforcos = degraus.reduce((n, d) => n + d.elements.length, 0);
-  const tracados = doc.objects.filter((o) => o.kind === 'path');
+  const tracados = doc.objects.filter((o): o is CoursePath => o.kind === 'path' && !o.fase);
   const distancia = tracados.length > 0 ? pathLength(tracados[0]!) : null;
   const achados = useMemo(() => findInterferences(doc), [doc]);
   const temPartida = doc.objects.some((o) => o.kind === 'timing' && o.role === 'start');
@@ -140,10 +142,161 @@ function ResumoProva() {
         {t('resumo.partidaNota')}
       </p>
 
+      <Desempate />
+
       <p className="note dim">
         {t('resumo.selecioneNota')}
       </p>
     </section>
+  );
+}
+
+/**
+ * Desempate (B-92): a ordem digitada, os avisos da FEI, a partida e a
+ * chegada próprias e o traçado. A ordem guarda os obstáculos, então o
+ * texto é sempre reescrito a partir dela: renumerar o percurso atualiza.
+ */
+function Desempate() {
+  const { doc, apply } = useDocumentStore();
+  const obstaculos = doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
+  const stops = phaseStops(doc, 'desempate');
+  const atual = ordemTexto(stops);
+  const [texto, setTexto] = useState(atual);
+  const [desconhecidos, setDesconhecidos] = useState<string[]>([]);
+  useEffect(() => setTexto(atual), [atual]);
+
+  const avisos = useMemo(() => avisosDesempate(doc), [doc]);
+  const tracado = doc.objects.find((o) => o.kind === 'path' && o.fase === 'desempate');
+  const temOrdem = (doc.desempate?.ordem.length ?? 0) > 0;
+  const tem = (role: 'start' | 'finish') =>
+    doc.objects.some((o) => o.kind === 'timing' && o.role === role && o.fase === 'desempate');
+
+  const confirma = () => {
+    const lida = lerOrdem(texto, obstaculos);
+    setDesconhecidos(lida.desconhecidos);
+    if (lida.desconhecidos.length > 0) return;
+    if (lida.ids.join() === (doc.desempate?.ordem ?? []).join()) {
+      setTexto(atual);
+      return;
+    }
+    apply(t('dsp.ordem'), (d) => {
+      if (lida.ids.length === 0) delete d.desempate;
+      else {
+        d.desempate = { ...d.desempate, ordem: lida.ids };
+        limpaVariacoes(d.desempate);
+      }
+    });
+  };
+
+  return (
+    <>
+      <h3>{t('dsp.titulo')}</h3>
+      <label className="field">
+        <span>{t('dsp.ordem')}</span>
+        <input
+          type="text"
+          value={texto}
+          placeholder={t('dsp.ordemExemplo')}
+          onChange={(e) => setTexto(e.target.value)}
+          onBlur={confirma}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          }}
+        />
+      </label>
+      {desconhecidos.length > 0 ? (
+        <p className="note">{t('dsp.desconhecidos', { lista: desconhecidos.join(', ') })}</p>
+      ) : (
+        <p className="note dim">{t('dsp.ordemNota')}</p>
+      )}
+
+      {temOrdem && (
+        <>
+          {avisos.length === 0 ? (
+            <p className="state ok">{t('dsp.semAvisos')}</p>
+          ) : (
+            <>
+              {avisos.map((a) => (
+                <p key={a.key} className="state warn">{t(a.key, a.params)}</p>
+              ))}
+              <p className="note dim">{t('dsp.avisosNota')}</p>
+            </>
+          )}
+
+          <h4>{t('dsp.variacoes')}</h4>
+          <div className="dsp-variacoes">
+            {stops.map((stop, i) => {
+              const tem = (v: 'contrario' | 'oxer') =>
+                stop.elements.every((e) => variacoesDe(doc.desempate, e.id).includes(v));
+              // O degrau já vem como é saltado: a pergunta é sobre o original.
+              const original = obstaculos.find((o) => o.id === stop.elements[0]!.id);
+              const podeOxer = stop.elements.length === 1 && original != null && viraOxer(original);
+              const alterna = (v: 'contrario' | 'oxer') =>
+                apply(t(v === 'contrario' ? 'dsp.contrario' : 'dsp.oxer'), (d) =>
+                  marcaVariacao(d, stop, v, !tem(v)),
+                );
+              return (
+                <span className="dsp-degrau" key={`${stop.label}-${i}`}>
+                  <strong>{stop.label}</strong>
+                  <button
+                    className={tem('contrario') ? 'active' : ''}
+                    title={t('dsp.contrario')}
+                    aria-pressed={tem('contrario')}
+                    onClick={() => alterna('contrario')}
+                  >
+                    ↩
+                  </button>
+                  {podeOxer && (
+                    <button
+                      className={tem('oxer') ? 'active' : ''}
+                      title={t('dsp.oxer')}
+                      aria-pressed={tem('oxer')}
+                      onClick={() => alterna('oxer')}
+                    >
+                      oxer
+                    </button>
+                  )}
+                </span>
+              );
+            })}
+          </div>
+          <p className="note dim">{t('dsp.variacoesNota')}</p>
+
+          <div className="row-buttons">
+            <button onClick={() => insertTimingLine('start', 'desempate')}>
+              {tem('start') ? t('resumo.recolocarPartida') : t('resumo.colocarPartida')}
+            </button>
+            <button onClick={() => insertTimingLine('finish', 'desempate')}>
+              {tem('finish') ? t('resumo.recolocarChegada') : t('resumo.colocarChegada')}
+            </button>
+          </div>
+          <p className="note dim">{t('dsp.partidaNota')}</p>
+
+          <div className="row-buttons">
+            <button onClick={() => traceCourse(undefined, 'desempate')}>{t('dsp.tracar')}</button>
+          </div>
+          {tracado?.kind === 'path' && (
+            <p className="note">{t('dsp.extensao', { d: formatDistance(pathLength(tracado), 0) })}</p>
+          )}
+          <label className="field">
+            <span>{t('dsp.naFolha')}</span>
+            <select
+              value={doc.desempate?.folha ?? 'percurso'}
+              onChange={(e) =>
+                apply(t('dsp.naFolha'), (d) => {
+                  if (d.desempate) d.desempate.folha = e.target.value as FolhaDesempate;
+                })
+              }
+            >
+              {(['percurso', 'duas', 'uma'] as const).map((f) => (
+                <option key={f} value={f}>{t(`dsp.folha.${f}`)}</option>
+              ))}
+            </select>
+          </label>
+          <p className="note dim">{t('dsp.vistaNota')}</p>
+        </>
+      )}
+    </>
   );
 }
 

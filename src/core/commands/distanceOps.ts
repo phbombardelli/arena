@@ -31,7 +31,7 @@ export const timingsOf = (doc: CourseDocument): TimingLine[] =>
 
 /** As distâncias do traçado como estão agora no documento. */
 export function courseDistances(doc: CourseDocument, path: CoursePath): ObstacleDistance[] {
-  return courseDistancesAlong(path, obstaclesOf(doc), timingsOf(doc));
+  return courseDistancesAlong(path, obstaclesOf(doc), timingsOf(doc), doc.desempate);
 }
 
 /** A distância dá para digitar? Precisa de quem possa andar. */

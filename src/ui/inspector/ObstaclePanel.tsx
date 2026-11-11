@@ -10,6 +10,7 @@ import {
   setObstacleNote,
   setObstacleNumber,
   setObstacleType,
+  setSoDesempate,
   setSpread,
 } from '@core/commands/obstacleOps';
 import {
@@ -92,6 +93,20 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
           </select>
         </label>
       </div>
+
+      {doc.kind !== 'ginastica' && (
+        <label className="check" title={t('dsp.soDesempateDica')}>
+          <input
+            type="checkbox"
+            checked={obstacle.soDesempate === true}
+            disabled={travado}
+            onChange={(e) =>
+              apply(t('dsp.soDesempate'), (d) => setSoDesempate(d, obstacle.id, e.target.checked))
+            }
+          />
+          {t('dsp.soDesempate')}
+        </label>
+      )}
 
       <div className="field-pair">
         <NumberField

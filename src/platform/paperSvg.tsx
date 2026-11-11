@@ -1,6 +1,6 @@
 import { createRoot, type Root } from 'react-dom/client';
 import { flushSync } from 'react-dom';
-import type { CourseDocument } from '@core/model/types';
+import type { CourseDocument, VistaProva } from '@core/model/types';
 import { pageSize } from '@core/scale/units';
 import { RenderDocument } from '@render/renderDocument';
 
@@ -17,7 +17,7 @@ export interface PaperSvgHandle {
   dispose: () => void;
 }
 
-export function buildPaperSvg(doc: CourseDocument): PaperSvgHandle {
+export function buildPaperSvg(doc: CourseDocument, vista: VistaProva = 'ambos'): PaperSvgHandle {
   const { widthMm, heightMm } = pageSize(doc.page);
 
   const host = document.createElement('div');
@@ -38,6 +38,7 @@ export function buildPaperSvg(doc: CourseDocument): PaperSvgHandle {
         <RenderDocument
           mode="paper"
           doc={doc}
+          vista={vista}
           selection={[]}
           viewBoxMm={{ x: 0, y: 0, width: widthMm, height: heightMm }}
           metersPerPixel={0}

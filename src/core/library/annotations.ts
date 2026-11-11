@@ -70,8 +70,39 @@ const CAMPOS: [id: string, key: MessageKey, valor?: string, enabled?: boolean][]
   ['limite', 'quadro.limite'],
   ['obstaculos', 'quadro.obstaculos'],
   ['esforcos', 'quadro.esforcos'],
+  // Bloco do desempate (B-92): desligado até a prova ter desempate.
+  ['dspOrdem', 'quadro.dspOrdem', '', false],
+  ['dspVelocidade', 'quadro.dspVelocidade', '', false],
+  ['dspDistancia', 'quadro.dspDistancia', '', false],
+  ['dspTempo', 'quadro.dspTempo', '', false],
+  ['dspLimite', 'quadro.dspLimite', '', false],
   ['desenhador', 'quadro.desenhador'],
 ];
+
+/** Campos do bloco do desempate, na ordem do quadro. */
+export const CAMPOS_DESEMPATE = ['dspOrdem', 'dspVelocidade', 'dspDistancia', 'dspTempo', 'dspLimite'] as const;
+
+/**
+ * Liga ou desliga o bloco do desempate. Quadro de croqui antigo, sem os
+ * campos, ganha os que faltam antes do desenhador (ou no fim).
+ */
+export function mostraDesempate(box: InfoBox, liga: boolean): void {
+  for (const id of CAMPOS_DESEMPATE) {
+    let campo = box.fields.find((f) => f.id === id);
+    if (!campo) {
+      if (!liga) continue;
+      const [, key, valor] = CAMPOS.find(([c]) => c === id)!;
+      campo = { id, label: t(key), value: valor ?? '', enabled: true };
+      const desenhador = box.fields.findIndex((f) => f.id === 'desenhador');
+      box.fields.splice(desenhador >= 0 ? desenhador : box.fields.length, 0, campo);
+    }
+    campo.enabled = liga;
+  }
+}
+
+/** O bloco do desempate está no quadro? */
+export const temDesempate = (box: InfoBox): boolean =>
+  box.fields.some((f) => f.id === 'dspOrdem' && f.enabled);
 
 /** Os campos padrão, com o título na língua atual. */
 export const camposPadrao = (): InfoBoxField[] => CAMPOS.map(([id, key, valor, enabled]) => campo(id, t(key), valor, enabled));

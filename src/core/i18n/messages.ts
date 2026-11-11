@@ -7,6 +7,7 @@ import { LIBRARY } from './messages/library';
 import { RAIL } from './messages/rail';
 import { TOOLBAR } from './messages/toolbar';
 import { TUTORIALS } from './messages/tutorials';
+import { DESEMPATE } from './messages/desempate';
 
 /**
  * Catálogo de textos da interface em português, inglês e espanhol (B-10).
@@ -29,6 +30,7 @@ export const MESSAGES = {
   ...PANELS,
   ...COMMON,
   ...TUTORIALS,
+  ...DESEMPATE,
 };
 
 export type MessageKey = keyof typeof MESSAGES;

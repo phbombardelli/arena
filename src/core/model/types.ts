@@ -213,6 +213,12 @@ export interface Obstacle extends BaseObject {
   heightLabel: ObstacleLabel;
   numberLabel: ObstacleLabel;
   note: string;
+  /**
+   * Obstáculo acrescentado só para o desempate (B-92): fica fora da
+   * contagem e da ordem do percurso, ganha número depois do último e sai
+   * na folha com a etiqueta "Só desempate".
+   */
+  soDesempate?: true;
 }
 
 /* -------------------------------------------------------------- traçado */
@@ -299,6 +305,8 @@ export interface CoursePath extends BaseObject {
    * cima (B-04). Ausente = desenhado à mão, que nunca é substituído.
    */
   assistant?: true;
+  /** Traçado do desempate (B-92). Ausente = do percurso. */
+  fase?: 'desempate';
 }
 
 /* ------------------------------------------------------------ anotações */
@@ -435,6 +443,8 @@ export interface TimingLine extends BaseObject {
   wings: WingsAppearance;
   arrow: { visible: boolean; reversed: boolean; lengthMm: Millimeters };
   style: { dash: DashPreset; strokeMm: Millimeters; color: string };
+  /** Partida ou chegada do desempate (B-92). Ausente = do percurso. */
+  fase?: 'desempate';
 }
 
 /* -------------------------------------------------- fundo e ornamentos */
@@ -546,6 +556,31 @@ export interface CourseDocument {
   arenaSource?: { name: string; savedAt: string };
   /** Percurso de salto (padrão) ou folha de ginástica (B-37, decisão 89). */
   kind?: 'percurso' | 'ginastica';
+  /** Desempate da prova (B-92). Ausente = prova sem desempate. */
+  desempate?: Desempate;
 }
+
+/**
+ * O desempate guarda a ordem pelos obstáculos, elemento a elemento, e não
+ * pelos números: renumerar o percurso depois não desfaz a ordem.
+ */
+export interface Desempate {
+  ordem: ObjectId[];
+  /** O que sai no PDF e na impressão; sem escolha, só o percurso. */
+  folha?: FolhaDesempate;
+  /** Obstáculos saltados no sentido contrário no desempate. */
+  contrario?: ObjectId[];
+  /** Verticais que viram oxer no desempate. */
+  oxer?: ObjectId[];
+}
+
+/**
+ * O que vai para o papel quando há desempate: só o percurso (com a ordem
+ * no quadro), o percurso e uma página só do desempate, ou tudo numa folha.
+ */
+export type FolhaDesempate = 'percurso' | 'duas' | 'uma';
+
+/** O que se vê: o percurso, o desempate, ou os dois juntos. */
+export type VistaProva = 'percurso' | 'desempate' | 'ambos';
 
 export const SCHEMA_VERSION = 11;

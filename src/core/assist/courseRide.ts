@@ -3,7 +3,8 @@ import { add, fromAngle, scale, distance, type Vec2 } from '@core/geometry/vec';
 import type { Pose } from '@core/geometry/dubins';
 import { solveLegCurve, type CurveSolution, type CurveWarning, type LegShape } from './legCurve';
 import { createPath } from '@core/model/path';
-import type { CourseDocument, CoursePath, Obstacle, PathNode, TimingLine } from '@core/model/types';
+import type { CourseDocument, CoursePath, Desempate, Obstacle, PathNode, TimingLine } from '@core/model/types';
+import { fitElementsToType, obstacleDef } from '@core/library/obstacles';
 import {
   DEFAULT_RIDE,
   entryPose,
@@ -43,26 +44,114 @@ const letterRank = (letra: string) => (letra === '' ? 0 : letra.charCodeAt(0) - 
  * Ordena os obstáculos pela numeração do croqui e agrupa as combinações.
  *
  * Obstáculo sem número fica de fora: o assistente não tem como saber onde
- * ele entra, e chutar seria pior que omitir.
+ * ele entra, e chutar seria pior que omitir. O obstáculo "Só desempate"
+ * também: tem número, mas não faz parte do percurso (B-92).
  */
 export function courseOrder(obstacles: Obstacle[]): RideStop[] {
   const numerados = obstacles
+    .filter((o) => !o.soDesempate)
     .map((o) => ({ o, n: parseInt(o.number, 10) }))
     .filter((x): x is { o: Obstacle; n: number } => Number.isFinite(x.n))
     .sort((a, b) => a.n - b.n || letterRank(a.o.letter) - letterRank(b.o.letter));
+  return groupStops(numerados.map(({ o }) => o));
+}
 
+/**
+ * Agrupa uma sequência de elementos em degraus: elementos seguidos com o
+ * mesmo número e letra formam uma combinação.
+ */
+export function groupStops(elements: Obstacle[]): RideStop[] {
   const stops: RideStop[] = [];
-  for (const { o, n } of numerados) {
+  for (const o of elements) {
+    const n = parseInt(o.number, 10);
     const ultimo = stops[stops.length - 1];
-    const combina = ultimo != null && parseInt(ultimo.elements[0]!.number, 10) === n && o.letter !== '';
+    const combina =
+      ultimo != null &&
+      o.letter !== '' &&
+      parseInt(ultimo.elements[0]!.number, 10) === n;
     if (combina) {
       ultimo!.elements.push(o);
       ultimo!.label = `${n}${ultimo!.elements.map((e) => e.letter).join('')}`;
     } else {
-      stops.push({ elements: [o], label: `${n}${o.letter}` });
+      stops.push({ elements: [o], label: `${Number.isFinite(n) ? n : '?'}${o.letter}` });
     }
   }
   return stops;
+}
+
+/** De que parte da prova é o traçado ou a cruzada (B-92). */
+export type Fase = 'percurso' | 'desempate';
+
+export const faseDe = (o: { fase?: 'desempate' }): Fase => o.fase ?? 'percurso';
+
+/**
+ * Degraus de uma fase: o percurso pela numeração, o desempate pela ordem
+ * que o desenhador escolheu (obstáculos apagados depois somem da ordem).
+ */
+export function phaseStops(doc: CourseDocument, fase: Fase): RideStop[] {
+  const obstacles = doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
+  if (fase === 'percurso') return courseOrder(obstacles);
+  return groupStops(elementosDoDesempate(obstacles, doc.desempate));
+}
+
+/** Vertical que pode virar oxer no desempate (FEI 218.2.7). */
+export const viraOxer = (o: Obstacle): boolean => o.type === 'vertical';
+
+/**
+ * O obstáculo como ele é saltado no desempate: no sentido contrário, a
+ * seta vira; o vertical que vira oxer ganha a segunda vara e a largura de
+ * um oxer. É uma cópia de trabalho, com o mesmo id: o croqui guarda o
+ * obstáculo do percurso, e o desempate só diz o que muda nele.
+ */
+export function comoNoDesempate(o: Obstacle, desempate: Desempate | undefined): Obstacle {
+  const contrario = desempate?.contrario?.includes(o.id) === true;
+  const oxer = desempate?.oxer?.includes(o.id) === true && viraOxer(o);
+  if (!contrario && !oxer) return o;
+  const copia: Obstacle = { ...o, arrow: { ...o.arrow } };
+  if (contrario) copia.arrow.reversed = !o.arrow.reversed;
+  if (oxer) {
+    copia.type = 'oxer';
+    // A vara de trás nasce na altura da da frente, até o desenhador dizer.
+    const frente = o.elements[0]?.height ?? null;
+    copia.elements = fitElementsToType(o.elements, 'oxer').map((e, i) =>
+      i > 0 && e.height == null ? { ...e, height: frente } : e,
+    );
+    copia.spreadM = o.spreadM ?? obstacleDef('oxer').spreadM;
+  }
+  return copia;
+}
+
+/** Os elementos do desempate, na ordem, já como são saltados nele. */
+export function elementosDoDesempate(obstacles: Obstacle[], desempate: Desempate | undefined): Obstacle[] {
+  const porId = new Map(obstacles.map((o) => [o.id, o]));
+  return (desempate?.ordem ?? [])
+    .map((id) => porId.get(id))
+    .filter((o): o is Obstacle => o != null)
+    .map((o) => comoNoDesempate(o, desempate));
+}
+
+/**
+ * A partida ou a chegada de uma fase. O desempate sem cruzada própria usa
+ * a do percurso quando ela serve ao mesmo obstáculo: desempate que começa
+ * no 1 parte da mesma linha, e ninguém precisa pôr duas no mesmo lugar.
+ */
+export function phaseTiming(
+  doc: CourseDocument,
+  fase: Fase,
+  role: 'start' | 'finish',
+): TimingLine | undefined {
+  const linha = (f: Fase) =>
+    doc.objects.find(
+      (o): o is TimingLine => o.kind === 'timing' && o.role === role && faseDe(o) === f,
+    );
+  const propria = linha(fase);
+  if (propria || fase === 'percurso') return propria;
+
+  const stops = phaseStops(doc, 'desempate');
+  const degrau = role === 'start' ? stops[0] : stops[stops.length - 1];
+  const ponta = role === 'start' ? degrau?.elements[0] : degrau?.elements[degrau.elements.length - 1];
+  const doPercurso = linha('percurso');
+  return ponta && doPercurso?.anchor?.obstacleId === ponta.id ? doPercurso : undefined;
 }
 
 /**
@@ -199,9 +288,9 @@ export interface CoursePrep {
 export function courseGates(
   doc: CourseDocument,
   params: RideParams = DEFAULT_RIDE,
+  fase: Fase = 'percurso',
 ): CoursePrep | null {
   const obstacles = doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
-  const timings = doc.objects.filter((o): o is TimingLine => o.kind === 'timing');
   const arena = doc.objects.find((o) => o.kind === 'arena' && !o.structure);
   const field: Field = fieldFrom(
     arena?.kind === 'arena' ? arena : null,
@@ -209,12 +298,12 @@ export function courseGates(
     decorBodies(doc).map((d) => d.outline),
   );
 
-  const partida = timings.find((t) => t.role === 'start');
-  const chegada = timings.find((t) => t.role === 'finish');
+  const partida = phaseTiming(doc, fase, 'start');
+  const chegada = phaseTiming(doc, fase, 'finish');
 
   const gates: Gate[] = [];
   if (partida) gates.push({ label: t('ride.partida'), kind: 'timing', line: partida });
-  for (const stop of courseOrder(obstacles)) {
+  for (const stop of phaseStops(doc, fase)) {
     gates.push({ label: stop.label, kind: 'obstacle', elements: stop.elements });
   }
   if (chegada) gates.push({ label: t('ride.chegada'), kind: 'timing', line: chegada });
@@ -308,8 +397,9 @@ export function gateStraightNodes(
 export function buildCourseRide(
   doc: CourseDocument,
   params: RideParams = DEFAULT_RIDE,
+  fase: Fase = 'percurso',
 ): RideResult | null {
-  const preparo = courseGates(doc, params);
+  const preparo = courseGates(doc, params, fase);
   if (!preparo) return null;
   const { gates, entradas, saidas, retaEntrada, retaSaida, field } = preparo;
 

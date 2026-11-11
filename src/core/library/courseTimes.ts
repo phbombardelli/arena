@@ -134,6 +134,31 @@ export function aplicaTempos(box: InfoBox): boolean {
   return true;
 }
 
+/**
+ * Tempos do desempate (B-92), pela distância e pela velocidade do próprio
+ * desempate — a FEI permite velocidade diferente da do percurso. Mesmas
+ * contas do percurso: concedido para cima e limite o dobro (Art. 253); na
+ * Tabela C, só o limite pela extensão. Velocidade em branco vale a do
+ * percurso.
+ */
+export function aplicaTemposDesempate(box: InfoBox): boolean {
+  const valor = (id: string) => box.fields.find((f) => f.id === id)?.value ?? '';
+  const dist = lerNumero(valor('dspDistancia'));
+  const vel = lerNumero(valor('dspVelocidade')) ?? lerNumero(valor('velocidade'));
+  const formato = box.tempos?.formato === 'C' ? 'C' : 'A';
+  if (dist == null || dist <= 0) return false;
+  if (formato !== 'C' && (vel == null || vel <= 0)) return false;
+
+  const tempos = calculaTempos(dist, vel ?? 0, { formato });
+  const escreve = (id: string, s: number | null) => {
+    const campo = box.fields.find((f) => f.id === id);
+    if (campo) campo.value = s == null ? '' : segundos(s);
+  };
+  escreve('dspTempo', tempos.concedido);
+  escreve('dspLimite', tempos.limite);
+  return true;
+}
+
 function novoCampo(id: (typeof IDS_TEMPO)[number]): InfoBoxField {
   return { id, label: t(ROTULO[id]), value: '', enabled: true };
 }

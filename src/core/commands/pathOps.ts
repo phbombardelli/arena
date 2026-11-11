@@ -10,7 +10,12 @@ import type {
   ObjectId,
   Obstacle,
   PathNode,
+  SceneObject,
 } from '@core/model/types';
+import { faseDe, type Fase } from '@core/assist/courseRide';
+
+/** Cor do traçado do desempate (B-92): azul, longe do vermelho da cronometragem. */
+export const COR_DESEMPATE = '#1f6fb2';
 
 /**
  * Operações sobre o traçado.
@@ -258,11 +263,22 @@ function syncLegs(path: CoursePath): void {
  * do assistente. Traçado à mão fica intocado. Tudo num passo só de
  * desfazer, porque quem chama já está dentro de um `apply`.
  */
-export function placeAssistantPath(doc: CourseDocument, path: CoursePath): void {
-  const anterior = doc.objects.find(
-    (o): o is CoursePath => o.kind === 'path' && o.assistant === true,
-  );
+export function placeAssistantPath(
+  doc: CourseDocument,
+  path: CoursePath,
+  fase: Fase = 'percurso',
+): void {
+  // Cada fase tem o seu: traçar o desempate não apaga o do percurso (B-92).
+  const doAssistente = (o: SceneObject): o is CoursePath =>
+    o.kind === 'path' && o.assistant === true && faseDe(o) === fase;
+  const anterior = doc.objects.find(doAssistente);
   const novo: CoursePath = { ...path, assistant: true };
+  if (fase === 'desempate') {
+    novo.fase = 'desempate';
+    // Outra cor e outro tracejado, para não se confundir com o percurso.
+    novo.style = { ...novo.style, dash: 'dashdot', color: COR_DESEMPATE };
+    novo.distanceMode = 'nenhum';
+  }
   if (anterior) {
     novo.style = { ...anterior.style };
     novo.distanceMode = anterior.distanceMode;
@@ -270,7 +286,7 @@ export function placeAssistantPath(doc: CourseDocument, path: CoursePath): void 
     novo.obstacleDistances = { ...anterior.obstacleDistances };
     if (anterior.lockedDistances) novo.lockedDistances = { ...anterior.lockedDistances };
   }
-  doc.objects = doc.objects.filter((o) => !(o.kind === 'path' && o.assistant === true));
+  doc.objects = doc.objects.filter((o) => !doAssistente(o));
   // O traçado do assistente nasce preso aos obstáculos (decisão 76).
   anchorNodesToObstacles(novo, doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'));
   addObject(doc, novo);

@@ -285,14 +285,15 @@ function Tips({
   );
 }
 
-export function JumpArrow({ obstacle, k }: Props) {
+/** `cor`: a seta do desempate sai na cor dele (B-92). */
+export function JumpArrow({ obstacle, k, cor = color.ink }: Props & { cor?: string }) {
   const { shaft, head } = arrowGeometry(obstacle, k);
   return (
     <g data-part="arrow">
-      <line {...shaft} stroke={color.ink} strokeWidth={stroke.medium} />
+      <line {...shaft} stroke={cor} strokeWidth={stroke.medium} />
       <path
         d={`M ${head[0].x} ${head[0].y} L ${head[1].x} ${head[1].y} L ${head[2].x} ${head[2].y} Z`}
-        fill={color.ink}
+        fill={cor}
       />
     </g>
   );

@@ -38,6 +38,9 @@ Referência para traduzir o programa sem gafes. Toda tradução da interface, da
 | Esforços | efforts | esfuerzos | R | Combinação de 3 elementos = 1 obstáculo, 3 esforços. |
 | Salto(s) | jump(s) | salto(s) | U | "Numerar os saltos" = Number the fences / Numerar los obstáculos. |
 | Desempate | jump-off | desempate | R |  |
+| Só desempate (obstáculo) | jump-off only | solo desempate | U | Etiqueta do obstáculo acrescentado para o desempate (FEI Art. 218.2.7). Visto em croquis americanos como "Jump-off only". |
+| Sentido contrário (desempate) | opposite direction | sentido contrario | U | Obstáculo do percurso saltado ao contrário no desempate; no quadro, "(inv.)" / "(rev.)". |
+| Vista (Percurso / Desempate / Ambos) | view (Course / Jump-off / Both) | vista (Recorrido / Desempate / Ambos) | U | O que aparece na tela quando há desempate. |
 | Júri de campo | Ground Jury | Jurado de Campo | R |  |
 | ⚠ Partida (a linha) | start | partida / línea de salida | R | No programa a linha se chama "Partida" (não "Largada"). Em espanhol "salida" é a partida: ver "Saída". |
 | Chegada (a linha) | finish | llegada | R |  |

@@ -1,6 +1,6 @@
 import { add, fromAngle, scale, type Vec2 } from '@core/geometry/vec';
 import { newId } from '@core/model/ids';
-import { courseOrder } from '@core/assist/courseRide';
+import { faseDe, phaseStops, type Fase } from '@core/assist/courseRide';
 import type { CourseDocument, Obstacle, TimingLine, WingsAppearance } from '@core/model/types';
 import { localizeDefault, t } from '@core/i18n/i18n';
 
@@ -39,8 +39,9 @@ export function createTimingLine(
   role: 'start' | 'finish',
   pos: Vec2,
   label?: string,
+  fase: Fase = 'percurso',
 ): TimingLine {
-  return {
+  const linha: TimingLine = {
     id: newId('tim'),
     kind: 'timing',
     layer: 'obstacles',
@@ -53,18 +54,25 @@ export function createTimingLine(
     pos,
     rotation: 0,
     widthM: 8,
-    label: label ?? t(role === 'start' ? 'tim.partida' : 'tim.chegada'),
+    label: label ?? t(chaveRotulo(role, fase)),
     labelVisible: true,
     wings: defaultWings(),
     // Vermelha, como nos croquis: distingue a cronometragem do percurso.
     arrow: { visible: true, reversed: false, lengthMm: 7 },
     style: { dash: 'dotted', strokeMm: 0.35, color: '#d32020' },
   };
+  if (fase === 'desempate') linha.fase = 'desempate';
+  return linha;
 }
+
+const chaveRotulo = (role: 'start' | 'finish', fase: Fase) =>
+  fase === 'desempate'
+    ? role === 'start' ? 'tim.partidaDesempate' : 'tim.chegadaDesempate'
+    : role === 'start' ? 'tim.partida' : 'tim.chegada';
 
 /** Rótulo da linha como sai no croqui: o padrão segue a língua da tela. */
 export const timingLabel = (line: TimingLine): string =>
-  localizeDefault(line.label, line.role === 'start' ? 'tim.partida' : 'tim.chegada');
+  localizeDefault(line.label, chaveRotulo(line.role, faseDe(line)));
 
 /** Extensão local, em metros — a base da envoltória e da seta. */
 export function timingExtent(line: TimingLine): {
@@ -119,8 +127,9 @@ export function placeTimingLine(
   obstacle: Obstacle,
   distanceM: number,
   label?: string,
+  fase: Fase = 'percurso',
 ): TimingLine {
-  const linha = createTimingLine(role, obstacle.pos, label);
+  const linha = createTimingLine(role, obstacle.pos, label, fase);
   linha.anchor = { obstacleId: obstacle.id, distanceM: clampTimingDistance(distanceM) };
   alinha(linha, obstacle);
   return linha;
@@ -140,14 +149,12 @@ function alinha(linha: TimingLine, obstacle: Obstacle): void {
 }
 
 /**
- * O obstáculo a que a cruzada pertence: o primeiro do percurso para a
+ * O obstáculo a que a cruzada pertence: o primeiro da fase para a
  * partida, o último para a chegada. Numa combinação, o elemento por onde
  * se entra ou por onde se sai.
  */
-function donoDe(role: 'start' | 'finish', doc: CourseDocument): Obstacle | null {
-  const stops = courseOrder(
-    doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'),
-  );
+export function donoDe(role: 'start' | 'finish', doc: CourseDocument, fase: Fase = 'percurso'): Obstacle | null {
+  const stops = phaseStops(doc, fase);
   if (stops.length === 0) return null;
   const degrau = role === 'start' ? stops[0]! : stops[stops.length - 1]!;
   return role === 'start'
@@ -180,7 +187,12 @@ export function syncTimingLines(doc: CourseDocument): void {
     const vinculado = obj.anchor
       ? doc.objects.find((o) => o.id === obj.anchor!.obstacleId)
       : undefined;
-    const dono = vinculado?.kind === 'obstacle' ? vinculado : donoDe(obj.role, doc);
+    // A cruzada do desempate segue a ordem do desempate: se a ordem mudar,
+    // ela muda de dono junto.
+    const dono =
+      faseDe(obj) === 'desempate'
+        ? donoDe(obj.role, doc, 'desempate')
+        : vinculado?.kind === 'obstacle' ? vinculado : donoDe(obj.role, doc);
 
     if (!dono) {
       obj.anchor = null;

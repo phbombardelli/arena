@@ -1,6 +1,6 @@
 import { formatDistance, pathD } from '@core/model/path';
 import type { Vec2 } from '@core/geometry/vec';
-import type { CoursePath, Obstacle, TimingLine } from '@core/model/types';
+import type { CoursePath, Desempate, Obstacle, TimingLine } from '@core/model/types';
 import { courseDistancesAlong, pathSampler } from '@core/assist/obstacleDistances';
 import {
   besideLinePlacement,
@@ -22,6 +22,8 @@ interface Props {
   obstacles?: Obstacle[];
   /** Partida e chegada, para as distâncias que começam ou terminam nelas. */
   timings?: TimingLine[];
+  /** Ordem do desempate, para as distâncias do traçado do desempate (B-92). */
+  desempate?: Desempate;
   /** Posição e giro escolhidos pelo leiaute de rótulos (decisões 55 e 56). */
   distanceAt?: Map<string, OnLineLabel>;
   onPointerDown?: (e: React.PointerEvent) => void;
@@ -34,7 +36,7 @@ interface Props {
  * O número mostrado é o comprimento do traçado desenhado, medido sobre a
  * curva — não a distância em linha reta entre os nós (§19).
  */
-export function PathLayer({ path, printScale, originMm, obstacles = [], timings = [], distanceAt, onPointerDown }: Props) {
+export function PathLayer({ path, printScale, originMm, obstacles = [], timings = [], desempate, distanceAt, onPointerDown }: Props) {
   const k = mmPerMeter(printScale);
   const toPaper = (p: Vec2): Vec2 => ({ x: originMm.x + p.x * k, y: originMm.y + p.y * k });
   // Toda distância do traçado é escrita SOBRE a linha, paralela a ela, como
@@ -45,7 +47,7 @@ export function PathLayer({ path, printScale, originMm, obstacles = [], timings 
 
   // Todas as distâncias mostradas são de vara a vara, na ordem do percurso
   // (decisão 76); o checkbox de cada uma decide se ela entra no croqui.
-  const pares = courseDistancesAlong(path, obstacles, timings);
+  const pares = courseDistancesAlong(path, obstacles, timings, desempate);
   const escolhidas = pares.filter((d) => path.obstacleDistances?.[d.key]);
 
   return (

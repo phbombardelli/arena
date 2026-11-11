@@ -1,9 +1,9 @@
 import { distance, type Vec2 } from '@core/geometry/vec';
 import { flattenPath } from '@core/model/path';
 import { obstacleLabel } from '@core/library/obstacles';
-import type { CoursePath, Obstacle, TimingLine } from '@core/model/types';
-import { courseOrder } from './courseRide';
-import { t as tr } from '@core/i18n/i18n';
+import type { CoursePath, Desempate, Obstacle, TimingLine } from '@core/model/types';
+import { courseOrder, elementosDoDesempate, faseDe } from './courseRide';
+import { timingLabel } from '@core/library/timing';
 
 /**
  * Distâncias entre obstáculos consecutivos, medidas AO LONGO do traçado
@@ -86,6 +86,8 @@ export function courseDistancesAlong(
   path: CoursePath,
   obstacles: Obstacle[],
   timings: TimingLine[],
+  /** O desempate, para o traçado do desempate (B-92). */
+  desempate?: Desempate,
 ): ObstacleDistance[] {
   const amostra = pathSampler(path);
   if (!amostra) return [];
@@ -139,15 +141,30 @@ export function courseDistancesAlong(
   });
   const cruzada = (t: TimingLine): Marco => ({
     id: t.id,
-    label: tr(t.role === 'start' ? 'tim.partida' : 'tim.chegada'),
+    label: timingLabel(t),
     meiaVara: 0,
     s: posicaoDaCruzada(t),
   });
-  const partida = timings.find((t) => t.role === 'start');
-  const chegada = timings.find((t) => t.role === 'finish');
+  // Cada traçado mede a sua fase: o do desempate pela ordem do desempate.
+  const fase = faseDe(path);
+  const elementos =
+    fase === 'desempate'
+      ? elementosDoDesempate(obstacles, desempate)
+      : courseOrder(obstacles).flatMap((st) => st.elements);
+  // Desempate sem cruzada própria usa a do percurso quando ela serve ao
+  // mesmo obstáculo, como o assistente (phaseTiming).
+  const cruzadaDe = (role: 'start' | 'finish'): TimingLine | undefined => {
+    const propria = timings.find((t) => t.role === role && faseDe(t) === fase);
+    if (propria || fase === 'percurso') return propria;
+    const ponta = role === 'start' ? elementos[0] : elementos[elementos.length - 1];
+    const doPercurso = timings.find((t) => t.role === role && faseDe(t) === 'percurso');
+    return ponta && doPercurso?.anchor?.obstacleId === ponta.id ? doPercurso : undefined;
+  };
+  const partida = cruzadaDe('start');
+  const chegada = cruzadaDe('finish');
   const marcos: Marco[] = [
     ...(partida ? [cruzada(partida)] : []),
-    ...courseOrder(obstacles).flatMap((st) => st.elements).map(marco),
+    ...elementos.map(marco),
     ...(chegada ? [cruzada(chegada)] : []),
   ];
 

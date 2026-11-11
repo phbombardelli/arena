@@ -1,11 +1,14 @@
-import { courseOrder } from '@core/assist/courseRide';
+import { courseOrder, phaseStops } from '@core/assist/courseRide';
 import { formatDistance, pathLength } from '@core/model/path';
 import type { CourseDocument, InfoBox, Obstacle } from '@core/model/types';
 import { useEffect, useState } from 'react';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
-import { fieldLabel } from '@core/library/annotations';
-import { aplicaTempos, FORMATOS_TEMPO, type FormatoTempo } from '@core/library/courseTimes';
+import { fieldLabel, mostraDesempate, temDesempate } from '@core/library/annotations';
+import { heightTableLayout, infoBoxLayout } from '@core/model/annotationLayout';
+import { pageSize } from '@core/scale/units';
+import { ordemQuadro } from '@core/library/desempate';
+import { aplicaTempos, aplicaTemposDesempate, FORMATOS_TEMPO, type FormatoTempo } from '@core/library/courseTimes';
 import type { MessageKey } from '@core/i18n/messages';
 import { t } from '@core/i18n/i18n';
 
@@ -34,15 +37,54 @@ function doDesenho(doc: CourseDocument, corrigidaM?: number): Record<string, str
   // A extensão corrigida na pista vale mais que a medida no desenho (B-90).
   if (corrigidaM != null) out.distancia = metros(corrigidaM);
   else if (maior > 0) out.distancia = metros(maior);
+
+  // Desempate (B-92): a ordem e o comprimento do traçado do desempate.
+  const desempate = phaseStops(doc, 'desempate');
+  if (desempate.length > 0) out.dspOrdem = ordemQuadro(doc);
+  const tracado = doc.objects.find((o) => o.kind === 'path' && o.fase === 'desempate');
+  if (tracado?.kind === 'path') out.dspDistancia = metros(pathLength(tracado));
   return out;
 }
 
-/** Comprimento do maior traçado: a extensão medida no desenho. */
+/** Comprimento do maior traçado do percurso: a extensão medida no desenho. */
 function extensaoDesenho(doc: CourseDocument): number {
-  return doc.objects.reduce((m, p) => Math.max(m, p.kind === 'path' ? pathLength(p) : 0), 0);
+  return doc.objects.reduce((m, p) => Math.max(m, p.kind === 'path' && !p.fase ? pathLength(p) : 0), 0);
 }
 
 const metros = (m: number) => `${formatDistance(m, 0)} m`;
+
+/** Algum quadro ou tabela passa da margem de baixo da folha. */
+function saiDaFolha(doc: CourseDocument): boolean {
+  const limite = pageSize(doc.page).heightMm - doc.page.marginsMm.bottom + 0.5;
+  const obstaculos = doc.objects.filter((x): x is Obstacle => x.kind === 'obstacle');
+  return doc.objects.some((o) =>
+    o.kind === 'infobox'
+      ? o.posMm.y + infoBoxLayout(o).heightMm > limite
+      : o.kind === 'heighttable' && o.posMm.y + heightTableLayout(o, obstaculos).heightMm > limite,
+  );
+}
+
+/**
+ * O quadro cresceu ou encolheu (o bloco do desempate entrou ou saiu): o
+ * que estava logo abaixo dele, na mesma faixa da folha, acompanha. Sem
+ * isto o quadro maior cobria a tabela de alturas posta embaixo dele.
+ */
+function empurraAbaixo(doc: CourseDocument, box: InfoBox, antes: number, depois: number): void {
+  const delta = depois - antes;
+  if (Math.abs(delta) < 0.01) return;
+  const fundo = box.posMm.y + antes;
+  const x0 = box.posMm.x;
+  const x1 = box.posMm.x + box.widthMm;
+  for (const o of doc.objects) {
+    if (o.id === box.id || (o.kind !== 'heighttable' && o.kind !== 'infobox')) continue;
+    const largura =
+      o.kind === 'infobox'
+        ? o.widthMm
+        : heightTableLayout(o, doc.objects.filter((x): x is Obstacle => x.kind === 'obstacle')).widthMm;
+    const naFaixa = o.posMm.x < x1 && o.posMm.x + largura > x0;
+    if (naFaixa && o.posMm.y >= fundo - 1) o.posMm = { ...o.posMm, y: o.posMm.y + delta };
+  }
+}
 
 export function InfoBoxPanel({ box }: { box: InfoBox }) {
   const { doc, apply } = useDocumentStore();
@@ -66,8 +108,70 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
         if (v != null) campo.value = v;
       }
       aplicaTempos(b);
+      aplicaTemposDesempate(b);
     });
   };
+
+  const desempate = temDesempate(box);
+  const ligaDesempate = (liga: boolean) => {
+    const valores = doDesenho(doc, box.distanciaCorrigidaM);
+    apply(t('dsp.noQuadro'), (d) => {
+      const b = d.objects.find((o) => o.id === box.id);
+      if (b?.kind !== 'infobox') return;
+      const antes = infoBoxLayout(b).heightMm;
+      mostraDesempate(b, liga);
+      empurraAbaixo(d, b, antes, infoBoxLayout(b).heightMm);
+      if (!liga) return;
+      for (const id of ['dspOrdem', 'dspDistancia']) {
+        const campo = b.fields.find((f) => f.id === id);
+        if (campo && valores[id] != null) campo.value = valores[id]!;
+      }
+      // Começa com a velocidade do percurso; o desenhador troca se for outra.
+      const vel = b.fields.find((f) => f.id === 'dspVelocidade');
+      if (vel && vel.value.trim() === '') vel.value = b.fields.find((f) => f.id === 'velocidade')?.value ?? '';
+      aplicaTemposDesempate(b);
+    });
+  };
+
+  // A ordem do desempate vem do desenho (syncQuadroDesempate): não se digita.
+  const automatico = (id: string) => id === 'dspOrdem';
+  const linha = (campo: InfoBox['fields'][number], i: number) => (
+    <div className="field-row" key={campo.id}>
+      <input
+        type="checkbox"
+        checked={campo.enabled}
+        disabled={travado}
+        title={campo.enabled ? t('quadrop.esconder') : t('quadrop.mostrar')}
+        onChange={(e) =>
+          edita('Campo do quadro', (b) => {
+            b.fields[i]!.enabled = e.target.checked;
+          })
+        }
+      />
+      <span className="field-label" title={fieldLabel(campo)}>
+        {fieldLabel(campo)}
+      </span>
+      <input
+        type="text"
+        value={campo.value}
+        disabled={travado || !campo.enabled}
+        readOnly={automatico(campo.id)}
+        title={automatico(campo.id) ? t('dsp.ordemAutomatica') : undefined}
+        onChange={(e) =>
+          edita(
+            'Valor do quadro',
+            (b) => {
+              b.fields[i]!.value = e.target.value;
+              // Os tempos acompanham a distância e a velocidade.
+              if (campo.id === 'distancia' || campo.id === 'velocidade') aplicaTempos(b);
+              if (['velocidade', 'dspDistancia', 'dspVelocidade'].includes(campo.id)) aplicaTemposDesempate(b);
+            },
+            `inf-${box.id}-${campo.id}`,
+          )
+        }
+      />
+    </div>
+  );
 
   return (
     <>
@@ -85,43 +189,30 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
 
       <Tempos box={box} travado={travado} edita={edita} />
 
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={desempate}
+          disabled={travado}
+          onChange={(e) => ligaDesempate(e.target.checked)}
+        />
+        {t('dsp.noQuadro')}
+      </label>
+      {desempate && <p className="note dim">{t('dsp.noQuadroNota')}</p>}
+      {saiDaFolha(doc) && <p className="state warn">{t('dsp.naoCabe')}</p>}
+
       <h3>{t('quadrop.campos')}</h3>
       <div className="leg-list">
-        {box.fields.map((campo, i) => (
-          <div className="field-row" key={campo.id}>
-            <input
-              type="checkbox"
-              checked={campo.enabled}
-              disabled={travado}
-              title={campo.enabled ? t('quadrop.esconder') : t('quadrop.mostrar')}
-              onChange={(e) =>
-                edita('Campo do quadro', (b) => {
-                  b.fields[i]!.enabled = e.target.checked;
-                })
-              }
-            />
-            <span className="field-label" title={fieldLabel(campo)}>
-              {fieldLabel(campo)}
-            </span>
-            <input
-              type="text"
-              value={campo.value}
-              disabled={travado || !campo.enabled}
-              onChange={(e) =>
-                edita(
-                  'Valor do quadro',
-                  (b) => {
-                    b.fields[i]!.value = e.target.value;
-                    // Os tempos acompanham a distância e a velocidade.
-                    if (campo.id === 'distancia' || campo.id === 'velocidade') aplicaTempos(b);
-                  },
-                  `inf-${box.id}-${campo.id}`,
-                )
-              }
-            />
-          </div>
-        ))}
+        {box.fields.map((campo, i) => (campo.id.startsWith('dsp') ? null : linha(campo, i)))}
       </div>
+      {box.fields.some((f) => f.id.startsWith('dsp')) && (
+        <>
+          <h4>{t('dsp.titulo')}</h4>
+          <div className="leg-list">
+            {box.fields.map((campo, i) => (campo.id.startsWith('dsp') ? linha(campo, i) : null))}
+          </div>
+        </>
+      )}
 
       <h3>{t('quadrop.aparencia')}</h3>
       <NumberField
@@ -277,6 +368,7 @@ function Tempos({
     edita(t('quadrop.calcular'), (b) => {
       b.tempos = { formato: f };
       aplicaTempos(b);
+      if (temDesempate(b)) aplicaTemposDesempate(b);
     });
   };
 

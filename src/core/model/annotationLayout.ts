@@ -27,48 +27,96 @@ export interface BoxLayout {
   heightMm: number;
   rowHeightMm: number;
   cells: LaidOutCell[];
+  /**
+   * Bloco do desempate (B-92): o fio que o separa, o título, e onde o
+   * título fica. Ausente quando o bloco está desligado.
+   */
+  secao?: { linhaYMm: number; tituloYMm: number; titulo: string };
 }
+
+/** Campo do bloco do desempate: vai para a seção própria, abaixo do resto. */
+const doDesempate = (id: string) => id.startsWith('dsp');
 
 /** Respiro interno do quadro, proporcional à letra. */
 const padding = (sizeMm: number) => sizeMm * 0.8;
 
-export function infoBoxLayout(box: InfoBox): BoxLayout {
-  const ativos = box.fields.filter((f) => f.enabled);
+/**
+ * Que parte do quadro sai (B-92). Com o desempate em página própria, cada
+ * página leva só o seu: a do percurso sem o bloco do desempate, a do
+ * desempate só com a prova e o bloco dele.
+ */
+export type ParteDoQuadro = 'tudo' | 'percurso' | 'desempate';
+
+export function infoBoxLayout(box: InfoBox, parte: ParteDoQuadro = 'tudo'): BoxLayout {
+  const ligados = box.fields.filter((f) => f.enabled);
+  const desempate = parte === 'percurso' ? [] : ligados.filter((f) => doDesempate(f.id));
+  const principais = ligados.filter(
+    (f) => !doDesempate(f.id) && (parte !== 'desempate' || desempate.length === 0 || f.id === 'prova'),
+  );
   const colunas = Math.max(1, Math.round(box.columns));
   const alturaLinha = box.style.sizeMm * 1.75;
   const pad = padding(box.style.sizeMm);
   const larguraColuna = (box.widthMm - pad * 2) / colunas;
-
-  // Preenchimento por COLUNA, não por linha: é assim que os croquis
-  // imprimem a faixa de cabeçalho, com cada bloco de assunto junto.
-  const porColuna = Math.ceil(ativos.length / colunas) || 1;
-
-  // O valor começa logo depois do título mais longo DA SUA COLUNA (B-70):
-  // alinhado à direita da célula, ele ficava longe do título e, com mais de
-  // uma coluna, parecia pertencer à coluna vizinha. A largura do título é
-  // estimada pela média de letra da Helvetica (0,56 em).
   const s = box.style.sizeMm;
-  const inicioDoValor = new Map<number, number>();
-  ativos.forEach((campo, i) => {
-    const col = Math.floor(i / porColuna);
-    const largura = fieldLabel(campo).length * s * 0.56 + s * 0.8;
-    inicioDoValor.set(col, Math.max(inicioDoValor.get(col) ?? 0, largura));
-  });
 
-  const cells = ativos.map((campo, i) => ({
-    xMm: pad + Math.floor(i / porColuna) * larguraColuna,
-    yMm: pad + (i % porColuna) * alturaLinha,
-    widthMm: larguraColuna,
-    valueXMm: inicioDoValor.get(Math.floor(i / porColuna)) ?? 0,
-    label: fieldLabel(campo),
-    value: campo.value,
-  }));
+  // Um bloco de campos a partir de `topo`: preenchido por COLUNA, não por
+  // linha, como os croquis imprimem a faixa de cabeçalho. O valor começa
+  // logo depois do título mais longo DA SUA COLUNA (B-70); a largura do
+  // título é estimada pela média de letra da Helvetica (0,56 em).
+  const bloco = (campos: typeof ligados, topo: number) => {
+    const porColuna = Math.ceil(campos.length / colunas) || 1;
+    const inicioDoValor = new Map<number, number>();
+    campos.forEach((campo, i) => {
+      const col = Math.floor(i / porColuna);
+      const largura = fieldLabel(campo).length * s * 0.56 + s * 0.8;
+      inicioDoValor.set(col, Math.max(inicioDoValor.get(col) ?? 0, largura));
+    });
+    const cells = campos.map((campo, i) => ({
+      xMm: pad + Math.floor(i / porColuna) * larguraColuna,
+      yMm: topo + (i % porColuna) * alturaLinha,
+      widthMm: larguraColuna,
+      valueXMm: inicioDoValor.get(Math.floor(i / porColuna)) ?? 0,
+      label: fieldLabel(campo),
+      value: campo.value,
+    }));
+    return { cells, altura: campos.length === 0 ? 0 : porColuna * alturaLinha };
+  };
 
+  const cima = bloco(principais, pad);
+  if (desempate.length === 0) {
+    return {
+      widthMm: box.widthMm,
+      heightMm: pad * 2 + Math.max(cima.altura, alturaLinha),
+      rowHeightMm: alturaLinha,
+      cells: cima.cells,
+    };
+  }
+
+  // Bloco do desempate: um fio, o título e os campos, embaixo do resto.
+  const linhaY = pad + cima.altura + (cima.altura > 0 ? pad * 0.5 : 0);
+  const tituloY = linhaY + pad * 0.5;
+  // A ordem é o valor longo ("1 (oxer)-4-5AB-7 (inv.)-…"): ocupa a largura
+  // toda, para não invadir a coluna vizinha; o resto vai em colunas.
+  const ordem = desempate.find((f) => f.id === 'dspOrdem');
+  const resto = desempate.filter((f) => f !== ordem);
+  const topoOrdem = tituloY + alturaLinha;
+  const celulaOrdem = ordem
+    ? [{
+        xMm: pad,
+        yMm: topoOrdem,
+        widthMm: box.widthMm - pad * 2,
+        valueXMm: fieldLabel(ordem).length * s * 0.56 + s * 0.8,
+        label: fieldLabel(ordem),
+        value: ordem.value,
+      }]
+    : [];
+  const baixo = bloco(resto, topoOrdem + (ordem ? alturaLinha : 0));
   return {
     widthMm: box.widthMm,
-    heightMm: pad * 2 + porColuna * alturaLinha,
+    heightMm: topoOrdem + (ordem ? alturaLinha : 0) + baixo.altura + pad,
     rowHeightMm: alturaLinha,
-    cells,
+    cells: [...cima.cells, ...celulaOrdem, ...baixo.cells],
+    secao: { linhaYMm: cima.altura > 0 ? linhaY : -1, tituloYMm: tituloY, titulo: t('quadro.secaoDesempate') },
   };
 }
 

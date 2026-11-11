@@ -9,6 +9,7 @@ import type {
   StructureType,
   PathNode,
   SceneObject,
+  VistaProva,
 } from '@core/model/types';
 import { withChoice, type GuidedRide } from '@core/assist/guidedRide';
 import type { Viewport } from '@core/scale/viewport';
@@ -21,7 +22,7 @@ import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
  */
 
 /** Janelas que se abrem por menu. Só uma de cada vez. */
-export type DialogId = 'atalhos' | 'modelos' | 'folha' | 'sobre' | 'alturas' | 'novo' | 'nova-ginastica' | 'outro-ginastica' | 'outro-percurso' | 'abrir' | 'nuvem' | 'admin' | 'contato' | 'tutoriais' | 'boas-vindas';
+export type DialogId = 'atalhos' | 'modelos' | 'folha' | 'sobre' | 'alturas' | 'novo' | 'nova-ginastica' | 'outro-ginastica' | 'outro-percurso' | 'abrir' | 'nuvem' | 'admin' | 'contato' | 'tutoriais' | 'boas-vindas' | 'saida';
 
 export type Tool =
   | 'select'
@@ -62,6 +63,15 @@ interface EditorState {
    * sai no PDF nem na impressão, ligada ou desligada.
    */
   showInterference: boolean;
+  /**
+   * Percurso, desempate ou os dois (B-92). Só a tela: o papel escolhe na
+   * hora de exportar.
+   */
+  vista: VistaProva;
+  setVista: (vista: VistaProva) => void;
+  /** O que a janela de saída faz ao confirmar: PDF ou impressão. */
+  saida: 'pdf' | 'imprimir';
+  pedeSaida: (saida: 'pdf' | 'imprimir') => void;
   /** Arrasto ou giro em andamento: as distâncias aparecem ao vivo (B-61). */
   dragging: boolean;
   setDragging: (dragging: boolean) => void;
@@ -160,6 +170,10 @@ export const useEditorStore = create<EditorState>((set) => ({
   guidedLeg: 0,
   showPageFrame: true,
   showInterference: true,
+  vista: 'ambos',
+  setVista: (vista) => set({ vista }),
+  saida: 'pdf',
+  pedeSaida: (saida) => set({ saida, dialog: 'saida' }),
   dragging: false,
   setDragging: (dragging) => set({ dragging }),
   clipboard: [],

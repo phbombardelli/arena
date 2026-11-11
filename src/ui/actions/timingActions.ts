@@ -1,7 +1,6 @@
 import { addObject, deleteObjects } from '@core/commands/ops';
-import { courseOrder } from '@core/assist/courseRide';
+import { faseDe, phaseStops, type Fase } from '@core/assist/courseRide';
 import { placeTimingLine, TIMING_DISTANCE } from '@core/library/timing';
-import type { Obstacle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { t } from '@core/i18n/i18n';
@@ -17,17 +16,13 @@ import { t } from '@core/i18n/i18n';
  * assistente tinha de inventar uma volta entre ela e o primeiro salto.
  * Inventava, e o croqui saía com uma laçada onde só pode haver reta.
  */
-export function insertTimingLine(role: 'start' | 'finish'): void {
+export function insertTimingLine(role: 'start' | 'finish', fase: Fase = 'percurso'): void {
   const { doc, apply } = useDocumentStore.getState();
   const distancia = useEditorStore.getState().timingDistanceM;
 
-  const stops = courseOrder(
-    doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'),
-  );
+  const stops = phaseStops(doc, fase);
   if (stops.length === 0) {
-    window.alert(
-      t('aviso.numereUm'),
-    );
+    window.alert(t(fase === 'desempate' ? 'dsp.semOrdem' : 'aviso.numereUm'));
     return;
   }
 
@@ -35,8 +30,10 @@ export function insertTimingLine(role: 'start' | 'finish'): void {
   const referencia =
     role === 'start' ? degrau.elements[0]! : degrau.elements[degrau.elements.length - 1]!;
 
-  const linha = placeTimingLine(role, referencia, distancia);
-  const antiga = doc.objects.find((o) => o.kind === 'timing' && o.role === role);
+  const linha = placeTimingLine(role, referencia, distancia, undefined, fase);
+  const antiga = doc.objects.find(
+    (o) => o.kind === 'timing' && o.role === role && faseDe(o) === fase,
+  );
 
   apply(role === 'start' ? 'Colocar partida' : 'Colocar chegada', (d) => {
     // Uma de cada: recolocar substitui, em vez de empilhar cruzadas.

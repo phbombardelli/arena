@@ -8,6 +8,7 @@ import { t } from '@core/i18n/i18n';
 import { APP_VERSION } from '@core/persistence/serialize';
 import { ContactForm } from '@ui/help/ContactForm';
 import { TutorialsBody, WelcomeBody } from '@ui/help/Tutorials';
+import { SaidaDialogBody } from '@ui/files/SaidaDialog';
 
 /** A lista na língua atual: montada a cada abertura, não no carregamento. */
 const atalhos = (): [string, string][] => [
@@ -43,7 +44,7 @@ const atalhos = (): [string, string][] => [
 
 /** As janelas abertas por menu. Só uma de cada vez. */
 export function Dialogs() {
-  const { dialog, setDialog } = useEditorStore();
+  const { dialog, setDialog, saida } = useEditorStore();
   const fecha = () => setDialog(null);
 
   if (dialog === 'atalhos') {
@@ -150,6 +151,13 @@ export function Dialogs() {
     return (
       <Dialog title={t('bv.titulo')} onClose={fecha}>
         <WelcomeBody />
+      </Dialog>
+    );
+  }
+  if (dialog === 'saida') {
+    return (
+      <Dialog title={saida === 'pdf' ? t('saida.tituloPdf') : t('saida.tituloImprimir')} onClose={fecha}>
+        <SaidaDialogBody />
       </Dialog>
     );
   }

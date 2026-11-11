@@ -3,6 +3,7 @@ import { applyPatches, enablePatches, produceWithPatches, type Patch } from 'imm
 import type { CourseDocument } from '@core/model/types';
 import { createDocument } from '@core/model/document';
 import { syncTimingLines } from '@core/library/timing';
+import { syncQuadroDesempate } from '@core/library/desempate';
 import { syncPathAnchors } from '@core/commands/pathAnchors';
 import { enforceLockedDistances } from '@core/commands/distanceOps';
 import type { FileHandleLike } from '@platform/fileSystem';
@@ -66,6 +67,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       syncTimingLines(draft);
       syncPathAnchors(draft);
       enforceLockedDistances(draft);
+      syncQuadroDesempate(draft);
     });
     if (redo.length === 0) return;
 

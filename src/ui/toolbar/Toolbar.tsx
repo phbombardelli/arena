@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { exportDocumentPdf } from '@platform/exportPdf';
-import { printDocument } from '@platform/print';
+import { pedeSaida } from '@ui/actions/exportActions';
 import { installApp, usePwa } from '@platform/pwa';
 import { AccountButton } from '@ui/cloud/CloudUI';
 import {
@@ -57,19 +55,6 @@ export function Toolbar() {
     selection,
     setDialog,
   } = useEditorStore();
-  const [busy, setBusy] = useState(false);
-
-  const exportPdf = async () => {
-    setBusy(true);
-    try {
-      await exportDocumentPdf(doc, (fileName ?? 'croqui').replace(/\.[^.]+$/, ''));
-    } catch (err) {
-      console.error(err);
-      window.alert(t('arquivo.falhaPdf'));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const check = (on: boolean, texto: string) => `${on ? '✓ ' : '   '}${texto}`;
   const nada = selection.length === 0;
@@ -94,12 +79,11 @@ export function Toolbar() {
     { label: t('arquivo.pistaPeloMapa'), onSelect: () => void startMapWizard() },
     'separator',
     {
-      label: busy ? t('arquivo.exportando') : t('arquivo.exportarPdf'),
+      label: t('arquivo.exportarPdf'),
       shortcut: 'Ctrl+E',
-      disabled: busy,
-      onSelect: () => void exportPdf(),
+      onSelect: () => pedeSaida('pdf', 'menu'),
     },
-    { label: t('arquivo.imprimir'), shortcut: 'Ctrl+P', onSelect: () => printDocument(doc) },
+    { label: t('arquivo.imprimir'), shortcut: 'Ctrl+P', onSelect: () => pedeSaida('imprimir', 'menu') },
     'separator',
     { label: t('arquivo.configurarFolha'), onSelect: () => setDialog('folha') },
     ...(pwa.instalavel

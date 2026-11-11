@@ -1,6 +1,7 @@
 import type { CourseDocument } from '@core/model/types';
 import { buildPaperSvg } from './paperSvg';
 import { t } from '@core/i18n/i18n';
+import { paginasDaFolha } from '@core/library/desempate';
 
 /**
  * Impressão direta pelo navegador, também vetorial. Rota secundária ao
@@ -8,9 +9,18 @@ import { t } from '@core/i18n/i18n';
  * do tamanho exato da folha, para o navegador não reescalar nada.
  */
 export function printDocument(doc: CourseDocument): void {
-  const handle = buildPaperSvg(doc);
-  const markup = new XMLSerializer().serializeToString(handle.svg);
-  handle.dispose();
+  // Uma página por vista: o percurso e, se pedido, o desempate (B-92).
+  let widthMm = 0;
+  let heightMm = 0;
+  const paginas = paginasDaFolha(doc).map((vista) => {
+    const handle = buildPaperSvg(doc, vista);
+    widthMm = handle.widthMm;
+    heightMm = handle.heightMm;
+    const svg = new XMLSerializer().serializeToString(handle.svg);
+    handle.dispose();
+    return svg;
+  });
+  const markup = paginas.join('');
 
   const frame = document.createElement('iframe');
   frame.setAttribute('aria-hidden', 'true');
@@ -28,9 +38,10 @@ export function printDocument(doc: CourseDocument): void {
   docFrame.write(`<!doctype html><html><head><meta charset="utf-8">
 <title>${t('aviso.croqui')}</title>
 <style>
-  @page { size: ${handle.widthMm}mm ${handle.heightMm}mm; margin: 0; }
+  @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; }
   html, body { margin: 0; padding: 0; }
-  svg { display: block; }
+  svg { display: block; break-after: page; }
+  svg:last-child { break-after: auto; }
   /* O Chrome remove fundos na impressão se "gráficos de segundo plano"
      estiver desligado; isto força a fidelidade de cor. */
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

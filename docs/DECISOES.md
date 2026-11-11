@@ -2036,3 +2036,62 @@ termos seguem docs/GLOSSARIO.md, revisado pelo usuário em 27/10/2026.
   (não aparecem na tela), mensagens de erro internas de programador e a
   página de diagnóstico do PDF.
 - A aba do navegador e o atributo `lang` da página também seguem a língua.
+
+## 99. Desempate (B-92)
+
+Observado em croquis publicados: o plano traz a ordem do desempate, os
+obstáculos acrescentados só para ele, partida e chegada próprias e um
+segundo bloco de tempos. O Arena não tinha nada disso.
+
+- **A ordem guarda os obstáculos, elemento a elemento** (`doc.desempate.ordem`),
+  e não os números: renumerar o percurso não desfaz a ordem. Digita-se
+  "1-2-5a-5b-6-14"; "5" traz a combinação inteira, "5a" só o elemento.
+- **Obstáculo "Só desempate"** (`soDesempate`): fica fora da ordem e da
+  contagem do percurso (`courseOrder`), ganha o número seguinte ao maior
+  do croqui e sai na folha com a etiqueta, posta do lado do número que
+  fica longe do obstáculo (acima ou abaixo, crescendo para fora). Entra na tabela de alturas.
+- **Fase** (`fase: 'desempate'`) em cruzadas e traçados. Cada fase tem o
+  seu traçado de assistente; traçar o desempate não apaga o do percurso.
+  Desempate sem cruzada própria usa a do percurso quando ela serve ao
+  mesmo obstáculo (desempate que começa no 1 parte da mesma linha).
+- **Traçado do desempate** azul, em traço e ponto.
+- **Vista** (só a tela, no editor): Percurso / Desempate / Ambos, na barra
+  de baixo quando há ordem (na de cima cortava a barra em janela menor). Na do desempate o traçado do percurso some, as cruzadas
+  do percurso só ficam se o desempate as usa e o obstáculo fora da ordem
+  fica apagado. Os números continuam os do percurso: é por eles que a
+  ordem se lê.
+- **Folha** (`doc.desempate.folha`), escolhida ao exportar ou imprimir:
+  só o percurso, com a ordem no quadro (padrão, para divulgação); percurso
+  e uma página só do desempate (título "DESEMPATE"); ou tudo numa folha.
+  Pelo menu a janela sempre abre; pelo atalho, só na primeira vez. O campo
+  "Na folha", na seção Desempate do painel, troca a qualquer hora.
+- **Sentido contrário e vertical que vira oxer** (`desempate.contrario`,
+  `desempate.oxer`): marcas por degrau no painel. O obstáculo do croqui
+  não muda; `comoNoDesempate` devolve a cópia como é saltada (seta virada,
+  ou oxer com a largura padrão e a vara de trás na altura da da frente),
+  e é ela que o traçado do desempate, as distâncias e a vista usam. Na
+  vista Ambos o obstáculo do percurso ganha a seta azul do desempate ou a
+  etiqueta "oxer no desempate". No quadro, "7 (inv.)" e "4 (oxer)" em
+  texto: seta não sai no WinAnsi.
+- **Quadro técnico:** o bloco do desempate (ordem, velocidade, distância,
+  concedido, limite) é desligado por padrão e o desenhador liga quando a
+  prova tiver desempate, em qualquer formato. Sai como seção própria, com
+  fio e título "DESEMPATE", embaixo do resto, e os títulos não repetem a
+  palavra. A velocidade é própria — a FEI não obriga a mesma do percurso
+  (Art. 219.1, 222.1.1, 288.5.3) — e começa igual à do percurso. Mesmas
+  contas de tempo (Art. 253). A **ordem acompanha o desenho sozinha**
+  (`syncQuadroDesempate`, junto das outras invariantes do `apply`): ela
+  não é digitada, então reescrever não apaga nada. Distância e tempos
+  seguem a regra do quadro: só quando pedidos. Cada página leva o seu
+  quadro: com o desempate em **página própria**, a do percurso sai sem o
+  bloco e a do desempate só com a prova e o bloco; em uma folha só (tudo,
+  ou só o percurso) sai o quadro inteiro. A ordem ocupa a largura toda do
+  quadro, para não invadir a coluna vizinha. Ligar ou desligar o bloco empurra
+  o que está logo abaixo do quadro (a tabela de alturas), e o painel avisa
+  quando algo passa do pé da folha.
+- **Avisos do Art. 218.2 da FEI**: mínimo de 6 (combinação conta 1),
+  combinação obrigatória se o percurso tinha, no máximo 2 "Só desempate",
+  elemento do meio da tríplice não sai, obstáculo repetido. "A mais"
+  conta o "Só desempate", o sentido contrário e o vertical que vira oxer.
+  Conferir regra esportiva é o que o §44 evita; aqui é exceção pedida pelo
+  desenhador, como o limite do composto. Só informam, nada é bloqueado.

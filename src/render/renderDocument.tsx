@@ -1,4 +1,7 @@
-import type { Arena, CourseDocument, ObjectId, Obstacle, SceneObject, TimingLine } from '@core/model/types';
+import type { Arena, CourseDocument, ObjectId, Obstacle, SceneObject, TimingLine, VistaProva } from '@core/model/types';
+import { comoNoDesempate, faseDe, phaseTiming } from '@core/assist/courseRide';
+import { t } from '@core/i18n/i18n';
+import { COR_DESEMPATE } from '@core/commands/pathOps';
 import { isLayerVisible } from '@core/model/document';
 import { boundsIn, objectScope } from '@core/model/transform';
 import type { ObjectScope } from '@core/model/types';
@@ -45,6 +48,11 @@ export interface RenderOptions {
    * clique e ficam esmaecidos. `null` no modo papel, onde tudo é desenho.
    */
   editScope?: ObjectScope | null;
+  /**
+   * Percurso, desempate ou os dois (B-92). Na vista do desempate, o que
+   * não entra nele fica apagado, e o traçado do percurso some.
+   */
+  vista?: VistaProva;
   onObjectPointerDown?: (id: ObjectId, e: React.PointerEvent) => void;
 }
 
@@ -62,8 +70,29 @@ export function RenderDocument(opts: RenderOptions) {
   const rotulos = useMemo(() => layoutLabels(doc), [doc]);
   const quadro = useMemo(() => measureFrame(doc), [doc]);
 
+  // Desempate (B-92): o que cada vista mostra.
+  const naOrdem = new Set(doc.desempate?.ordem ?? []);
+  const vista: VistaProva = naOrdem.size === 0 ? 'ambos' : (opts.vista ?? 'ambos');
+  const soDesempate = vista === 'desempate';
+  // A cruzada do percurso que o desempate aproveita continua na vista dele.
+  const cruzadasDoDesempate = new Set(
+    soDesempate ? [phaseTiming(doc, 'desempate', 'start')?.id, phaseTiming(doc, 'desempate', 'finish')?.id] : [],
+  );
+  const someNaVista = (obj: SceneObject): boolean => {
+    if (obj.kind !== 'path' && obj.kind !== 'timing') return false;
+    const fase = faseDe(obj);
+    if (vista === 'percurso') return fase === 'desempate';
+    if (vista === 'desempate' && fase === 'percurso') {
+      return obj.kind === 'path' || !cruzadasDoDesempate.has(obj.id);
+    }
+    return false;
+  };
+
   const desenha = (obj: SceneObject) => {
         if (!isLayerVisible(doc, obj.layer) || !obj.visible) return null;
+        if (someNaVista(obj)) return null;
+        // Na vista do desempate, o obstáculo que fica de fora é cenário.
+        const foraDoDesempate = soDesempate && obj.kind === 'obstacle' && !naOrdem.has(obj.id);
 
         // Fora do modo ativo o objeto é cenário: some do alcance do mouse.
         const ativo = opts.editScope == null || objectScope(obj) === opts.editScope;
@@ -99,7 +128,15 @@ export function RenderDocument(opts: RenderOptions) {
             return (
               <ObstacleLayer
                 key={obj.id}
-                obstacle={obj}
+                obstacle={soDesempate ? comoNoDesempate(obj, doc.desempate) : obj}
+                noDesempate={
+                  vista === 'ambos' && naOrdem.has(obj.id)
+                    ? {
+                        contrario: doc.desempate?.contrario?.includes(obj.id) === true,
+                        oxer: doc.desempate?.oxer?.includes(obj.id) === true,
+                      }
+                    : undefined
+                }
                 printScale={doc.page.printScale}
                 originMm={doc.originMm}
                 numberAt={rotulos.number.get(obj.id)}
@@ -114,6 +151,7 @@ export function RenderDocument(opts: RenderOptions) {
                 path={obj}
                 obstacles={doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle')}
                 timings={doc.objects.filter((o): o is TimingLine => o.kind === 'timing')}
+                desempate={doc.desempate}
                 distanceAt={rotulos.distances.get(obj.id)}
                 printScale={doc.page.printScale}
                 originMm={doc.originMm}
@@ -171,7 +209,19 @@ export function RenderDocument(opts: RenderOptions) {
               />
             );
           case 'infobox':
-            return <InfoBoxLayer key={obj.id} box={obj} onPointerDown={onPointerDown} />;
+            return (
+              <InfoBoxLayer
+                key={obj.id}
+                box={obj}
+                parte={
+                  mode !== 'paper' ? 'tudo'
+                  : soDesempate ? 'desempate'
+                  : vista === 'percurso' && doc.desempate?.folha === 'duas' ? 'percurso'
+                  : 'tudo'
+                }
+                onPointerDown={onPointerDown}
+              />
+            );
           case 'heighttable':
             return (
               <HeightTableLayer
@@ -187,6 +237,13 @@ export function RenderDocument(opts: RenderOptions) {
         })();
 
         if (conteudo === null) return null;
+        if (foraDoDesempate) {
+          return (
+            <g key={obj.id} opacity={0.25}>
+              {conteudo}
+            </g>
+          );
+        }
         // Área de clique folgada (B-50): a envoltória do objeto mais 9 px
         // de TELA, por baixo do desenho dele. Linha de partida, ornamento e
         // texto pequenos viravam fios em escala grande.
@@ -266,6 +323,21 @@ export function RenderDocument(opts: RenderOptions) {
         ))}
 
       {frente.map(desenha)}
+
+      {/* A página do desempate no papel diz o que é (B-92). */}
+      {mode === 'paper' && soDesempate && (
+        <text
+          x={widthMm / 2}
+          y={doc.page.marginsMm.top + 5}
+          textAnchor="middle"
+          fontFamily="Helvetica, Arial, sans-serif"
+          fontSize={5}
+          fontWeight="bold"
+          fill={COR_DESEMPATE}
+        >
+          {t('saida.paginaDesempate')}
+        </text>
+      )}
 
       {/* Por último, para a legenda nunca ficar debaixo de um objeto. */}
       <ScaleLegend page={doc.page} />
