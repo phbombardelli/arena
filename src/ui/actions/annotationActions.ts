@@ -2,6 +2,7 @@ import { addObject } from '@core/commands/ops';
 import { createHeightTable, createInfoBox } from '@core/library/annotations';
 import { infoBoxLayout } from '@core/model/annotationLayout';
 import { usableArea } from '@core/scale/units';
+import { ligaArranjo } from '@core/model/sheetLayout';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 
@@ -26,7 +27,10 @@ export function insertInfoBox(): void {
 
   const area = usableArea(doc.page);
   const quadro = createInfoBox({ x: area.xMm, y: area.yMm });
-  apply('Inserir quadro técnico', (d) => addObject(d, quadro));
+  apply('Inserir quadro técnico', (d) => {
+    addObject(d, quadro);
+    ligaArranjo(d);
+  });
   useEditorStore.getState().setSelection([quadro.id]);
 }
 
@@ -46,6 +50,9 @@ export function insertHeightTable(): void {
     : area.yMm;
 
   const tabela = createHeightTable({ x: area.xMm, y });
-  apply('Inserir tabela de alturas', (d) => addObject(d, tabela));
+  apply('Inserir tabela de alturas', (d) => {
+    addObject(d, tabela);
+    ligaArranjo(d);
+  });
   useEditorStore.getState().setSelection([tabela.id]);
 }

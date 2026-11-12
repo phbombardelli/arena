@@ -2207,3 +2207,16 @@ segundo bloco de tempos. O Arena não tinha nada disso.
   escolha do lado já mede o quadro do jeito que ele ficaria em cada um.
   Quadro posto à mão não é deitado pela folha: o painel do quadro tem
   "Seções lado a lado" para escolher.
+
+### Ajustes da 1.2.1 (12/11/2026)
+
+- Decisão 104: a arrumação liga sozinha em croqui antigo quando o usuário
+  muda a folha ou insere quadro, tabela ou logo (`ligaArranjo`). Só abrir
+  um croqui antigo continua não mexendo em nada.
+- Decisão 103: com duas fases, a distância da 1ª fase é sempre a do
+  traçado até a linha; a extensão corrigida (B-90) é do percurso inteiro e
+  fica guardada para quando as duas fases forem desligadas. Traçado que
+  não cruza a linha: vale o ponto dele mais perto da linha, depois do
+  último da 1ª (até 15 m).
+- Aviso de "volta por fora" do assistente: só com giro acima de 225°;
+  reta alongada para encaixar uma curva normal não é volta por fora.

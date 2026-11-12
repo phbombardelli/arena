@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { centerOnPage, fitScaleToPage } from '@core/model/document';
-import { escolheLado, rearrumaFolha } from '@core/model/sheetLayout';
+import { escolheLado, ligaArranjo, rearrumaFolha } from '@core/model/sheetLayout';
 import { GRID_STEPS } from '@core/geometry/snap';
 import { PAGE_FORMATS, STANDARD_SCALES, formatMeters } from '@core/scale/units';
 import type { LadoDaFolha, Orientation, PageFormat, SheetCorner } from '@core/scale/units';
@@ -43,6 +43,7 @@ export function SheetSettings() {
             onChange={(e) =>
               apply('Formato da página', (d) => {
                 d.page.format = e.target.value as PageFormat;
+                ligaArranjo(d);
               })
             }
           >
@@ -58,6 +59,7 @@ export function SheetSettings() {
             onChange={(e) =>
               apply(t('folhap.orientacao'), (d) => {
                 d.page.orientation = e.target.value as Orientation;
+                ligaArranjo(d);
               })
             }
           >
@@ -114,6 +116,7 @@ export function SheetSettings() {
                   const v = Math.max(0, Number(e.target.value) || 0);
                   apply(`Margem ${lado}`, (d) => {
                     d.page.marginsMm[lado] = v;
+                    ligaArranjo(d);
                   });
                 }}
               />
@@ -127,6 +130,7 @@ export function SheetSettings() {
               apply('Margens iguais', (d) => {
                 const v = d.page.marginsMm.top;
                 d.page.marginsMm = { top: v, right: v, bottom: v, left: v };
+                ligaArranjo(d);
               })
             }
           >

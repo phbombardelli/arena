@@ -1,4 +1,5 @@
 import { addObject } from '@core/commands/ops';
+import { ligaArranjo } from '@core/model/sheetLayout';
 import { newId } from '@core/model/ids';
 import type { Logo } from '@core/model/types';
 import { pageSize, usableArea } from '@core/scale/units';
@@ -46,6 +47,7 @@ export async function insertLogo(): Promise<void> {
     apply('Inserir logo', (d) => {
       d.assets[assetId] = imported.asset;
       addObject(d, logo);
+      ligaArranjo(d);
     });
     const ed = useEditorStore.getState();
     if (ed.mode !== 'percurso') ed.setMode('percurso');

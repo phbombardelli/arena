@@ -171,7 +171,11 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
         </button>
       </div>
 
-      <Extensao box={box} medidaM={extensaoDesenho(doc)} travado={travado} edita={edita} />
+      {doc.duasFases && temFase2(box) ? (
+        <p className="note">{t('df.semCorrigida')}</p>
+      ) : (
+        <Extensao box={box} medidaM={extensaoDesenho(doc)} travado={travado} edita={edita} />
+      )}
 
       <Tempos box={box} travado={travado} edita={edita} />
 

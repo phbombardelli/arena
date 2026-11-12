@@ -23,6 +23,9 @@ const MOTIVO: Record<CurveWarning, MessageKey> = {
  * desenhada assim mesmo e o problema é dito: o desenhador precisa ver
  * ONDE está o aperto para decidir o que mudar na pista.
  */
+/** Giro a partir do qual a volta é por fora, para o aviso. */
+const GIRO_POR_FORA = 225;
+
 export function traceCourse(params: RideParams = DEFAULT_RIDE, fase: Fase = 'percurso'): void {
   const { doc, apply } = useDocumentStore.getState();
   const resultado = buildCourseRide(doc, params, fase);
@@ -37,7 +40,12 @@ export function traceCourse(params: RideParams = DEFAULT_RIDE, fase: Fase = 'per
 
   // Curva para trás é decisão visível: o desenhador tem que saber que ali
   // a linha sai e volta de propósito, e não por defeito do assistente.
-  const porFora = resultado.legs.filter((l) => l.lead.after > 0 || l.lead.before > 0);
+  // Reta alongada não basta: o assistente também estica a reta para
+  // encaixar uma curva normal (1 para 2 virando 90°). Por fora é a volta
+  // que gira bem mais que meia volta.
+  const porFora = resultado.legs.filter(
+    (l) => (l.lead.after > 0 || l.lead.before > 0) && l.turnDeg > GIRO_POR_FORA,
+  );
   if (porFora.length > 0 && resultado.problems.length === 0) {
     const lista = porFora.map((l) => `  ${l.where}`).join('\n');
     window.alert(

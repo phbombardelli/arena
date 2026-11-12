@@ -14,6 +14,14 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.2.1 — 12/11/2026
+
+- A arrumação da folha liga sozinha também nos croquis antigos, quando se muda a folha (formato, orientação, margens) ou se insere quadro, tabela ou logo.
+- Duas fases: a distância da 1ª fase vem sempre do traçado até a linha (a extensão corrigida do percurso inteiro não vale para ela e volta quando as duas fases são desligadas); traçado que não cruza a linha também é medido.
+- A linha das fases não mostra mais a opção de texto no desenho.
+- O assistente só avisa "volta por fora" quando a linha gira bem mais que meia volta, e não quando apenas estica a reta para fazer uma curva normal.
+- Desempate: "Na folha" virou "Na impressão".
+
 ## 1.2.0 — 12/11/2026
 
 - **Espelhar (B-96):** espelha o que está selecionado (um obstáculo, uma combinação ou o percurso inteiro), esquerda ↔ direita ou cima ↕ baixo, pelo painel, pelo menu Editar ou com Shift+H / Shift+V. O sentido de salto e o traçado acompanham.

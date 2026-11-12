@@ -119,6 +119,34 @@ describe('prova em duas fases (B-95)', () => {
     expect(vel.yMm).toBeGreaterThan(secao1);
   });
 
+  it('a extensão corrigida do percurso inteiro não vira a distância da 1ª fase', () => {
+    const base = comTracado(produce(prova(), (d) => ligaDuasFases(d, true)));
+    const doc = produce(base, (d) => {
+      ligaDuasFases(d, false);
+      quadroDe(d).distanciaCorrigidaM = 999;
+      ligaDuasFases(d, true);
+    });
+    const ext = extensoesDasFases(doc)!;
+    expect(valor(quadroDe(doc), 'distancia')).toBe(`${Math.round(ext.primeira)} m`);
+    // Desligando, a corrigida volta.
+    const sem = produce(doc, (d) => ligaDuasFases(d, false));
+    expect(valor(quadroDe(sem), 'distancia')).toBe('999 m');
+  });
+
+  it('traçado que não cruza a linha: a 1ª fase vai até o ponto dele mais perto da linha', () => {
+    // Traçado feito antes de ligar: depois, a linha é posta mais para o lado.
+    const doc = produce(comTracado(prova()), (d) => {
+      ligaDuasFases(d, true);
+      const linha = divisaDe(d)!;
+      linha.pos = { x: linha.pos.x, y: linha.pos.y + 4 };
+      linha.widthM = 1;
+    });
+    const ext = extensoesDasFases(doc);
+    expect(ext).not.toBeNull();
+    expect(ext!.primeira).toBeGreaterThan(0);
+    expect(ext!.segunda).toBeGreaterThan(0);
+  });
+
   it('2ª fase em Tabela C: só o limite', () => {
     const doc = comTracado(produce(prova(), (d) => ligaDuasFases(d, true)));
     const out = produce(doc, (d) => {

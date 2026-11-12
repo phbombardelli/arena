@@ -281,3 +281,12 @@ export function rearrumaFolha(doc: CourseDocument): void {
     doc.page.arranjo.escala = doc.page.printScale;
   }
 }
+
+/**
+ * Croqui de antes da arrumação: ela liga sozinha quando o usuário mexe na
+ * folha (formato, orientação, margens) ou põe um quadro, uma tabela ou um
+ * logo — é quando ele espera que tudo se reorganize. Já ligada, não faz nada.
+ */
+export function ligaArranjo(doc: CourseDocument): void {
+  if (!doc.page.arranjo) rearrumaFolha(doc);
+}

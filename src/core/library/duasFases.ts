@@ -1,5 +1,5 @@
 import { courseOrder, type RideStop } from '@core/assist/courseRide';
-import { courseDistancesAlong } from '@core/assist/obstacleDistances';
+import { courseDistancesAlong, pathSampler } from '@core/assist/obstacleDistances';
 import { formatDistance, pathLength } from '@core/model/path';
 import { empurraAbaixo, infoBoxLayout } from '@core/model/annotationLayout';
 import type { CourseDocument, CoursePath, InfoBox, ObjectId, Obstacle, TimingLine } from '@core/model/types';
@@ -114,10 +114,27 @@ export function extensoesDasFases(doc: CourseDocument): { primeira: number; segu
   const tracado = tracadoDoPercurso(doc);
   if (!divisa || !tracado) return null;
   const timings = doc.objects.filter((o): o is TimingLine => o.kind === 'timing');
-  const trecho = courseDistancesAlong(tracado, obstaculosDe(doc), timings).find((d) => d.toId === divisa.id);
-  if (!trecho) return null;
+  const trechos = courseDistancesAlong(tracado, obstaculosDe(doc), timings);
   const total = pathLength(tracado);
-  return { primeira: trecho.sTo, segunda: total - trecho.sTo };
+  const trecho = trechos.find((d) => d.toId === divisa.id);
+  if (trecho) return { primeira: trecho.sTo, segunda: total - trecho.sTo };
+
+  // O traçado não cruza a linha (feito à mão antes de ligar as duas fases):
+  // vale o ponto do traçado mais perto dela, depois do último da 1ª.
+  const dono = ultimoDaPrimeira(doc);
+  const amostra = pathSampler(tracado);
+  if (!dono || !amostra) return null;
+  const depoisDe = trechos.find((d) => d.toId === dono.id)?.sTo ?? 0;
+  let melhor: { s: number; d: number } | null = null;
+  amostra.pts.forEach((p, i) => {
+    const s = amostra.acumulado[i]!;
+    if (s < depoisDe) return;
+    const d = Math.hypot(p.x - divisa.pos.x, p.y - divisa.pos.y);
+    if (!melhor || d < melhor.d) melhor = { s, d };
+  });
+  const achado = melhor as { s: number; d: number } | null;
+  if (!achado || achado.d > TIMING_DISTANCE.max) return null;
+  return { primeira: achado.s, segunda: total - achado.s };
 }
 
 export interface AvisoDuasFases {
@@ -162,14 +179,16 @@ const metros = (m: number) => `${formatDistance(m, 0)} m`;
 
 /**
  * Escreve no quadro o que o desenho sabe das fases: a distância de cada
- * uma e os tempos. Distância corrigida na pista (B-90) não é apagada.
+ * uma e os tempos.
  */
 export function preencheFases(doc: CourseDocument, box: InfoBox): void {
   const ext = extensoesDasFases(doc);
   if (!ext) return;
   const campo = (id: string) => box.fields.find((f) => f.id === id);
   const d1 = campo('distancia');
-  if (d1 && box.distanciaCorrigidaM == null) d1.value = metros(ext.primeira);
+  // A extensão corrigida na pista (B-90) é do percurso inteiro: não vale
+  // para a 1ª fase, que vem sempre do traçado até a linha.
+  if (d1) d1.value = metros(ext.primeira);
   const d2 = campo('f2Distancia');
   if (d2) d2.value = metros(ext.segunda);
   aplicaTempos(box);
@@ -203,7 +222,8 @@ export function ligaDuasFases(doc: CourseDocument, liga: boolean): void {
       // Sem a 2ª fase, a distância volta a ser a do percurso inteiro.
       const tracado = tracadoDoPercurso(doc);
       const d = box.fields.find((f) => f.id === 'distancia');
-      if (d && tracado && box.distanciaCorrigidaM == null) d.value = metros(pathLength(tracado));
+      if (d && box.distanciaCorrigidaM != null) d.value = metros(box.distanciaCorrigidaM);
+      else if (d && tracado) d.value = metros(pathLength(tracado));
       aplicaTempos(box);
     }
     empurraAbaixo(doc, box, antes, infoBoxLayout(box).heightMm);

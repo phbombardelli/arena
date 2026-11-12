@@ -1,10 +1,10 @@
-import { setTimingLine } from '@core/commands/timingOps';
-import { clampTimingDistance, TIMING_DISTANCE } from '@core/library/timing';
-import { obstacleLabel } from '@core/library/obstacles';
-import type { TimingLine, WingStyle } from '@core/model/types';
-import { useDocumentStore } from '@store/documentStore';
-import { NumberField } from './NumberField';
-import { t } from '@core/i18n/i18n';
+import { setTimingLine } from "@core/commands/timingOps";
+import { clampTimingDistance, TIMING_DISTANCE } from "@core/library/timing";
+import { obstacleLabel } from "@core/library/obstacles";
+import type { TimingLine, WingStyle } from "@core/model/types";
+import { useDocumentStore } from "@store/documentStore";
+import { NumberField } from "./NumberField";
+import { t } from "@core/i18n/i18n";
 
 /**
  * Painel da partida/chegada, enxuto (B-53). A linha é solidária ao
@@ -21,10 +21,10 @@ export function TimingPanel({ line }: { line: TimingLine }) {
 
   return (
     <>
-      {line.anchor && dono?.kind === 'obstacle' ? (
+      {line.anchor && dono?.kind === "obstacle" ? (
         <>
           <NumberField
-            label={t('campo.distancia')}
+            label={t("campo.distancia")}
             unit="m"
             value={line.anchor.distanceM}
             decimals={1}
@@ -33,9 +33,9 @@ export function TimingPanel({ line }: { line: TimingLine }) {
             max={TIMING_DISTANCE.max}
             disabled={travado}
             onCommit={(v) =>
-              apply('Distância da cruzada', (d) => {
+              apply("Distância da cruzada", (d) => {
                 const alvo = d.objects.find((o) => o.id === line.id);
-                if (alvo?.kind === 'timing' && alvo.anchor) {
+                if (alvo?.kind === "timing" && alvo.anchor) {
                   alvo.anchor.distanceM = clampTimingDistance(v);
                 }
               })
@@ -54,10 +54,11 @@ export function TimingPanel({ line }: { line: TimingLine }) {
             onChange={(e) => {
               const v = clampTimingDistance(Number(e.target.value));
               apply(
-                'Distância da cruzada',
+                "Distância da cruzada",
                 (d) => {
                   const alvo = d.objects.find((o) => o.id === line.id);
-                  if (alvo?.kind === 'timing' && alvo.anchor) alvo.anchor.distanceM = v;
+                  if (alvo?.kind === "timing" && alvo.anchor)
+                    alvo.anchor.distanceM = v;
                 },
                 // Arrastar o controle é um gesto só no histórico.
                 `cruzada-${line.id}`,
@@ -66,57 +67,68 @@ export function TimingPanel({ line }: { line: TimingLine }) {
           />
           <p className="note">
             {line.divisa
-              ? t('timingp.notaDivisa', { obstaculo: obstacleLabel(dono) || t('alturas.semNumero') })
-              : t(line.role === 'start' ? 'timingp.notaPartida' : 'timingp.notaChegada', {
-                  obstaculo: obstacleLabel(dono) || t('alturas.semNumero'),
-                })}
+              ? t("timingp.notaDivisa", {
+                  obstaculo: obstacleLabel(dono) || t("alturas.semNumero"),
+                })
+              : t(
+                  line.role === "start"
+                    ? "timingp.notaPartida"
+                    : "timingp.notaChegada",
+                  {
+                    obstaculo: obstacleLabel(dono) || t("alturas.semNumero"),
+                  },
+                )}
           </p>
         </>
       ) : (
-        <p className="note dim">
-          {t('timingp.solta')}
-        </p>
+        <p className="note dim">{t("timingp.solta")}</p>
       )}
 
       {!line.divisa && (
         <label className="field">
-          <span>{t('timingp.papel')}</span>
+          <span>{t("timingp.papel")}</span>
           <select
             value={line.role}
             disabled={travado}
             onChange={(e) =>
-              apply('Papel da linha', (d) =>
-                setTimingLine(d, line.id, { role: e.target.value as TimingLine['role'] }),
+              apply("Papel da linha", (d) =>
+                setTimingLine(d, line.id, {
+                  role: e.target.value as TimingLine["role"],
+                }),
               )
             }
           >
-            <option value="start">{t('timingp.partida')}</option>
-            <option value="finish">{t('timingp.chegada')}</option>
+            <option value="start">{t("timingp.partida")}</option>
+            <option value="finish">{t("timingp.chegada")}</option>
           </select>
         </label>
       )}
 
       <NumberField
-        label={t('campo.largura')}
+        label={t("campo.largura")}
         unit="m"
         value={line.widthM}
         decimals={2}
         step={0.5}
         min={0.5}
         disabled={travado}
-        onCommit={(v) => apply('Largura da linha', (d) => setTimingLine(d, line.id, { widthM: v }))}
+        onCommit={(v) =>
+          apply("Largura da linha", (d) =>
+            setTimingLine(d, line.id, { widthM: v }),
+          )
+        }
       />
 
       {!line.divisa && (
         <label className="field">
-          <span>{t('campo.texto')}</span>
+          <span>{t("campo.texto")}</span>
           <input
             type="text"
             value={line.label}
             disabled={travado}
             onChange={(e) =>
               apply(
-                'Texto da linha',
+                "Texto da linha",
                 (d) => setTimingLine(d, line.id, { label: e.target.value }),
                 `timlabel-${line.id}`,
               )
@@ -124,69 +136,79 @@ export function TimingPanel({ line }: { line: TimingLine }) {
           />
         </label>
       )}
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={line.labelVisible}
-          disabled={travado}
-          onChange={(e) =>
-            apply(t('timingp.textoDesenho'), (d) =>
-              setTimingLine(d, line.id, { labelVisible: e.target.checked }),
-            )
-          }
-        />
-        {t('timingp.textoDesenho')}
-      </label>
+      {/* A linha das fases já leva "1ª fase" e "2ª fase": não tem texto próprio. */}
+      {!line.divisa && (
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={line.labelVisible}
+            disabled={travado}
+            onChange={(e) =>
+              apply(t("timingp.textoDesenho"), (d) =>
+                setTimingLine(d, line.id, { labelVisible: e.target.checked }),
+              )
+            }
+          />
+          {t("timingp.textoDesenho")}
+        </label>
+      )}
 
-      <h3>{t('timingp.passagem')}</h3>
+      <h3>{t("timingp.passagem")}</h3>
       <label className="check">
         <input
           type="checkbox"
           checked={line.arrow.visible}
           disabled={travado}
           onChange={(e) =>
-            apply('Seta da linha', (d) =>
-              setTimingLine(d, line.id, { arrow: { ...line.arrow, visible: e.target.checked } }),
+            apply("Seta da linha", (d) =>
+              setTimingLine(d, line.id, {
+                arrow: { ...line.arrow, visible: e.target.checked },
+              }),
             )
           }
         />
-        {t('timingp.mostrarSeta')}
+        {t("timingp.mostrarSeta")}
       </label>
       <label className="field">
-        <span>{t('timingp.corTraco')}</span>
+        <span>{t("timingp.corTraco")}</span>
         <input
           type="color"
           value={line.style.color}
           disabled={travado}
           onChange={(e) =>
             apply(
-              'Cor da linha',
-              (d) => setTimingLine(d, line.id, { style: { ...line.style, color: e.target.value } }),
+              "Cor da linha",
+              (d) =>
+                setTimingLine(d, line.id, {
+                  style: { ...line.style, color: e.target.value },
+                }),
               `timcor-${line.id}`,
             )
           }
         />
       </label>
       <label className="field">
-        <span>{t('campo.traco')}</span>
+        <span>{t("campo.traco")}</span>
         <select
           value={line.style.dash}
           disabled={travado}
           onChange={(e) =>
-            apply('Traço da linha', (d) =>
+            apply("Traço da linha", (d) =>
               setTimingLine(d, line.id, {
-                style: { ...line.style, dash: e.target.value as TimingLine['style']['dash'] },
+                style: {
+                  ...line.style,
+                  dash: e.target.value as TimingLine["style"]["dash"],
+                },
               }),
             )
           }
         >
-          <option value="solid">{t('tracadop.continuo')}</option>
-          <option value="dashed">{t('tracadop.tracejado')}</option>
-          <option value="dotted">{t('tracadop.pontilhado')}</option>
-          <option value="dashdot">{t('tracadop.tracoPonto')}</option>
+          <option value="solid">{t("tracadop.continuo")}</option>
+          <option value="dashed">{t("tracadop.tracejado")}</option>
+          <option value="dotted">{t("tracadop.pontilhado")}</option>
+          <option value="dashdot">{t("tracadop.tracoPonto")}</option>
         </select>
       </label>
-
     </>
   );
 }
