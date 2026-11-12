@@ -14,6 +14,10 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.3.1 — 12/11/2026
+
+- Escala mais flexível. Puxando o canto da pista na Impressão, ela anda de 10 em 10 (1:610, 1:620…); com Shift, pula só entre as escalas padrão. "Ajustar ao papel" e "Rearrumar a folha" procuram de 25 em 25 (1:625, 1:650…), para a pista sair a maior possível em vez de cair direto para a próxima escala padrão.
+
 ## 1.3.0 — 12/11/2026
 
 - **Aba Impressão (B-105):** a folha se monta numa aba própria, ao lado de Pista, Percurso e Ginástica. Ali ficam formato, orientação, margens, escala, posição da pista, quadro técnico, tabela de alturas e logos. A pista com o percurso vira um bloco: arraste para mudar de lugar na folha e puxe um canto para mudar a escala (de escala padrão em escala padrão). O botão "Folha A4 · 1:750" do topo leva para essa aba.

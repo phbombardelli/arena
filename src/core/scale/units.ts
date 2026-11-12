@@ -47,8 +47,24 @@ export function nextStandardScale(exact: PrintScale): PrintScale {
 }
 
 /**
+ * "Ajustar ao papel" e a arrumação da folha procuram de 25 em 25: a pista
+ * fica a maior possível (1:625 em vez de cair para 1:750), e a escala
+ * continua redonda. Arrastando o canto na Impressão, o passo é 10.
+ */
+export const PASSO_AJUSTE = 25;
+export const PASSO_ARRASTE = 10;
+
+/** Menor escala, no passo de ajuste, que ainda comporta a extensão pedida (de 1:250 a 1:1000). */
+export function escalaQueCabe(exata: PrintScale): PrintScale {
+  const menor = STANDARD_SCALES[0]!;
+  const maior = STANDARD_SCALES[STANDARD_SCALES.length - 1]!;
+  if (exata > maior) return maior;
+  return Math.max(menor, Math.ceil(exata / PASSO_AJUSTE - 1e-9) * PASSO_AJUSTE);
+}
+
+/**
  * Escala necessária para que uma área de `widthM` × `heightM` caiba na
- * área útil do papel, já arredondada para uma escala padrão.
+ * área útil do papel, já arredondada no passo de ajuste.
  */
 export function fitScale(
   widthM: Meters,
@@ -58,7 +74,7 @@ export function fitScale(
 ): PrintScale {
   if (widthM <= 0 || heightM <= 0) return 250;
   const needed = Math.max((widthM * 1000) / usableWidthMm, (heightM * 1000) / usableHeightMm);
-  return nextStandardScale(needed);
+  return escalaQueCabe(needed);
 }
 
 /** Formatos de página em mm, sempre no formato retrato (largura × altura). */

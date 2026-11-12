@@ -83,3 +83,13 @@ describe('formatação', () => {
     expect(formatMeters(5, 0)).toBe('5');
   });
 });
+
+describe('escala que cabe, de 25 em 25', () => {
+  it('arredonda para cima no passo, entre 1:250 e 1:1000', async () => {
+    const { escalaQueCabe } = await import('./units');
+    expect(escalaQueCabe(610)).toBe(625);
+    expect(escalaQueCabe(625)).toBe(625);
+    expect(escalaQueCabe(100)).toBe(250);
+    expect(escalaQueCabe(1300)).toBe(1000);
+  });
+});

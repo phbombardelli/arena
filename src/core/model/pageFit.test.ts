@@ -120,9 +120,9 @@ describe('contorno livre (decisão 64)', () => {
         ]),
       );
     });
-    // 150 × 100 m em A4 paisagem pede 1:600; um contorno lido como 0×0
-    // daria a menor escala da lista.
-    expect(fitScaleToPage(doc)).toBe(600);
+    // 150 × 100 m em A4 paisagem pede ~1:575 (de 25 em 25); um contorno
+    // lido como 0×0 daria a menor escala da lista.
+    expect(fitScaleToPage(doc)).toBe(575);
   });
 });
 

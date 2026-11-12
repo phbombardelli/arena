@@ -1,4 +1,4 @@
-import { nextStandardScale, STANDARD_SCALES, usableArea } from '@core/scale/units';
+import { escalaQueCabe, STANDARD_SCALES, usableArea } from '@core/scale/units';
 import type { LadoDaFolha, PosicaoDaPista } from '@core/scale/units';
 import { heightTableLayout, infoBoxLayout } from './annotationLayout';
 import { anotacaoMm, centerOriginMm, desenhoCabe, extensaoDoDesenho, firstArena, fitScaleToPage } from './document';
@@ -261,7 +261,7 @@ const MAIOR_ESCALA = STANDARD_SCALES[STANDARD_SCALES.length - 1]!;
 function escalaDaNota(nota: number): number {
   if (nota <= 0) return Number.POSITIVE_INFINITY;
   const precisa = 1000 / nota;
-  return precisa > MAIOR_ESCALA ? precisa : nextStandardScale(precisa);
+  return precisa > MAIOR_ESCALA ? precisa : escalaQueCabe(precisa);
 }
 
 interface Plano {

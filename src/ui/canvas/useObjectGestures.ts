@@ -19,7 +19,7 @@ import { deepClone } from '@core/model/clone';
 import type { ObjectId, SceneObject } from '@core/model/types';
 import { DESENHO_ID, desenhoNaFolhaMm } from '@core/model/document';
 import { isPaperAnchored } from '@core/model/transform';
-import { STANDARD_SCALES } from '@core/scale/units';
+import { PASSO_ARRASTE, STANDARD_SCALES } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 
@@ -135,7 +135,11 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
             ? (agora.x - ancoraPaper.x) / span.x
             : (agora.y - ancoraPaper.y) / span.y;
         if (!(r > 0.05)) return;
-        const escala = escalaPadraoPerto(current.escalaStart / r);
+        // De 10 em 10; com Shift, só as escalas padrão.
+        const exata = current.escalaStart / r;
+        const escala = shift
+          ? escalaPadraoPerto(exata)
+          : Math.min(5000, Math.max(50, Math.round(exata / PASSO_ARRASTE) * PASSO_ARRASTE));
         if (escala === store.doc.page.printScale) return;
         store.apply('Escala da folha', (doc) => {
           doc.page.printScale = escala;

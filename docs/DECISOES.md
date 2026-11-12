@@ -2291,3 +2291,12 @@ objetos continua `pista`/`percurso`.
 
 **Próximas etapas:** título e imagens (B-106), desempate em uma ou duas
 folhas com diagramação própria (B-107), folha de especificação (B-108).
+
+### Escala flexível (1.3.1, 12/11/2026)
+
+- Decisão 105: o canto do bloco na Impressão muda a escala de 10 em 10
+  (`PASSO_ARRASTE`); com Shift, a escala padrão mais perto.
+- Decisões 64 e 104: `fitScale` e o plano da folha arredondam para cima
+  de 25 em 25 (`escalaQueCabe`, `PASSO_AJUSTE`), entre 1:250 e 1:1000. A
+  lista de escalas padrão continua no seletor do painel. No croqui modelo
+  (AMAN), Rearrumar passou de 1:750 para 1:625.
