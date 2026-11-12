@@ -94,3 +94,25 @@ describe('distância escrita sobre a linha (decisão 56)', () => {
     }
   });
 });
+
+describe('círculo da ordem do desempate (B-99)', () => {
+  it('entra na caixa do número: dois obstáculos vizinhos não se cobrem', () => {
+    // Como o 2 e o 12 do croqui do usuário: lado a lado, girados.
+    const doc = cena((d) => {
+      const a = createObstacle('oxer', { x: 40, y: 30 }, '2');
+      a.rotation = 40;
+      const b = createObstacle('oxer', { x: 46, y: 30 }, '12');
+      b.rotation = 60;
+      addObject(d, a);
+      addObject(d, b);
+    });
+    const [a, b] = doc.objects as Obstacle[];
+    const comOrdem = new Set([a!.id, b!.id]);
+    const l = layoutLabels(doc, comOrdem);
+    const ca = caixa(l.number.get(a!.id)!, '2  ', LABEL_FONT_MM.number);
+    const cb = caixa(l.number.get(b!.id)!, '12  ', LABEL_FONT_MM.number);
+    const cobre =
+      ca.min.x < cb.max.x && cb.min.x < ca.max.x && ca.min.y < cb.max.y && cb.min.y < ca.max.y;
+    expect(cobre).toBe(false);
+  });
+});

@@ -65,14 +65,16 @@ export function createTimingLine(
   return linha;
 }
 
-const chaveRotulo = (role: 'start' | 'finish', fase: Fase) =>
-  fase === 'desempate'
+const chaveRotulo = (role: 'start' | 'finish', fase: Fase, divisa?: boolean) =>
+  divisa
+    ? 'tim.divisa'
+    : fase === 'desempate'
     ? role === 'start' ? 'tim.partidaDesempate' : 'tim.chegadaDesempate'
     : role === 'start' ? 'tim.partida' : 'tim.chegada';
 
 /** Rótulo da linha como sai no croqui: o padrão segue a língua da tela. */
 export const timingLabel = (line: TimingLine): string =>
-  localizeDefault(line.label, chaveRotulo(line.role, faseDe(line)));
+  line.divisa ? t('tim.divisa') : localizeDefault(line.label, chaveRotulo(line.role, faseDe(line)));
 
 /** Extensão local, em metros — a base da envoltória e da seta. */
 export function timingExtent(line: TimingLine): {
@@ -89,7 +91,7 @@ export const allTimingLines = (doc: CourseDocument): TimingLine[] =>
 
 /** Já existe uma linha desse papel? Serve para o aviso, não para bloquear. */
 export const hasTimingRole = (doc: CourseDocument, role: 'start' | 'finish'): boolean =>
-  allTimingLines(doc).some((l) => l.role === role);
+  allTimingLines(doc).some((l) => l.role === role && !l.divisa);
 
 /** Limites da distância da cruzada à vara que ela serve, em metros. */
 export const TIMING_DISTANCE = { min: 6, max: 15, padrao: 12, passo: 0.1 };
@@ -136,7 +138,7 @@ export function placeTimingLine(
 }
 
 /** Põe a cruzada no lugar que o vínculo manda. */
-function alinha(linha: TimingLine, obstacle: Obstacle): void {
+export function alinha(linha: TimingLine, obstacle: Obstacle): void {
   if (!linha.anchor) return;
   const heading = obstacle.rotation + (obstacle.arrow.reversed ? 90 : -90);
   const daVara = meiaVara(obstacle) + clampTimingDistance(linha.anchor.distanceM);
@@ -182,7 +184,8 @@ export function donoDe(role: 'start' | 'finish', doc: CourseDocument, fase: Fase
  */
 export function syncTimingLines(doc: CourseDocument): void {
   for (const obj of doc.objects) {
-    if (obj.kind !== 'timing') continue;
+    // A linha entre as fases (B-95) é da syncDuasFases.
+    if (obj.kind !== 'timing' || obj.divisa) continue;
 
     const vinculado = obj.anchor
       ? doc.objects.find((o) => o.id === obj.anchor!.obstacleId)

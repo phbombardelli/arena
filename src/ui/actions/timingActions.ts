@@ -32,7 +32,7 @@ export function insertTimingLine(role: 'start' | 'finish', fase: Fase = 'percurs
 
   const linha = placeTimingLine(role, referencia, distancia, undefined, fase);
   const antiga = doc.objects.find(
-    (o) => o.kind === 'timing' && o.role === role && faseDe(o) === fase,
+    (o) => o.kind === 'timing' && o.role === role && !o.divisa && faseDe(o) === fase,
   );
 
   apply(role === 'start' ? 'Colocar partida' : 'Colocar chegada', (d) => {

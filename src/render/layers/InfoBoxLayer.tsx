@@ -35,30 +35,40 @@ export function InfoBoxLayer({ box, parte, onPointerDown }: Props) {
         stroke="#23282d"
         strokeWidth={box.style.borderMm}
       />
-      {l.secao && (
-        <>
-          {l.secao.linhaYMm >= 0 && (
+      {l.secoes.map((secao, i) => (
+        <g key={i}>
+          {secao.linhaYMm >= 0 && (
             <line
               x1={0}
               x2={round(l.widthMm)}
-              y1={round(l.secao.linhaYMm)}
-              y2={round(l.secao.linhaYMm)}
+              y1={round(secao.linhaYMm)}
+              y2={round(secao.linhaYMm)}
+              stroke="#23282d"
+              strokeWidth={box.style.borderMm}
+            />
+          )}
+          {secao.linhaXMm >= 0 && (
+            <line
+              x1={round(secao.linhaXMm)}
+              x2={round(secao.linhaXMm)}
+              y1={0}
+              y2={round(l.heightMm)}
               stroke="#23282d"
               strokeWidth={box.style.borderMm}
             />
           )}
           <text
-            x={round(s * 0.8)}
-            y={round(l.secao.tituloYMm + l.rowHeightMm * 0.7)}
+            x={round(secao.xMm + s * 0.8)}
+            y={round(secao.tituloYMm + l.rowHeightMm * 0.7)}
             fontSize={s}
             fontFamily="Helvetica, Arial, sans-serif"
             fontWeight={700}
             fill="#23282d"
           >
-            {l.secao.titulo}
+            {secao.titulo}
           </text>
-        </>
-      )}
+        </g>
+      ))}
       {l.cells.map((c, i) => (
         <g key={i} transform={`translate(${round(c.xMm)} ${round(c.yMm + l.rowHeightMm * 0.7)})`}>
           <text fontSize={s} fontFamily="Helvetica, Arial, sans-serif" fill="#6c757d">

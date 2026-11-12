@@ -1,5 +1,5 @@
 import type { Arena, CourseDocument, ObjectId, Obstacle, SceneObject, TimingLine, VistaProva } from '@core/model/types';
-import { comoNoDesempate, faseDe, phaseTiming } from '@core/assist/courseRide';
+import { comoNoDesempate, faseDe, phaseStops, phaseTiming } from '@core/assist/courseRide';
 import { t } from '@core/i18n/i18n';
 import { COR_DESEMPATE } from '@core/commands/pathOps';
 import { isLayerVisible } from '@core/model/document';
@@ -67,13 +67,25 @@ export function RenderDocument(opts: RenderOptions) {
   const isSelected = (id: ObjectId) => selection.includes(id);
   // Um leiaute só para todos os rótulos automáticos: cada um foge dos
   // outros, então precisam ser decididos juntos (decisão 55).
-  const rotulos = useMemo(() => layoutLabels(doc), [doc]);
   const quadro = useMemo(() => measureFrame(doc), [doc]);
 
   // Desempate (B-92): o que cada vista mostra.
   const naOrdem = new Set(doc.desempate?.ordem ?? []);
   const vista: VistaProva = naOrdem.size === 0 ? 'ambos' : (opts.vista ?? 'ambos');
   const soDesempate = vista === 'desempate';
+  // Posição de cada degrau na ordem do desempate (B-99), no primeiro
+  // elemento dele: uma combinação leva um círculo só.
+  const ordemDoDesempate = useMemo(() => {
+    const m = new Map<string, number>();
+    if (vista === 'percurso' || doc.desempate?.ordemNoObstaculo === false) return m;
+    phaseStops(doc, 'desempate').forEach((st, i) => {
+      const primeiro = st.elements[0];
+      if (primeiro) m.set(primeiro.id, i + 1);
+    });
+    return m;
+  }, [doc, vista]);
+  // O círculo da ordem entra na caixa do número: o leiaute desvia dele.
+  const rotulos = useMemo(() => layoutLabels(doc, new Set(ordemDoDesempate.keys())), [doc, ordemDoDesempate]);
   // A cruzada do percurso que o desempate aproveita continua na vista dele.
   const cruzadasDoDesempate = new Set(
     soDesempate ? [phaseTiming(doc, 'desempate', 'start')?.id, phaseTiming(doc, 'desempate', 'finish')?.id] : [],
@@ -137,6 +149,7 @@ export function RenderDocument(opts: RenderOptions) {
                       }
                     : undefined
                 }
+                ordemDesempate={ordemDoDesempate.get(obj.id)}
                 printScale={doc.page.printScale}
                 originMm={doc.originMm}
                 numberAt={rotulos.number.get(obj.id)}

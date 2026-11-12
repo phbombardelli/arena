@@ -8,12 +8,16 @@ import {
   boundsCenter,
   boundsIn,
   getRotation,
+  mirrorAround,
+  podeEspelhar,
   rotateAround,
   setPosition,
   setRotation,
   translate,
   unionBounds,
 } from '@core/model/transform';
+import { soltaNaFolha } from '@core/model/sheetLayout';
+import type { EixoEspelho } from '@core/model/transform';
 
 /**
  * Operações sobre o documento. São funções que mutam um rascunho do Immer,
@@ -26,7 +30,10 @@ const selected = (doc: CourseDocument, ids: ObjectId[]): SceneObject[] =>
 
 /** Move a seleção. `deltaM` em metros. */
 export function moveObjects(doc: CourseDocument, ids: ObjectId[], deltaM: Vec2): void {
-  for (const obj of selected(doc, ids)) translate(obj, deltaM, doc.page.printScale);
+  const objs = selected(doc, ids);
+  for (const obj of objs) translate(obj, deltaM, doc.page.printScale);
+  // Quadro, tabela ou logo arrastado sai da arrumação automática (B-103).
+  for (const obj of objs) soltaNaFolha(doc, obj);
   settleMovedAnchors(doc, ids);
 }
 
@@ -36,7 +43,9 @@ export function setObjectPosition(
   posM: Vec2,
 ): void {
   const obj = doc.objects.find((o) => o.id === id);
-  if (obj && !obj.locked) setPosition(obj, posM, doc.page.printScale);
+  if (!obj || obj.locked) return;
+  setPosition(obj, posM, doc.page.printScale);
+  soltaNaFolha(doc, obj);
 }
 
 /** Gira a seleção em torno do centro comum. Um objeto gira em torno de si. */
@@ -56,6 +65,21 @@ export function rotateObjects(doc: CourseDocument, ids: ObjectId[], deltaDeg: nu
   const pivot = boundsCenter(bounds);
   for (const obj of objs) rotateAround(obj, pivot, deltaDeg, doc.page.printScale);
   settleMovedAnchors(doc, ids);
+}
+
+/**
+ * Espelha a seleção (B-96) em torno do centro dela: um obstáculo, uma
+ * combinação ou o percurso inteiro. O traçado selecionado junto continua
+ * preso aos obstáculos; as cruzadas presas se realinham sozinhas depois.
+ */
+export function mirrorObjects(doc: CourseDocument, ids: ObjectId[], eixo: EixoEspelho): void {
+  const objs = selected(doc, ids).filter(podeEspelhar);
+  if (objs.length === 0) return;
+  const bounds = unionBounds(objs.map((o) => boundsIn(doc, o)));
+  if (!bounds) return;
+  const pivot = boundsCenter(bounds);
+  for (const obj of objs) mirrorAround(obj, pivot, eixo);
+  settleMovedAnchors(doc, objs.map((o) => o.id));
 }
 
 export function setObjectRotation(doc: CourseDocument, id: ObjectId, degrees: number): void {

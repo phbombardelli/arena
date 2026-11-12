@@ -12,6 +12,7 @@ import {
   deleteSelection,
   duplicateSelection,
   linkSelection,
+  mirrorSelection,
   pasteClipboard,
   selectAll,
   sendSelectionToBack,
@@ -110,6 +111,9 @@ export function Toolbar() {
     { label: t('editar.selecionarTudo'), shortcut: 'Ctrl+A', onSelect: selectAll },
     { label: t('editar.trazerFrente'), disabled: nada, onSelect: bringSelectionToFront },
     { label: t('editar.enviarTras'), disabled: nada, onSelect: sendSelectionToBack },
+    'separator',
+    { label: t('editar.espelharH'), shortcut: 'Shift+H', disabled: nada, onSelect: () => mirrorSelection('horizontal') },
+    { label: t('editar.espelharV'), shortcut: 'Shift+V', disabled: nada, onSelect: () => mirrorSelection('vertical') },
     'separator',
     { label: t('editar.vincular'), shortcut: 'Ctrl+G', disabled: selection.length < 2, onSelect: linkSelection },
     {

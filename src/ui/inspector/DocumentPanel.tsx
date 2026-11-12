@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { courseOrder, phaseStops, viraOxer } from '@core/assist/courseRide';
 import { avisosDesempate, lerOrdem, limpaVariacoes, marcaVariacao, ordemTexto, variacoesDe } from '@core/library/desempate';
 import { traceCourse } from '@ui/actions/rideActions';
+import { avisosDuasFases, fasesDoPercurso, ligaDuasFases, mudaFimDaPrimeira } from '@core/library/duasFases';
 import { findInterferences } from '@core/assist/interference';
 import { firstArena } from '@core/model/document';
 import { arenaArea, arenaExtent } from '@core/model/arena';
@@ -94,8 +95,8 @@ function ResumoProva() {
   const tracados = doc.objects.filter((o): o is CoursePath => o.kind === 'path' && !o.fase);
   const distancia = tracados.length > 0 ? pathLength(tracados[0]!) : null;
   const achados = useMemo(() => findInterferences(doc), [doc]);
-  const temPartida = doc.objects.some((o) => o.kind === 'timing' && o.role === 'start');
-  const temChegada = doc.objects.some((o) => o.kind === 'timing' && o.role === 'finish');
+  const temPartida = doc.objects.some((o) => o.kind === 'timing' && o.role === 'start' && !o.divisa);
+  const temChegada = doc.objects.some((o) => o.kind === 'timing' && o.role === 'finish' && !o.divisa);
 
   return (
     <section className="summary">
@@ -142,12 +143,72 @@ function ResumoProva() {
         {t('resumo.partidaNota')}
       </p>
 
+      <DuasFases />
+
       <Desempate />
 
       <p className="note dim">
         {t('resumo.selecioneNota')}
       </p>
     </section>
+  );
+}
+
+/**
+ * Prova em duas fases (B-95): liga, escolhe onde a 1ª termina e mostra os
+ * avisos do Art. 222. A linha entre as fases e os blocos do quadro vêm
+ * sozinhos.
+ */
+function DuasFases() {
+  const { doc, apply } = useDocumentStore();
+  const stops = courseOrder(doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'));
+  const fases = fasesDoPercurso(doc);
+  const avisos = useMemo(() => avisosDuasFases(doc), [doc]);
+  // Precisa de pelo menos dois obstáculos para haver duas fases.
+  if (stops.length < 2 && !fases) return null;
+  const fim = fases?.primeira[fases.primeira.length - 1];
+
+  return (
+    <>
+      <h3>{t('df.titulo')}</h3>
+      <label className="check" title={t('df.ligaDica')}>
+        <input
+          type="checkbox"
+          checked={fases != null}
+          onChange={(e) => apply(t('df.liga'), (d) => ligaDuasFases(d, e.target.checked))}
+        />
+        {t('df.liga')}
+      </label>
+      {fases && (
+        <>
+          <label className="field">
+            <span>{t('df.fimPrimeira')}</span>
+            <select
+              value={fim?.elements[0]?.id ?? ''}
+              onChange={(e) => apply(t('df.fimPrimeira'), (d) => mudaFimDaPrimeira(d, e.target.value))}
+            >
+              {stops.slice(0, -1).map((st) => (
+                <option key={st.elements[0]!.id} value={st.elements[0]!.id}>
+                  {st.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="note">{t('df.contagem', { a: fases.primeira.length, b: fases.segunda.length })}</p>
+          {avisos.length === 0 ? (
+            <p className="state ok">{t('df.semAvisos')}</p>
+          ) : (
+            avisos.map((a) => (
+              <p key={a.chave} className="state warn">
+                {t(a.chave, a.params)}
+              </p>
+            ))
+          )}
+          <p className="note dim">{t('df.avisosNota')}</p>
+          <p className="note dim">{t('df.linhaNota')}</p>
+        </>
+      )}
+    </>
   );
 }
 
@@ -278,6 +339,20 @@ function Desempate() {
           {tracado?.kind === 'path' && (
             <p className="note">{t('dsp.extensao', { d: formatDistance(pathLength(tracado), 0) })}</p>
           )}
+          <label className="check" title={t('dsp.ordemNoObstaculoDica')}>
+            <input
+              type="checkbox"
+              checked={doc.desempate?.ordemNoObstaculo !== false}
+              onChange={(e) =>
+                apply(t('dsp.ordemNoObstaculo'), (d) => {
+                  if (!d.desempate) return;
+                  if (e.target.checked) delete d.desempate.ordemNoObstaculo;
+                  else d.desempate.ordemNoObstaculo = false;
+                })
+              }
+            />
+            {t('dsp.ordemNoObstaculo')}
+          </label>
           <label className="field">
             <span>{t('dsp.naFolha')}</span>
             <select

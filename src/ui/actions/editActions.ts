@@ -3,12 +3,14 @@ import {
   bringToFront,
   deleteObjects,
   duplicateObjects,
+  mirrorObjects,
   sendToBack,
 } from '@core/commands/ops';
 import { linkObjects, unlinkObjects } from '@core/commands/groupOps';
 import { deepClone } from '@core/model/clone';
 import { newId } from '@core/model/ids';
-import { objectScope, translate } from '@core/model/transform';
+import { objectScope, translate, type EixoEspelho } from '@core/model/transform';
+import { t } from '@core/i18n/i18n';
 import type { SceneObject } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
@@ -102,4 +104,11 @@ export function unlinkSelection(): void {
   const ed = useEditorStore.getState();
   if (ed.selection.length === 0) return;
   useDocumentStore.getState().apply('Desvincular', (d) => unlinkObjects(d, ed.selection));
+}
+
+/** Espelha a seleção (B-96): Shift+H troca esquerda e direita, Shift+V cima e baixo. */
+export function mirrorSelection(eixo: EixoEspelho): void {
+  const sel = useEditorStore.getState().selection;
+  if (sel.length === 0) return;
+  useDocumentStore.getState().apply(t('editar.espelhar'), (d) => mirrorObjects(d, sel, eixo));
 }

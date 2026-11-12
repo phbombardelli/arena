@@ -352,6 +352,11 @@ export interface InfoBox extends BaseObject {
   kind: 'infobox';
   /** Posição em milímetros de papel: o quadro é anotação, não geometria. */
   posMm: Vec2;
+  /**
+   * Posto à mão (arrastado ou com posição digitada): fica fora da
+   * arrumação automática da folha (B-103) até "Rearrumar a folha".
+   */
+  livre?: true;
   widthMm: Millimeters;
   columns: number;
   fields: InfoBoxField[];
@@ -363,6 +368,12 @@ export interface InfoBox extends BaseObject {
    * traçado na hora.
    */
   distanciaCorrigidaM?: number;
+  /**
+   * Como as seções (1ª fase, 2ª fase, desempate) se arrumam: `lado`, uma
+   * ao lado da outra — o quadro deitado da faixa da folha (B-103, etapa
+   * 2). Ausente: uma embaixo da outra.
+   */
+  blocos?: 'lado';
   /**
    * Como os tempos do quadro são calculados (regras da CBH). Sem ele, o
    * croqui é anterior ao cálculo e vale a Tabela A.
@@ -381,6 +392,11 @@ export interface TemposDoQuadro {
 export interface HeightTable extends BaseObject {
   kind: 'heighttable';
   posMm: Vec2;
+  /**
+   * Posto à mão (arrastado ou com posição digitada): fica fora da
+   * arrumação automática da folha (B-103) até "Rearrumar a folha".
+   */
+  livre?: true;
   /** Número de colunas de elemento (varas) exibidas. */
   elementColumns: number;
   showSpread: boolean;
@@ -396,6 +412,11 @@ export interface HeightTable extends BaseObject {
 export interface Logo extends BaseObject {
   kind: 'logo';
   posMm: Vec2;
+  /**
+   * Posto à mão (arrastado ou com posição digitada): fica fora da
+   * arrumação automática da folha (B-103) até "Rearrumar a folha".
+   */
+  livre?: true;
   widthMm: Millimeters;
   assetId: string;
   /** Proporção do arquivo: a altura sai da largura, sem deformar. */
@@ -445,6 +466,12 @@ export interface TimingLine extends BaseObject {
   style: { dash: DashPreset; strokeMm: Millimeters; color: string };
   /** Partida ou chegada do desempate (B-92). Ausente = do percurso. */
   fase?: 'desempate';
+  /**
+   * Linha entre as fases de uma prova em duas fases (B-95): a chegada da 1ª
+   * fase, que é a partida da 2ª (FEI Art. 222). Fica presa ao último
+   * obstáculo da 1ª fase, como uma chegada, e o programa a cria e a apaga.
+   */
+  divisa?: true;
 }
 
 /* -------------------------------------------------- fundo e ornamentos */
@@ -558,6 +585,18 @@ export interface CourseDocument {
   kind?: 'percurso' | 'ginastica';
   /** Desempate da prova (B-92). Ausente = prova sem desempate. */
   desempate?: Desempate;
+  /** Prova em duas fases (B-95). Ausente = prova de uma fase só. */
+  duasFases?: DuasFases;
+}
+
+/**
+ * Prova em duas fases (B-95, FEI Art. 222): as duas correm sem parada, e a
+ * chegada da 1ª é a partida da 2ª. A numeração é contínua; o que divide as
+ * fases é o último obstáculo da 1ª.
+ */
+export interface DuasFases {
+  /** Um elemento do último obstáculo da 1ª fase (o degrau inteiro conta). */
+  fimDaPrimeira: ObjectId;
 }
 
 /**
@@ -572,6 +611,11 @@ export interface Desempate {
   contrario?: ObjectId[];
   /** Verticais que viram oxer no desempate. */
   oxer?: ObjectId[];
+  /**
+   * A posição na ordem do desempate num círculo azul ao lado do número
+   * (B-99), com o desempate à vista. Ausente = mostra.
+   */
+  ordemNoObstaculo?: boolean;
 }
 
 /**

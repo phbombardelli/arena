@@ -76,6 +76,13 @@ const CAMPOS: [id: string, key: MessageKey, valor?: string, enabled?: boolean][]
   ['dspDistancia', 'quadro.dspDistancia', '', false],
   ['dspTempo', 'quadro.dspTempo', '', false],
   ['dspLimite', 'quadro.dspLimite', '', false],
+  // 2ª fase (B-95): desligada até a prova ser de duas fases. Com ela, a
+  // tabela, a velocidade, a distância e os tempos de cima são os da 1ª.
+  ['f2Tabela', 'quadro.f2Tabela', '', false],
+  ['f2Velocidade', 'quadro.f2Velocidade', '', false],
+  ['f2Distancia', 'quadro.f2Distancia', '', false],
+  ['f2Tempo', 'quadro.f2Tempo', '', false],
+  ['f2Limite', 'quadro.f2Limite', '', false],
   ['desenhador', 'quadro.desenhador'],
 ];
 
@@ -99,6 +106,32 @@ export function mostraDesempate(box: InfoBox, liga: boolean): void {
     campo.enabled = liga;
   }
 }
+
+/** Campos da 2ª fase (B-95), na ordem do quadro. */
+export const CAMPOS_FASE2 = ['f2Tabela', 'f2Velocidade', 'f2Distancia', 'f2Tempo', 'f2Limite'] as const;
+
+/** Campos de cima que, numa prova em duas fases, são os da 1ª fase. */
+export const CAMPOS_FASE1 = ['tabela', 'velocidade', 'distancia', 'tempo', 'ideal', 'faixa', 'limite'] as const;
+
+/** Liga ou desliga o bloco da 2ª fase; quadro antigo ganha os campos que faltam. */
+export function mostraFase2(box: InfoBox, liga: boolean): void {
+  for (const id of CAMPOS_FASE2) {
+    let campo = box.fields.find((f) => f.id === id);
+    if (!campo) {
+      if (!liga) continue;
+      const [, key, valor] = CAMPOS.find(([c]) => c === id)!;
+      campo = { id, label: t(key), value: valor ?? '', enabled: true };
+      const depois = box.fields.findIndex((f) => f.id === 'desenhador');
+      box.fields.splice(depois >= 0 ? depois : box.fields.length, 0, campo);
+    }
+    // A tabela da 2ª só aparece se a 1ª mostra a dela.
+    campo.enabled = liga && (id !== 'f2Tabela' || box.fields.some((f) => f.id === 'tabela' && f.enabled));
+  }
+}
+
+/** O bloco da 2ª fase está no quadro? */
+export const temFase2 = (box: InfoBox): boolean =>
+  box.fields.some((f) => f.id.startsWith('f2') && f.enabled);
 
 /** O bloco do desempate está no quadro? */
 export const temDesempate = (box: InfoBox): boolean =>

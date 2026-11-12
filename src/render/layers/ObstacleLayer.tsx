@@ -22,6 +22,8 @@ interface Props {
    * a seta azul do sentido contrário e a etiqueta do vertical que vira oxer.
    */
   noDesempate?: { contrario: boolean; oxer: boolean };
+  /** Posição na ordem do desempate (B-99): o círculo azul ao lado do número. */
+  ordemDesempate?: number;
   onPointerDown?: (e: React.PointerEvent) => void;
 }
 
@@ -32,6 +34,7 @@ export function ObstacleLayer({
   numberAt,
   heightsAt,
   noDesempate,
+  ordemDesempate,
   onPointerDown,
 }: Props) {
   const k = mmPerMeter(printScale);
@@ -74,6 +77,17 @@ export function ObstacleLayer({
     return numeroEm.x > 0 ? { x: nx - borda, y, anchor: 'start' } : { x: nx + borda, y, anchor: 'end' };
   };
 
+  // Círculo da ordem do desempate (B-99): número e círculo formam um
+  // rótulo só, centrado onde o leiaute pôs o número — que já reservou o
+  // lugar do círculo e desviou dos vizinhos com ele.
+  const raio = text.small * 0.8;
+  const folga = text.small * 0.35;
+  const larguraNumero = numero.length * text.medium * 0.62;
+  const larguraGrupo = larguraNumero + folga + raio * 2;
+  const comOrdem = ordemDesempate !== undefined;
+  const numeroX = comOrdem ? nx - larguraGrupo / 2 + larguraNumero / 2 : nx;
+  const ordemEm = comOrdem ? { x: nx + larguraGrupo / 2 - raio, y: ny } : null;
+
   return (
     <g data-object={obstacle.id} data-kind="obstacle">
       {/* Corpo e seta giram com o obstáculo. */}
@@ -102,8 +116,8 @@ export function ObstacleLayer({
       */}
       {obstacle.numberLabel.visible && numero !== '' && (
         <text
-          x={round(cx + numeroEm.x * k)}
-          y={round(cy + numeroEm.y * k)}
+          x={round(numeroX)}
+          y={round(ny)}
           fontFamily={font.family}
           fontSize={text.medium}
           fontWeight="bold"
@@ -114,6 +128,31 @@ export function ObstacleLayer({
         >
           {numero}
         </text>
+      )}
+
+      {ordemEm && (
+        <g pointerEvents="none">
+          <circle
+            cx={round(ordemEm.x)}
+            cy={round(ordemEm.y)}
+            r={round(raio)}
+            fill={color.paper}
+            stroke={COR_DESEMPATE}
+            strokeWidth={round(raio * 0.16)}
+          />
+          <text
+            x={round(ordemEm.x)}
+            y={round(ordemEm.y)}
+            fontFamily={font.family}
+            fontSize={round(text.small * (String(ordemDesempate).length > 1 ? 0.85 : 1))}
+            fontWeight="bold"
+            fill={COR_DESEMPATE}
+            textAnchor="middle"
+            dominantBaseline="central"
+          >
+            {ordemDesempate}
+          </text>
+        </g>
       )}
 
       {/* Etiquetas do desempate (B-92): sempre do lado de fora do número,

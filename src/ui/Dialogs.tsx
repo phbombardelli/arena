@@ -31,6 +31,7 @@ const atalhos = (): [string, string][] => [
   [t('atalho.ctrlVPrint'), t('atalho.colarFundo')],
   ['Ctrl+A', t('atalho.selecionarTudo')],
   ['Ctrl+G  /  Ctrl+Shift+G', t('atalho.vincular')],
+  ['Shift+H  /  Shift+V', t('atalho.espelhar')],
   [t('atalho.altClique'), t('atalho.pegarUm')],
   [t('atalho.setas'), t('atalho.mover')],
   [t('atalho.altSetas'), t('atalho.desliza')],

@@ -4,11 +4,12 @@ import type { CourseDocument, InfoBox, Obstacle } from '@core/model/types';
 import { useEffect, useState } from 'react';
 import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
-import { fieldLabel, mostraDesempate, temDesempate } from '@core/library/annotations';
-import { heightTableLayout, infoBoxLayout } from '@core/model/annotationLayout';
+import { fieldLabel, mostraDesempate, temDesempate, temFase2 } from '@core/library/annotations';
+import { preencheFases } from '@core/library/duasFases';
+import { empurraAbaixo, heightTableLayout, infoBoxLayout } from '@core/model/annotationLayout';
 import { pageSize } from '@core/scale/units';
 import { ordemQuadro } from '@core/library/desempate';
-import { aplicaTempos, aplicaTemposDesempate, FORMATOS_TEMPO, type FormatoTempo } from '@core/library/courseTimes';
+import { aplicaTempos, aplicaTemposDesempate, aplicaTemposFase2, FORMATOS_TEMPO, type FormatoTempo } from '@core/library/courseTimes';
 import type { MessageKey } from '@core/i18n/messages';
 import { t } from '@core/i18n/i18n';
 
@@ -64,28 +65,6 @@ function saiDaFolha(doc: CourseDocument): boolean {
   );
 }
 
-/**
- * O quadro cresceu ou encolheu (o bloco do desempate entrou ou saiu): o
- * que estava logo abaixo dele, na mesma faixa da folha, acompanha. Sem
- * isto o quadro maior cobria a tabela de alturas posta embaixo dele.
- */
-function empurraAbaixo(doc: CourseDocument, box: InfoBox, antes: number, depois: number): void {
-  const delta = depois - antes;
-  if (Math.abs(delta) < 0.01) return;
-  const fundo = box.posMm.y + antes;
-  const x0 = box.posMm.x;
-  const x1 = box.posMm.x + box.widthMm;
-  for (const o of doc.objects) {
-    if (o.id === box.id || (o.kind !== 'heighttable' && o.kind !== 'infobox')) continue;
-    const largura =
-      o.kind === 'infobox'
-        ? o.widthMm
-        : heightTableLayout(o, doc.objects.filter((x): x is Obstacle => x.kind === 'obstacle')).widthMm;
-    const naFaixa = o.posMm.x < x1 && o.posMm.x + largura > x0;
-    if (naFaixa && o.posMm.y >= fundo - 1) o.posMm = { ...o.posMm, y: o.posMm.y + delta };
-  }
-}
-
 export function InfoBoxPanel({ box }: { box: InfoBox }) {
   const { doc, apply } = useDocumentStore();
   const travado = box.locked;
@@ -102,16 +81,22 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
 
   const preencher = () => {
     const valores = doDesenho(doc, box.distanciaCorrigidaM);
-    edita(t('quadrop.preencher'), (b) => {
+    apply(t('quadrop.preencher'), (d) => {
+      const b = d.objects.find((o) => o.id === box.id);
+      if (b?.kind !== 'infobox') return;
       for (const campo of b.fields) {
         const v = valores[campo.id];
         if (v != null) campo.value = v;
       }
       aplicaTempos(b);
       aplicaTemposDesempate(b);
+      // Duas fases (B-95): a distância de cima é a da 1ª, e a 2ª tem a sua.
+      if (d.duasFases && temFase2(b)) preencheFases(d, b);
     });
   };
 
+  // Arrumado pela folha (B-103): é ela que deita ou levanta o quadro.
+  const arrumado = doc.page.arranjo != null && !box.livre && !box.locked;
   const desempate = temDesempate(box);
   const ligaDesempate = (liga: boolean) => {
     const valores = doDesenho(doc, box.distanciaCorrigidaM);
@@ -165,6 +150,7 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
               // Os tempos acompanham a distância e a velocidade.
               if (campo.id === 'distancia' || campo.id === 'velocidade') aplicaTempos(b);
               if (['velocidade', 'dspDistancia', 'dspVelocidade'].includes(campo.id)) aplicaTemposDesempate(b);
+              if (['velocidade', 'f2Tabela', 'f2Distancia', 'f2Velocidade'].includes(campo.id)) aplicaTemposFase2(b);
             },
             `inf-${box.id}-${campo.id}`,
           )
@@ -203,8 +189,17 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
 
       <h3>{t('quadrop.campos')}</h3>
       <div className="leg-list">
-        {box.fields.map((campo, i) => (campo.id.startsWith('dsp') ? null : linha(campo, i)))}
+        {box.fields.map((campo, i) => (campo.id.startsWith('dsp') || campo.id.startsWith('f2') ? null : linha(campo, i)))}
       </div>
+      {temFase2(box) && (
+        <>
+          <h4>{t('tim.fase2')}</h4>
+          <div className="leg-list">
+            {box.fields.map((campo, i) => (campo.id.startsWith('f2') ? linha(campo, i) : null))}
+          </div>
+          <p className="note dim">{t('df.f2Nota')}</p>
+        </>
+      )}
       {box.fields.some((f) => f.id.startsWith('dsp')) && (
         <>
           <h4>{t('dsp.titulo')}</h4>
@@ -236,6 +231,25 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
         disabled={travado}
         onCommit={(v) => edita('Colunas do quadro', (b) => { b.columns = Math.round(v); })}
       />
+      {temSecoes(box) && (
+        <>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={box.blocos === 'lado'}
+              disabled={travado || arrumado}
+              onChange={(e) =>
+                edita(t('quadrop.blocosLado'), (b) => {
+                  if (e.target.checked) b.blocos = 'lado';
+                  else delete b.blocos;
+                })
+              }
+            />
+            {t('quadrop.blocosLado')}
+          </label>
+          <p className="note">{t(arrumado ? 'quadrop.blocosAuto' : 'quadrop.blocosDica')}</p>
+        </>
+      )}
       <NumberField
         label={t('campo.letra')}
         unit="mm"
@@ -369,6 +383,7 @@ function Tempos({
       b.tempos = { formato: f };
       aplicaTempos(b);
       if (temDesempate(b)) aplicaTemposDesempate(b);
+      if (temFase2(b)) aplicaTemposFase2(b);
     });
   };
 
@@ -400,3 +415,6 @@ function Tempos({
     </>
   );
 }
+
+/** O quadro tem seções (1ª e 2ª fase, desempate) para pôr lado a lado. */
+const temSecoes = (box: InfoBox) => infoBoxLayout(box).secoes.length > 0;

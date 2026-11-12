@@ -49,6 +49,10 @@ export const TOOLBAR = {
   'editar.enviarTras': { pt: 'Enviar para trás', en: 'Send backward', es: 'Enviar atrás' },
   'editar.vincular': { pt: 'Vincular', en: 'Link', es: 'Vincular' },
   'editar.desvincular': { pt: 'Desvincular', en: 'Unlink', es: 'Desvincular' },
+  'editar.espelharH': { pt: 'Espelhar: esquerda ↔ direita', en: 'Mirror: left ↔ right', es: 'Reflejar: izquierda ↔ derecha' },
+  'editar.espelharV': { pt: 'Espelhar: cima ↕ baixo', en: 'Mirror: top ↕ bottom', es: 'Reflejar: arriba ↕ abajo' },
+  'editar.espelhar': { pt: 'Espelhar', en: 'Mirror', es: 'Reflejar' },
+  'editar.espelharDica': { pt: 'Espelha o que está selecionado em torno do centro da seleção: um obstáculo, uma combinação ou o percurso inteiro. O sentido de salto e o traçado acompanham.', en: 'Mirrors the selection around its centre: one obstacle, a combination or the whole course. The jumping direction and the track follow.', es: 'Refleja lo seleccionado alrededor del centro de la selección: un obstáculo, una combinación o el recorrido entero. El sentido de salto y el trazado acompañan.' },
 
   // Inserir
   'inserir.obstaculo': { pt: 'Obstáculo', en: 'Obstacle', es: 'Obstáculo' },

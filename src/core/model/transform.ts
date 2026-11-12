@@ -1,5 +1,5 @@
 import type { Vec2 } from '@core/geometry/vec';
-import { rotate } from '@core/geometry/vec';
+import { normalizeAngle, rotate } from '@core/geometry/vec';
 import { obstacleExtent } from '@core/library/obstacles';
 import { timingExtent } from '@core/library/timing';
 import { heightTableLayout, infoBoxLayout } from './annotationLayout';
@@ -172,6 +172,80 @@ export function rotateAround(
   const r = getRotation(obj);
   if (r !== null) setRotation(obj, r + deltaDeg);
 }
+
+/**
+ * Espelhar (B-96). `horizontal` troca esquerda e direita (reflete em torno
+ * da vertical que passa pelo pivô); `vertical` troca cima e baixo.
+ *
+ * O sentido de salto mora no eixo y local do obstáculo (rumo = giro − 90°),
+ * então refletir o rumo é trocar o giro: −g na horizontal e 180° − g na
+ * vertical. O deslocamento LOCAL dos rótulos troca o x nos dois casos.
+ * Imagem de fundo e o que mora na folha não espelham: a foto é do lugar, e
+ * quadro, tabela e logo são do papel.
+ */
+export type EixoEspelho = 'horizontal' | 'vertical';
+
+export function podeEspelhar(obj: SceneObject): boolean {
+  return obj.kind !== 'image' && !isPaperAnchored(obj);
+}
+
+export function mirrorAround(obj: SceneObject, pivotM: Vec2, eixo: EixoEspelho): void {
+  const h = eixo === 'horizontal';
+  const ponto = (p: Vec2): Vec2 => (h ? { x: 2 * pivotM.x - p.x, y: p.y } : { x: p.x, y: 2 * pivotM.y - p.y });
+  const vetor = (v: Vec2): Vec2 => (h ? { x: -v.x, y: v.y } : { x: v.x, y: -v.y });
+  const giro = (g: number): number => normalizeAngle(h ? -g : 180 - g);
+  switch (obj.kind) {
+    case 'arena':
+      if (obj.shape === 'rectangle') {
+        obj.origin = h
+          ? { x: 2 * pivotM.x - obj.origin.x - obj.widthM, y: obj.origin.y }
+          : { x: obj.origin.x, y: 2 * pivotM.y - obj.origin.y - obj.heightM };
+        if (obj.points.length) obj.points = obj.points.map(ponto).reverse();
+      } else {
+        // Ao contrário, para o contorno continuar no mesmo sentido de giro.
+        obj.points = obj.points.map(ponto).reverse();
+      }
+      return;
+    case 'path':
+      for (const n of obj.nodes) {
+        n.pos = ponto(n.pos);
+        if (n.handleIn) n.handleIn = vetor(n.handleIn);
+        if (n.handleOut) n.handleOut = vetor(n.handleOut);
+      }
+      for (const leg of obj.legs) leg.label.offsetM = vetor(leg.label.offsetM);
+      obj.totalLabel.offsetM = vetor(obj.totalLabel.offsetM);
+      return;
+    case 'measure':
+      obj.a = ponto(obj.a);
+      obj.b = ponto(obj.b);
+      return;
+    case 'obstacle':
+      obj.pos = ponto(obj.pos);
+      obj.rotation = giro(obj.rotation);
+      obj.numberLabel.offsetM = { x: -obj.numberLabel.offsetM.x, y: obj.numberLabel.offsetM.y };
+      obj.heightLabel.offsetM = { x: -obj.heightLabel.offsetM.x, y: obj.heightLabel.offsetM.y };
+      return;
+    case 'timing':
+      obj.pos = ponto(obj.pos);
+      obj.rotation = giro(obj.rotation);
+      return;
+    case 'ornament':
+      // A seta de entrada/saída aponta no x local: o contrário do obstáculo.
+      obj.pos = ponto(obj.pos);
+      obj.rotation = normalizeAngle(h ? 180 - obj.rotation : -obj.rotation);
+      return;
+    case 'text':
+      // Texto não se lê espelhado: anda o ponto, o giro reflete e, na
+      // horizontal, o alinhamento troca de lado para o texto crescer para o
+      // lado de cá.
+      obj.pos = ponto(obj.pos);
+      obj.rotation = normalizeAngle(-obj.rotation);
+      if (h && obj.align !== 'middle') obj.align = obj.align === 'start' ? 'end' : 'start';
+      return;
+    default:
+  }
+}
+
 
 /* ------------------------------------------------------------ envoltória */
 

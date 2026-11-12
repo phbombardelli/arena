@@ -65,9 +65,11 @@ export function TimingPanel({ line }: { line: TimingLine }) {
             }}
           />
           <p className="note">
-            {t(line.role === 'start' ? 'timingp.notaPartida' : 'timingp.notaChegada', {
-              obstaculo: obstacleLabel(dono) || t('alturas.semNumero'),
-            })}
+            {line.divisa
+              ? t('timingp.notaDivisa', { obstaculo: obstacleLabel(dono) || t('alturas.semNumero') })
+              : t(line.role === 'start' ? 'timingp.notaPartida' : 'timingp.notaChegada', {
+                  obstaculo: obstacleLabel(dono) || t('alturas.semNumero'),
+                })}
           </p>
         </>
       ) : (
@@ -76,21 +78,23 @@ export function TimingPanel({ line }: { line: TimingLine }) {
         </p>
       )}
 
-      <label className="field">
-        <span>{t('timingp.papel')}</span>
-        <select
-          value={line.role}
-          disabled={travado}
-          onChange={(e) =>
-            apply('Papel da linha', (d) =>
-              setTimingLine(d, line.id, { role: e.target.value as TimingLine['role'] }),
-            )
-          }
-        >
-          <option value="start">{t('timingp.partida')}</option>
-          <option value="finish">{t('timingp.chegada')}</option>
-        </select>
-      </label>
+      {!line.divisa && (
+        <label className="field">
+          <span>{t('timingp.papel')}</span>
+          <select
+            value={line.role}
+            disabled={travado}
+            onChange={(e) =>
+              apply('Papel da linha', (d) =>
+                setTimingLine(d, line.id, { role: e.target.value as TimingLine['role'] }),
+              )
+            }
+          >
+            <option value="start">{t('timingp.partida')}</option>
+            <option value="finish">{t('timingp.chegada')}</option>
+          </select>
+        </label>
+      )}
 
       <NumberField
         label={t('campo.largura')}
@@ -103,21 +107,23 @@ export function TimingPanel({ line }: { line: TimingLine }) {
         onCommit={(v) => apply('Largura da linha', (d) => setTimingLine(d, line.id, { widthM: v }))}
       />
 
-      <label className="field">
-        <span>{t('campo.texto')}</span>
-        <input
-          type="text"
-          value={line.label}
-          disabled={travado}
-          onChange={(e) =>
-            apply(
-              'Texto da linha',
-              (d) => setTimingLine(d, line.id, { label: e.target.value }),
-              `timlabel-${line.id}`,
-            )
-          }
-        />
-      </label>
+      {!line.divisa && (
+        <label className="field">
+          <span>{t('campo.texto')}</span>
+          <input
+            type="text"
+            value={line.label}
+            disabled={travado}
+            onChange={(e) =>
+              apply(
+                'Texto da linha',
+                (d) => setTimingLine(d, line.id, { label: e.target.value }),
+                `timlabel-${line.id}`,
+              )
+            }
+          />
+        </label>
+      )}
       <label className="check">
         <input
           type="checkbox"

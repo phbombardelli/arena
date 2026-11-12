@@ -101,6 +101,27 @@ export interface PageSetup {
   marginsMm: { top: number; right: number; bottom: number; left: number };
   printScale: PrintScale;
   scaleLabel: ScaleLabel;
+  /**
+   * Arrumação automática dos quadros na folha (B-103). Ausente, o croqui é
+   * anterior a ela e nada se move sozinho.
+   */
+  arranjo?: ArranjoDaFolha;
+}
+
+/** De que lado da folha ficam os quadros: coluna (direita/esquerda) ou faixa (baixo/cima). */
+export type LadoDaFolha = 'direita' | 'esquerda' | 'baixo' | 'cima';
+
+export interface ArranjoDaFolha {
+  /** `auto`: o programa escolhe o lado que deixa a pista maior. */
+  zona: 'auto' | LadoDaFolha;
+  /** O lado escolhido da última vez, para não ficar trocando por pouco. */
+  ultima?: LadoDaFolha;
+  /** Assinatura da faixa ocupada; quando muda, a pista se reenquadra. */
+  chave?: string;
+  /** A escala que o usuário quer: a arrumação só sai dela se a pista não couber, e volta quando couber. */
+  preferida?: PrintScale;
+  /** A escala deixada pela última arrumação; diferente da atual, foi o usuário que mudou. */
+  escala?: PrintScale;
 }
 
 /** Dimensões da página já considerando a orientação. */

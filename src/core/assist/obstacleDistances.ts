@@ -154,17 +154,19 @@ export function courseDistancesAlong(
   // Desempate sem cruzada própria usa a do percurso quando ela serve ao
   // mesmo obstáculo, como o assistente (phaseTiming).
   const cruzadaDe = (role: 'start' | 'finish'): TimingLine | undefined => {
-    const propria = timings.find((t) => t.role === role && faseDe(t) === fase);
+    const propria = timings.find((t) => t.role === role && !t.divisa && faseDe(t) === fase);
     if (propria || fase === 'percurso') return propria;
     const ponta = role === 'start' ? elementos[0] : elementos[elementos.length - 1];
-    const doPercurso = timings.find((t) => t.role === role && faseDe(t) === 'percurso');
+    const doPercurso = timings.find((t) => t.role === role && !t.divisa && faseDe(t) === 'percurso');
     return ponta && doPercurso?.anchor?.obstacleId === ponta.id ? doPercurso : undefined;
   };
   const partida = cruzadaDe('start');
   const chegada = cruzadaDe('finish');
+  // A linha entre as fases (B-95) entra depois do último da 1ª fase.
+  const divisa = fase === 'percurso' ? timings.find((t) => t.divisa && t.anchor) : undefined;
   const marcos: Marco[] = [
     ...(partida ? [cruzada(partida)] : []),
-    ...elementos.map(marco),
+    ...elementos.flatMap((o) => (divisa && divisa.anchor!.obstacleId === o.id ? [marco(o), cruzada(divisa)] : [marco(o)])),
     ...(chegada ? [cruzada(chegada)] : []),
   ];
 

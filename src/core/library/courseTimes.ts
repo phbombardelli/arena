@@ -173,3 +173,28 @@ function posicaoPara(fields: InfoBoxField[], id: (typeof IDS_TEMPO)[number]): nu
   const limite = fields.findIndex((f) => f.id === 'limite');
   return limite >= 0 ? limite : fields.length;
 }
+
+/**
+ * Tempos da 2ª fase (B-95): a distância e a velocidade da própria 2ª fase
+ * (velocidade em branco vale a de cima). A 2ª fase pode ser Tabela C
+ * (FEI 222.1.4, fórmulas 4.4 e 4.5): o campo "Tabela" dela começando por C
+ * dá só o limite pela extensão; vazio, segue o formato do quadro.
+ */
+export function aplicaTemposFase2(box: InfoBox): boolean {
+  const valor = (id: string) => box.fields.find((f) => f.id === id)?.value ?? '';
+  const dist = lerNumero(valor('f2Distancia'));
+  const vel = lerNumero(valor('f2Velocidade')) ?? lerNumero(valor('velocidade'));
+  const tabela = valor('f2Tabela').trim().toUpperCase();
+  const formato = tabela.startsWith('C') || (tabela === '' && box.tempos?.formato === 'C') ? 'C' : 'A';
+  if (dist == null || dist <= 0) return false;
+  if (formato !== 'C' && (vel == null || vel <= 0)) return false;
+
+  const tempos = calculaTempos(dist, vel ?? 0, { formato });
+  const escreve = (id: string, s: number | null) => {
+    const campo = box.fields.find((f) => f.id === id);
+    if (campo) campo.value = s == null ? '' : segundos(s);
+  };
+  escreve('f2Tempo', tempos.concedido);
+  escreve('f2Limite', tempos.limite);
+  return true;
+}

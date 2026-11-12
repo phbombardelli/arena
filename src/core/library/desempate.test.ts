@@ -219,7 +219,7 @@ describe('quadro técnico do desempate', () => {
   it('o bloco sai separado, embaixo; com páginas separadas, cada uma leva o seu', () => {
     const q = quadro(comQuadro(prova()));
     const tudo = infoBoxLayout(q);
-    expect(tudo.secao).toBeDefined();
+    expect(tudo.secoes).toHaveLength(1);
     const ultimoPrincipal = tudo.cells.find((c) => c.label === fieldLabel(q.fields.find((f) => f.id === 'desenhador')!))!;
     const primeiroDsp = tudo.cells.find((c) => c.label === fieldLabel(q.fields.find((f) => f.id === 'dspOrdem')!))!;
     expect(primeiroDsp.yMm).toBeGreaterThan(ultimoPrincipal.yMm);
@@ -228,7 +228,7 @@ describe('quadro técnico do desempate', () => {
     expect(so.heightMm).toBeLessThan(tudo.heightMm);
     // Na página do percurso, quando o desempate tem a sua, o bloco não vai.
     const percurso = infoBoxLayout(q, 'percurso');
-    expect(percurso.secao).toBeUndefined();
+    expect(percurso.secoes).toHaveLength(0);
     expect(percurso.cells.some((c) => c.label === primeiroDsp.label)).toBe(false);
   });
 });

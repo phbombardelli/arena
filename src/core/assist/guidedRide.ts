@@ -80,7 +80,7 @@ export function prepareGuidedRide(
     const where = t('ride.trecho', { de: g.label, para: proximo.label });
 
     // Cruzada de tempo nunca tem volta: reta, e nada a escolher.
-    if (g.kind === 'timing' || proximo.kind === 'timing') {
+    if ((g.kind === 'timing' && !g.line.divisa) || proximo.kind === 'timing') {
       legs.push({ where, options: [retaComoOpcao(saidas[i]!.pos, entradas[i + 1]!.pos)], chosen: 0 });
       continue;
     }

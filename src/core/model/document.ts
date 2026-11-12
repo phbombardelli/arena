@@ -54,6 +54,8 @@ export function createDocument(opts: { arena?: boolean } = {}): CourseDocument {
     orientation: 'landscape' as const,
     marginsMm: { top: 10, right: 10, bottom: 10, left: 10 },
     printScale: DEFAULT_PRINT_SCALE,
+    // Croqui novo já nasce com os quadros arrumados pelo programa (B-103).
+    arranjo: { zona: 'auto' as const },
     // A legenda de escala só entra quando pedida (menu Inserir › Escala).
     scaleLabel: { visible: false, corner: 'inferior-direito' as const, bar: true },
   };
@@ -125,17 +127,22 @@ export function freeAreaMm(doc: CourseDocument): RectMm {
     const caixa = anotacaoMm(doc, obj);
     if (!caixa) continue;
 
-    const candidatos = [
+    const custos = [
       { lado: 'esq' as const, custo: caixa.xMm + caixa.widthMm - usable.xMm, teto: usable.widthMm },
       { lado: 'dir' as const, custo: direita - caixa.xMm, teto: usable.widthMm },
       { lado: 'topo' as const, custo: caixa.yMm + caixa.heightMm - usable.yMm, teto: usable.heightMm },
       { lado: 'fundo' as const, custo: base - caixa.yMm, teto: usable.heightMm },
-    ]
+    ];
+    const candidatos = custos
       // Custo acima de meia folha é anotação central: não se desconta.
       .filter((c) => c.custo > 0 && c.custo < c.teto / 2)
       .sort((a, b) => a.custo - b.custo);
 
-    const melhor = candidatos[0];
+    // Com a arrumação da folha (B-103), o lado de quem está arrumado é
+    // sabido: não se adivinha. Um quadro quase quadrado na coluna da
+    // direita contava como cabeçalho e roubava a altura da pista.
+    const lado = ladoArrumado(doc, obj);
+    const melhor = lado ? custos.find((c) => c.lado === lado) : candidatos[0];
     if (!melhor) continue;
     if (melhor.lado === 'esq') esq = Math.max(esq, melhor.custo);
     else if (melhor.lado === 'dir') dir = Math.max(dir, melhor.custo);
@@ -154,8 +161,17 @@ export function freeAreaMm(doc: CourseDocument): RectMm {
   };
 }
 
+const LADO_ARRUMADO = { direita: 'dir', esquerda: 'esq', baixo: 'fundo', cima: 'topo' } as const;
+
+function ladoArrumado(doc: CourseDocument, obj: SceneObject): 'esq' | 'dir' | 'topo' | 'fundo' | null {
+  const ultima = doc.page.arranjo?.ultima;
+  if (!ultima || obj.locked) return null;
+  if (obj.kind !== 'infobox' && obj.kind !== 'heighttable' && obj.kind !== 'logo') return null;
+  return obj.livre ? null : LADO_ARRUMADO[ultima];
+}
+
 /** Retângulo em mm de uma anotação de papel; `null` para o resto. */
-function anotacaoMm(doc: CourseDocument, obj: SceneObject): RectMm | null {
+export function anotacaoMm(doc: CourseDocument, obj: SceneObject): RectMm | null {
   if (obj.kind === 'infobox') {
     const l = infoBoxLayout(obj);
     return { xMm: obj.posMm.x, yMm: obj.posMm.y, widthMm: l.widthMm, heightMm: l.heightMm };
@@ -166,6 +182,10 @@ function anotacaoMm(doc: CourseDocument, obj: SceneObject): RectMm | null {
       doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'),
     );
     return { xMm: obj.posMm.x, yMm: obj.posMm.y, widthMm: l.widthMm, heightMm: l.heightMm };
+  }
+  if (obj.kind === 'logo') {
+    const h = (obj.widthMm * obj.heightPx) / Math.max(1, obj.widthPx);
+    return { xMm: obj.posMm.x, yMm: obj.posMm.y, widthMm: obj.widthMm, heightMm: h };
   }
   return null;
 }

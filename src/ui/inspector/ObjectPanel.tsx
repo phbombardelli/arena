@@ -13,6 +13,7 @@ import { ObstacleMore, ObstaclePanel } from './ObstaclePanel';
 import { PathPanel } from './PathPanel';
 import { CombinationPanel } from './CombinationPanel';
 import { LinkRow } from './LinkRow';
+import { MirrorRow } from './MirrorRow';
 import { ExercisePanel } from '@ui/gym/ExercisePanel';
 import { HeightTablePanel } from './HeightTablePanel';
 import { InfoBoxPanel } from './InfoBoxPanel';
@@ -109,6 +110,7 @@ export function ObjectPanel() {
       </div>
 
       <LinkRow ids={selection} />
+      <MirrorRow ids={selection} />
 
       {single && (
         <>

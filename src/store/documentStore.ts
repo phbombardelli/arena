@@ -4,6 +4,8 @@ import type { CourseDocument } from '@core/model/types';
 import { createDocument } from '@core/model/document';
 import { syncTimingLines } from '@core/library/timing';
 import { syncQuadroDesempate } from '@core/library/desempate';
+import { syncDuasFases } from '@core/library/duasFases';
+import { syncArranjo } from '@core/model/sheetLayout';
 import { syncPathAnchors } from '@core/commands/pathAnchors';
 import { enforceLockedDistances } from '@core/commands/distanceOps';
 import type { FileHandleLike } from '@platform/fileSystem';
@@ -65,9 +67,12 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       // colado ou trazido de volta pelo desfazer. Espalhar isso pelos
       // comandos seria esquecer em um deles.
       syncTimingLines(draft);
+      syncDuasFases(draft);
       syncPathAnchors(draft);
       enforceLockedDistances(draft);
       syncQuadroDesempate(draft);
+      // Por último: o quadro já tem a altura final (desempate, duas fases).
+      syncArranjo(draft);
     });
     if (redo.length === 0) return;
 

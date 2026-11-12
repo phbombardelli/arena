@@ -37,6 +37,7 @@ import {
   deleteSelection,
   duplicateSelection,
   linkSelection,
+  mirrorSelection,
   pasteClipboard,
   unlinkSelection,
   selectAll,
@@ -527,6 +528,10 @@ export function Canvas() {
         fitPage();
       } else if (ctrl || e.altKey) {
         // Letra com modificador não é atalho de ferramenta.
+      } else if (e.shiftKey && (key === 'h' || key === 'v')) {
+        if (sel.length === 0) return;
+        e.preventDefault();
+        mirrorSelection(key === 'h' ? 'horizontal' : 'vertical');
       } else if (key === 'g') {
         toggleGrid();
       } else if (key === 'v') {

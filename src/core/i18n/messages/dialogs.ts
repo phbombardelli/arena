@@ -24,6 +24,7 @@ export const DIALOGS = {
   'atalho.colarFundo': { pt: 'Colar como imagem de fundo', en: 'Paste as background image', es: 'Pegar como imagen de fondo' },
   'atalho.selecionarTudo': { pt: 'Selecionar tudo do modo atual', en: 'Select everything in the current mode', es: 'Seleccionar todo del modo actual' },
   'atalho.vincular': { pt: 'Vincular  /  desvincular', en: 'Link  /  unlink', es: 'Vincular  /  desvincular' },
+  'atalho.espelhar': { pt: 'Espelhar: esquerda ↔ direita  /  cima ↕ baixo', en: 'Mirror: left ↔ right  /  top ↕ bottom', es: 'Reflejar: izquierda ↔ derecha  /  arriba ↕ abajo' },
   'atalho.altClique': { pt: 'Alt + clique', en: 'Alt + click', es: 'Alt + clic' },
   'atalho.pegarUm': { pt: 'Pegar só um elemento vinculado', en: 'Pick a single linked element', es: 'Tomar un solo elemento vinculado' },
   'atalho.setas': { pt: 'setas  /  Shift+setas', en: 'arrows  /  Shift+arrows', es: 'flechas  /  Shift+flechas' },

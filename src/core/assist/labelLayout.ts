@@ -200,8 +200,20 @@ const hitsAny = (grupos: SegmentGroup[], box: Box): number => {
   return n;
 };
 
-export function layoutLabels(doc: CourseDocument): LabelLayout {
+/**
+ * Espaço do círculo da ordem do desempate (B-99) ao lado do número, em
+ * caracteres do número: o círculo entra na caixa do rótulo, para o leiaute
+ * desviar dele como desvia do número.
+ */
+export const ORDEM_NO_NUMERO = '\u2007\u2007';
+
+export function layoutLabels(
+  doc: CourseDocument,
+  /** Obstáculos com o círculo da ordem do desempate ao lado do número. */
+  comOrdem: ReadonlySet<ObjectId> = new Set(),
+): LabelLayout {
   const k = mmPerMeter(doc.page.printScale);
+  const textoDoNumero = (o: Obstacle) => obstacleLabel(o) + (comOrdem.has(o.id) ? ORDEM_NO_NUMERO : '');
   const obstaculos = doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle' && o.visible);
   const cruzadas = doc.objects.filter((o): o is TimingLine => o.kind === 'timing' && o.visible);
   const tracados = doc.objects.filter((o) => o.kind === 'path' && o.visible);
@@ -337,7 +349,7 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
     for (const qual of ['numberLabel', 'heightLabel'] as const) {
       const r = o[qual];
       if (!r.visible || r.auto) continue;
-      const texto = qual === 'numberLabel' ? obstacleLabel(o) : formatHeights(o);
+      const texto = qual === 'numberLabel' ? textoDoNumero(o) : formatHeights(o);
       if (texto === '') continue;
       const c = add(o.pos, rotate(r.offsetM, o.rotation));
       const font = qual === 'numberLabel' ? LABEL_FONT_MM.number : LABEL_FONT_MM.heights;
@@ -378,7 +390,7 @@ export function layoutLabels(doc: CourseDocument): LabelLayout {
       // outro lado e, por último, a frente — por onde sai a seta.
       const tras = o.arrow.reversed ? -90 : 90;
       const angulos = [0, 180, tras - 45, tras + 45, tras, 360 - (tras - 45), 360 - (tras + 45), -tras];
-      const b = escolhe(emVolta(o.pos, o.rotation, angulos, raio, numero, LABEL_FONT_MM.number, true), idx);
+      const b = escolhe(emVolta(o.pos, o.rotation, angulos, raio, textoDoNumero(o), LABEL_FONT_MM.number, true), idx);
       resultado.number.set(o.id, centro(b));
     }
 

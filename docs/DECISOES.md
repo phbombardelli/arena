@@ -2109,3 +2109,101 @@ segundo bloco de tempos. O Arena não tinha nada disso.
 - Cada versão ganha uma entrada em `docs/NOVIDADES.md` e a tag `vX.Y.Z` no
   git. Marco zero: v1.0.0 é o commit 98e8aed (27/10/2026, "versão 1.0" do
   Sobre); v1.1.0 é a do desempate.
+
+## 101. Espelhar a seleção (B-96)
+
+- Um comando só, sobre o que está selecionado: um obstáculo, uma
+  combinação ou o percurso inteiro. Espelha em torno do centro da seleção
+  (um obstáculo sozinho espelha no próprio lugar). Menu Editar, botões no
+  painel (ao lado de Vincular) e Shift+H (esquerda ↔ direita) / Shift+V
+  (cima ↕ baixo).
+- O rumo do salto mora no y local (rumo = giro − 90°): refletir é trocar o
+  giro por −g na horizontal e 180° − g na vertical. A seta de entrada e
+  saída aponta no x local, então troca ao contrário. O deslocamento local
+  dos rótulos troca o x nos dois casos. Contorno: pontos refletidos em
+  ordem inversa, para manter o sentido; retângulo continua retângulo.
+- Texto não se espelha (ficaria ilegível): anda o ponto, e na horizontal o
+  alinhamento troca de lado. Imagem de fundo e o que mora na folha
+  (quadro, tabela, logo) ficam como estão.
+- Traçado selecionado junto continua preso (settleMovedAnchors); traçado
+  fora da seleção acompanha os nós presos, como no girar. As distâncias do
+  percurso inteiro espelhado saem idênticas.
+
+## 102. Ordem do desempate no obstáculo (B-99)
+
+- Círculo azul (a cor do desempate) com a posição na ordem, ao lado do
+  número do obstáculo, do lado de fora. Uma combinação leva um círculo só,
+  no primeiro elemento saltado.
+- Aparece nas vistas Desempate e Ambos e, por consequência, na folha "tudo
+  numa folha" e na página do desempate; nunca na vista Percurso.
+- Ligado por padrão; "Ordem do desempate nos obstáculos" no painel da
+  prova desliga (`desempate.ordemNoObstaculo = false`).
+
+## 103. Prova em duas fases (B-95)
+
+- Regulamento: FEI Jumping Rules 2026, **Art. 222** (antes Art. 274). As
+  duas fases correm sem parada; a chegada da 1ª é a partida da 2ª; a
+  numeração é contínua.
+- Liga-se no painel da prova ("Prova em duas fases"), com o obstáculo em
+  que a 1ª fase termina (`doc.duasFases.fimDaPrimeira`; o padrão deixa 4 a
+  6 obstáculos na 2ª). Normal e especial não se escolhem: os avisos aceitam
+  as duas contagens.
+- A divisa é uma cruzada de verdade (o 241.2.5 pede bandeiras e placas S/F
+  em toda linha de cronometragem): `TimingLine` com `divisa: true` e papel
+  de chegada, presa à saída do último da 1ª, de 6 a 15 m. Tracejada, sem
+  texto próprio, com "1ª fase" do lado de quem chega e "2ª fase" do lado
+  de quem sai. O programa a cria, realinha e apaga (`syncDuasFases`, depois
+  do `syncTimingLines`, que a deixa de lado). Partida e chegada do percurso
+  nunca a confundem com a chegada.
+- O assistente a trata como porteira: reta do último da 1ª até ela, volta
+  livre dela até o primeiro da 2ª. As distâncias do percurso a incluem
+  ("8 › linha › 9").
+- Quadro técnico: com a 2ª fase ligada, tabela, velocidade, distância e
+  tempos de cima viram a seção "1ª FASE"; os campos `f2*` formam a "2ª
+  FASE". O leiaute passou a ter uma lista de seções (`secoes`), que também
+  serve ao desempate. Distância de cada fase medida no traçado até a
+  divisa e dali ao fim; velocidade da 2ª em branco vale a da 1ª; "Tabela"
+  da 2ª começando por C dá só o limite (fórmulas 4.4 e 4.5).
+- Avisos (só informam): 2ª fase de 4 a 6 obstáculos e no máximo uma
+  combinação; 1ª de 5 a 9; total de 11 a 15; linha a 6–15 m do primeiro da
+  2ª; prova em duas fases não tem desempate.
+
+## 104. Arrumação automática da folha (B-103, etapa 1)
+
+- Quadro técnico, tabela de alturas e logos ficam numa zona só: **coluna**
+  (direita ou esquerda), um embaixo do outro, ou **faixa** (embaixo ou em
+  cima), um ao lado do outro, encostados na margem de fora. Quando uma
+  fila não basta (quadro de duas fases mais tabela em A4 deitada), abre-se
+  uma segunda, mais para dentro.
+- No automático (`page.arranjo.zona = 'auto'`) o programa testa os quatro
+  lados e fica com o que deixa a pista maior; empate vai para coluna à
+  direita, depois faixa embaixo. Só troca de lado se o novo for 5% melhor.
+  O painel da folha mostra o lado escolhido e deixa forçar um.
+- Roda depois de cada edição (`syncArranjo`, último da cadeia do
+  `documentStore`): quadro que cresce, folha que vira retrato, logo novo,
+  tudo se rearruma sozinho.
+- A pista se reenquadra só quando a faixa ocupada muda (lado, espessura,
+  folha). Mover a pista ou um quadro posto à mão não a puxa de volta ao
+  centro. Isto inverte, para os croquis com arrumação, a regra antiga de
+  que trocar de formato não move o desenho.
+- **Escala preferida:** a que o usuário escolheu (ou a de "Rearrumar a
+  folha"). A arrumação só sai dela se a pista não couber, e volta quando
+  couber: ligar e desligar as duas fases deixa a escala como estava.
+- **Livre:** quadro, tabela ou logo arrastado (ou com posição digitada)
+  ganha `livre: true` e não é mais tocado; os outros se arrumam em volta.
+  "Rearrumar a folha" tira o `livre` de todos, ajusta a escala e
+  centraliza.
+- Croqui salvo antes disto não tem `page.arranjo`: nada se move sozinho
+  até o usuário clicar em "Rearrumar a folha" ou escolher onde ficam. Os
+  novos já nascem com o automático.
+- A área livre (`freeAreaMm`) deixou de adivinhar o lado dos itens
+  arrumados (um quadro quase quadrado na coluna contava como cabeçalho e
+  roubava a altura da pista) e passou a contar o logo.
+- **Etapa 2 — quadro deitado:** na faixa, o quadro técnico com seções
+  (1ª fase, 2ª fase, desempate) deita (`InfoBox.blocos = 'lado'`): campos
+  gerais e cada seção viram blocos lado a lado, com fio vertical entre
+  eles, cada um uma coluna só, da largura do que tem dentro. Na coluna,
+  volta a ficar em pé. Só deita se couber na largura útil da folha; a
+  escolha do lado já mede o quadro do jeito que ele ficaria em cada um.
+  Quadro posto à mão não é deitado pela folha: o painel do quadro tem
+  "Seções lado a lado" para escolher.

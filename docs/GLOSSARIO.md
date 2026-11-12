@@ -40,6 +40,9 @@ Referência para traduzir o programa sem gafes. Toda tradução da interface, da
 | Desempate | jump-off | desempate | R |  |
 | Só desempate (obstáculo) | jump-off only | solo desempate | U | Etiqueta do obstáculo acrescentado para o desempate (FEI Art. 218.2.7). Visto em croquis americanos como "Jump-off only". |
 | Sentido contrário (desempate) | opposite direction | sentido contrario | U | Obstáculo do percurso saltado ao contrário no desempate; no quadro, "(inv.)" / "(rev.)". |
+| Espelhar | mirror | reflejar | U | Reflete a seleção esquerda ↔ direita ou cima ↕ baixo; o sentido de salto acompanha (B-96). |
+| Duas fases | two-phase competition | dos fases | R | Prova em que a 2ª fase segue a 1ª sem parada; FEI Art. 222 (2026). Ver B-95. |
+| Rearrumar a folha | rearrange the sheet | reordenar la hoja | U | Devolve quadro, tabela e logos à arrumação automática (coluna ou faixa), ajusta a escala e centraliza a pista (B-103). |
 | Vista (Percurso / Desempate / Ambos) | view (Course / Jump-off / Both) | vista (Recorrido / Desempate / Ambos) | U | O que aparece na tela quando há desempate. |
 | Júri de campo | Ground Jury | Jurado de Campo | R |  |
 | ⚠ Partida (a linha) | start | partida / línea de salida | R | No programa a linha se chama "Partida" (não "Largada"). Em espanhol "salida" é a partida: ver "Saída". |

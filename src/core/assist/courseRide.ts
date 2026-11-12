@@ -142,7 +142,7 @@ export function phaseTiming(
 ): TimingLine | undefined {
   const linha = (f: Fase) =>
     doc.objects.find(
-      (o): o is TimingLine => o.kind === 'timing' && o.role === role && faseDe(o) === f,
+      (o): o is TimingLine => o.kind === 'timing' && o.role === role && !o.divisa && faseDe(o) === f,
     );
   const propria = linha(fase);
   if (propria || fase === 'percurso') return propria;
@@ -303,8 +303,15 @@ export function courseGates(
 
   const gates: Gate[] = [];
   if (partida) gates.push({ label: t('ride.partida'), kind: 'timing', line: partida });
+  const divisa =
+    fase === 'percurso'
+      ? doc.objects.find((o): o is TimingLine => o.kind === 'timing' && o.divisa === true && o.anchor != null)
+      : undefined;
   for (const stop of phaseStops(doc, fase)) {
     gates.push({ label: stop.label, kind: 'obstacle', elements: stop.elements });
+    if (divisa && stop.elements.some((e) => e.id === divisa.anchor!.obstacleId)) {
+      gates.push({ label: t('tim.divisa'), kind: 'timing', line: divisa });
+    }
   }
   if (chegada) gates.push({ label: t('ride.chegada'), kind: 'timing', line: chegada });
   if (gates.length < 2) return null;
@@ -416,7 +423,9 @@ export function buildCourseRide(
     // apontado para o primeiro salto, e segue reto do último para a
     // chegada. Procurar curva aqui era o que produzia aquelas voltas
     // absurdas entre a partida e o obstáculo 1.
-    if (g.kind === 'timing' || proximo.kind === 'timing') {
+    // A linha entre as fases (B-95) é chegada para quem vem e partida para
+    // quem vai: reta ao chegar nela, volta livre ao sair para a 2ª fase.
+    if ((g.kind === 'timing' && !g.line.divisa) || proximo.kind === 'timing') {
       return retaEntre(saidas[i]!, entradas[i + 1]!);
     }
 

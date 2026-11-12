@@ -4,6 +4,8 @@ import type { TimingLine } from '@core/model/types';
 import { mmPerMeter } from '@core/scale/units';
 import { color, dashPattern, font, stroke, text } from '@render/style/tokens';
 import { timingLabel } from '@core/library/timing';
+import { rotate } from '@core/geometry/vec';
+import { t } from '@core/i18n/i18n';
 
 interface Props {
   line: TimingLine;
@@ -31,6 +33,19 @@ export function TimingLayer({ line, printScale, originMm, labelAt, onPointerDown
   const ponta = dir * (profAsa / 2 + 1 + line.arrow.lengthMm);
   const cabeca = line.arrow.lengthMm * 0.42;
   const ext = timingExtent(line);
+
+  // Linha entre as fases (B-95): "1ª fase" do lado de quem chega e
+  // "2ª fase" do lado de quem sai, junto da ponta da linha. O texto não
+  // gira; o lugar gira com a linha.
+  const lados = line.divisa
+    ? ([
+        { texto: t('tim.fase1'), y: line.arrow.reversed ? -1 : 1 },
+        { texto: t('tim.fase2'), y: line.arrow.reversed ? 1 : -1 },
+      ] as const).map(({ texto, y }) => {
+        const p = rotate({ x: line.widthM / 2 + 2.2, y: y * 1.3 }, line.rotation);
+        return { texto, x: cx + p.x * k, y: cy + p.y * k };
+      })
+    : [];
 
   return (
     <g data-object={line.id} data-kind="timing" data-role={line.role}>
@@ -81,6 +96,23 @@ export function TimingLayer({ line, printScale, originMm, labelAt, onPointerDown
           </g>
         )}
       </g>
+
+      {lados.map((l) => (
+        <text
+          key={l.texto}
+          x={round(l.x)}
+          y={round(l.y)}
+          fontFamily={font.family}
+          fontSize={text.small}
+          fontWeight="bold"
+          fill={line.style.color}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          pointerEvents="none"
+        >
+          {l.texto}
+        </text>
+      ))}
 
       {/* O texto não gira, como nos rótulos de obstáculo (decisão 23). */}
       {line.labelVisible && line.label !== '' && (

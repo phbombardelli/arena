@@ -1,12 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { centerOnPage, fitScaleToPage } from '@core/model/document';
+import { escolheLado, rearrumaFolha } from '@core/model/sheetLayout';
 import { GRID_STEPS } from '@core/geometry/snap';
 import { PAGE_FORMATS, STANDARD_SCALES, formatMeters } from '@core/scale/units';
-import type { Orientation, PageFormat, SheetCorner } from '@core/scale/units';
+import type { LadoDaFolha, Orientation, PageFormat, SheetCorner } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { toggleGrid } from '@ui/actions/viewActions';
 import { t } from '@core/i18n/i18n';
 import type { MessageKey } from '@core/i18n/messages';
+
+const ROTULO_LADO: Record<LadoDaFolha, MessageKey> = {
+  direita: 'folhap.zonaDireita',
+  esquerda: 'folhap.zonaEsquerda',
+  baixo: 'folhap.zonaBaixo',
+  cima: 'folhap.zonaCima',
+};
 
 const ROTULO_MARGEM: Record<'top' | 'right' | 'bottom' | 'left', MessageKey> = {
   top: 'folhap.topo',
@@ -88,6 +96,8 @@ export function SheetSettings() {
           <button onClick={() => apply('Centralizar na página', centerOnPage)}>{t('folhap.centralizar')}</button>
         </div>
       </section>
+
+      <QuadrosNaFolha />
 
       <section>
         <h3>{t('folhap.margens')}</h3>
@@ -288,5 +298,48 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span>{label}</span>
       {children}
     </label>
+  );
+}
+
+/** Onde ficam quadro, tabela e logos (B-103). */
+function QuadrosNaFolha() {
+  const { doc, apply } = useDocumentStore();
+  const arranjo = doc.page.arranjo;
+  const livres = doc.objects.filter(
+    (o) => (o.kind === 'infobox' || o.kind === 'heighttable' || o.kind === 'logo') && o.livre,
+  ).length;
+  const temPapel = doc.objects.some((o) => o.kind === 'infobox' || o.kind === 'heighttable' || o.kind === 'logo');
+  return (
+    <section>
+      <h3>{t('folhap.quadros')}</h3>
+      <Field label={t('folhap.zona')}>
+        <select
+          value={arranjo?.zona ?? 'auto'}
+          onChange={(e) => {
+            const zona = e.target.value as 'auto' | LadoDaFolha;
+            apply(t('folhap.zona'), (d) => {
+              d.page.arranjo = { ...(d.page.arranjo ?? {}), zona };
+            });
+          }}
+        >
+          <option value="auto">{t('folhap.zonaAuto')}</option>
+          {(Object.keys(ROTULO_LADO) as LadoDaFolha[]).map((l) => (
+            <option key={l} value={l}>{t(ROTULO_LADO[l])}</option>
+          ))}
+        </select>
+      </Field>
+      {arranjo?.zona === 'auto' && temPapel && (
+        <p className="note">{t('folhap.zonaEscolhida', { lado: t(ROTULO_LADO[arranjo.ultima ?? escolheLado(doc)]) })}</p>
+      )}
+      <div className="row-buttons">
+        <button title={t('folhap.rearrumarDica')} onClick={() => apply(t('folhap.rearrumar'), rearrumaFolha)}>
+          {t('folhap.rearrumar')}
+        </button>
+      </div>
+      <p className="note">
+        {arranjo ? t('folhap.arranjoNota') : t('folhap.arranjoAntigo')}
+        {arranjo && livres > 0 && <> {t('folhap.arranjoLivres', { n: livres })}</>}
+      </p>
+    </section>
   );
 }

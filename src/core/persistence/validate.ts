@@ -79,6 +79,12 @@ export function validateDocument(raw: unknown): ValidationResult {
   if (!isRecord(page.marginsMm)) {
     throw new CourseFileError(t('val.margens'));
   }
+  // Arrumação da folha (B-103) estragada: o croqui abre sem ela, como os antigos.
+  if (page.arranjo !== undefined) {
+    const a = page.arranjo;
+    const lados = ['auto', 'direita', 'esquerda', 'baixo', 'cima'];
+    if (!isRecord(a) || !lados.includes(a.zona as string)) delete page.arranjo;
+  }
 
   if (!isPoint(raw.originMm)) {
     throw new CourseFileError(t('val.posicaoDesenho'));

@@ -19,6 +19,7 @@ import type { CoursePath, Obstacle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { ArcGapPreview } from './ArcGapPreview';
 import { LinkRow } from './LinkRow';
+import { MirrorRow } from './MirrorRow';
 import { NumberField } from './NumberField';
 import { t } from '@core/i18n/i18n';
 
@@ -202,6 +203,7 @@ export function CombinationPanel({ obstacles }: { obstacles: Obstacle[] }) {
       )}
 
       <LinkRow ids={ids} />
+      <MirrorRow ids={ids} />
 
       <p className="note dim">
         {t('comb.nota', { min: COMBINATION_GAP.min, max: COMBINATION_GAP.max })}
