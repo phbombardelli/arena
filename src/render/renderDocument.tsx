@@ -2,12 +2,12 @@ import type { Arena, CourseDocument, ObjectId, Obstacle, SceneObject, TimingLine
 import { comoNoDesempate, faseDe, phaseStops, phaseTiming } from '@core/assist/courseRide';
 import { t } from '@core/i18n/i18n';
 import { COR_DESEMPATE } from '@core/commands/pathOps';
-import { isLayerVisible } from '@core/model/document';
-import { boundsIn, objectScope } from '@core/model/transform';
+import { DESENHO_ID, desenhoNaFolhaMm, isLayerVisible } from '@core/model/document';
+import { boundsIn, isPaperAnchored, objectScope } from '@core/model/transform';
 import type { ObjectScope } from '@core/model/types';
 import { LAYER_ORDER } from '@core/model/types';
 import { pageSize } from '@core/scale/units';
-import { ArenaLayer, PerimeterRulerLayer } from './layers/ArenaLayer';
+import { ArenaFloor, ArenaLayer, PerimeterRulerLayer } from './layers/ArenaLayer';
 import { GridLayer } from './layers/GridLayer';
 import { measureFrame } from '@core/model/measureFrame';
 import { ImageLayer } from './layers/ImageLayer';
@@ -46,8 +46,11 @@ export interface RenderOptions {
   /**
    * Escopo em edição. Objetos de outro escopo viram fundo: não recebem
    * clique e ficam esmaecidos. `null` no modo papel, onde tudo é desenho.
+   * Em Pista e Percurso o que é da folha (quadros, tabela, logos, legenda)
+   * não aparece; em `folha` (aba Impressão, B-105) só o que é da folha se
+   * pega um a um, e o desenho inteiro responde como um bloco (`DESENHO_ID`).
    */
-  editScope?: ObjectScope | null;
+  editScope?: ObjectScope | 'folha' | null;
   /**
    * Percurso, desempate ou os dois (B-92). Na vista do desempate, o que
    * não entra nele fica apagado, e o traçado do percurso some.
@@ -100,17 +103,25 @@ export function RenderDocument(opts: RenderOptions) {
     return false;
   };
 
+  const naFolha = opts.editScope === 'folha';
+  // Pista e Percurso desenham em metros: folha e quadros ficam na Impressão.
+  const semFolha = opts.editScope === 'pista' || opts.editScope === 'percurso';
+  const blocoDoDesenho = naFolha && opts.onObjectPointerDown ? desenhoNaFolhaMm(doc) : null;
+
   const desenha = (obj: SceneObject) => {
         if (!isLayerVisible(doc, obj.layer) || !obj.visible) return null;
         if (someNaVista(obj)) return null;
         // Na vista do desempate, o obstáculo que fica de fora é cenário.
         const foraDoDesempate = soDesempate && obj.kind === 'obstacle' && !naOrdem.has(obj.id);
 
+        const papel = isPaperAnchored(obj);
+        if (papel && semFolha) return null;
         // Fora do modo ativo o objeto é cenário: some do alcance do mouse.
-        const ativo = opts.editScope == null || objectScope(obj) === opts.editScope;
+        const ativo = opts.editScope == null || naFolha || objectScope(obj) === opts.editScope;
+        const alvo = naFolha && !papel ? DESENHO_ID : obj.id;
         const onPointerDown =
           ativo && opts.onObjectPointerDown
-            ? (e: React.PointerEvent) => opts.onObjectPointerDown!(obj.id, e)
+            ? (e: React.PointerEvent) => opts.onObjectPointerDown!(alvo, e)
             : undefined;
         const conteudo = (() => {
         switch (obj.kind) {
@@ -260,7 +271,7 @@ export function RenderDocument(opts: RenderOptions) {
         // Área de clique folgada (B-50): a envoltória do objeto mais 9 px
         // de TELA, por baixo do desenho dele. Linha de partida, ornamento e
         // texto pequenos viravam fios em escala grande.
-        const folga = onPointerDown && GENEROUS_HIT.has(obj.kind) ? hitBox(doc, obj, onPointerDown) : null;
+        const folga = onPointerDown && papel === naFolha && GENEROUS_HIT.has(obj.kind) ? hitBox(doc, obj, onPointerDown) : null;
         if (folga) {
           return (
             <g key={obj.id}>
@@ -312,6 +323,25 @@ export function RenderDocument(opts: RenderOptions) {
       )}
 
 
+      {/* Na Impressão, clicar em qualquer ponto do desenho pega o bloco. */}
+      {blocoDoDesenho && (
+        <rect
+          data-part="bloco-do-desenho"
+          x={blocoDoDesenho.xMm}
+          y={blocoDoDesenho.yMm}
+          width={blocoDoDesenho.widthMm}
+          height={blocoDoDesenho.heightMm}
+          fill="transparent"
+          style={{ cursor: 'move' }}
+          onPointerDown={(e) => opts.onObjectPointerDown!(DESENHO_ID, e)}
+        />
+      )}
+
+      {semFolha &&
+        fundo
+          .filter((o): o is Arena => o.kind === 'arena' && !o.structure && isLayerVisible(doc, o.layer))
+          .map((a) => <ArenaFloor key={`piso-${a.id}`} arena={a} printScale={doc.page.printScale} originMm={doc.originMm} />)}
+
       {fundo.map(desenha)}
 
       {/* A grade sai na folha como aparece na tela (decisão 60). Fica
@@ -330,7 +360,7 @@ export function RenderDocument(opts: RenderOptions) {
         .filter((o): o is Arena => o.kind === 'arena' && !o.structure && isLayerVisible(doc, o.layer))
         .map((a) => (
           // Fora do modo Pista ela esmaece junto com a pista.
-          <g key={`regua-${a.id}`} opacity={opts.editScope != null && objectScope(a) !== opts.editScope ? 0.45 : 1}>
+          <g key={`regua-${a.id}`} opacity={opts.editScope != null && !naFolha && objectScope(a) !== opts.editScope ? 0.45 : 1}>
             <PerimeterRulerLayer arena={a} printScale={doc.page.printScale} originMm={doc.originMm} />
           </g>
         ))}
@@ -353,7 +383,7 @@ export function RenderDocument(opts: RenderOptions) {
       )}
 
       {/* Por último, para a legenda nunca ficar debaixo de um objeto. */}
-      <ScaleLegend page={doc.page} />
+      {!semFolha && <ScaleLegend page={doc.page} />}
     </>
   );
 }

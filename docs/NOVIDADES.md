@@ -14,6 +14,11 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.3.0 — 12/11/2026
+
+- **Aba Impressão (B-105):** a folha se monta numa aba própria, ao lado de Pista, Percurso e Ginástica. Ali ficam formato, orientação, margens, escala, posição da pista, quadro técnico, tabela de alturas e logos. A pista com o percurso vira um bloco: arraste para mudar de lugar na folha e puxe um canto para mudar a escala (de escala padrão em escala padrão). O botão "Folha A4 · 1:750" do topo leva para essa aba.
+- Nas abas Pista e Percurso não aparecem mais a folha nem os quadros: só a pista, em metros, sem preocupação com o espaço em volta. "Ajustar à tela" enquadra a pista; na Impressão, a folha.
+
 ## 1.2.4 — 12/11/2026
 
 - **A pista é o principal da folha:** "Rearrumar a folha" procura a maior escala para a pista e, se for preciso, encolhe quadro técnico, tabela e logos (até 70%) para ela caber maior. Com folga, eles voltam ao tamanho cheio.

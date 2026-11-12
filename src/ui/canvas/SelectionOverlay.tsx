@@ -98,7 +98,7 @@ export function SelectionOverlay({
   );
 }
 
-function SelectionFrame({
+export function SelectionFrame({
   min,
   max,
   mm,

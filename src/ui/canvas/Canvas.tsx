@@ -14,7 +14,8 @@ import { constrainToFence, createMeasure, measureLength } from '@core/library/me
 import { createPath, createPathNode, smoothedNodes } from '@core/model/path';
 import { createPolygonArena, createRectangleArena } from '@core/model/arena';
 import { createPolygonStructure, createRectangleStructure } from '@core/library/structures';
-import { pageRectMm } from '@core/model/document';
+import { DESENHO_ID, desenhoNaFolhaMm } from '@core/model/document';
+import { areaDeTrabalhoMm } from '@ui/actions/viewActions';
 import { getRotation, scaleMode } from '@core/model/transform';
 import { mmPerMeter } from '@core/scale/units';
 import {
@@ -55,7 +56,7 @@ import { InterferenceOverlay } from './InterferenceOverlay';
 import { LiveDistanceOverlay } from './LiveDistanceOverlay';
 import { CenterGuideOverlay } from './CenterGuideOverlay';
 import { InlineTextEditor } from './InlineTextEditor';
-import { SelectionOverlay } from './SelectionOverlay';
+import { SelectionFrame, SelectionOverlay } from './SelectionOverlay';
 import { useObjectGestures } from './useObjectGestures';
 
 const ZOOM_STEP = 1.12;
@@ -193,8 +194,16 @@ export function Canvas() {
   }, []);
 
   const fitPage = useCallback(() => {
-    if (size.width > 0) setViewport(fitToRect(pageRectMm(doc), size));
+    if (size.width > 0) setViewport(fitToRect(areaDeTrabalhoMm(doc, useEditorStore.getState().mode), size));
   }, [doc, size, setViewport]);
+
+  // A folha aparece ou some (B-105): enquadra o que a aba nova mostra.
+  const abaAnterior = useRef(mode);
+  useEffect(() => {
+    const antes = abaAnterior.current;
+    abaAnterior.current = mode;
+    if ((antes === 'impressao') !== (mode === 'impressao')) fitPage();
+  }, [mode]);
 
   useEffect(() => {
     if (!jaEnquadrou && size.width > 0 && size.height > 0 && wrapSize.width > 0) {
@@ -592,6 +601,7 @@ export function Canvas() {
     y: doc.originMm.y + p.y * k,
   });
   const selectedObjects = doc.objects.filter((o) => selection.includes(o.id));
+  const blocoMm = mode === 'impressao' ? desenhoNaFolhaMm(doc) : null;
   const selectedArena =
     selectedObjects.length === 1 && selectedObjects[0]!.kind === 'arena'
       ? selectedObjects[0]
@@ -631,17 +641,18 @@ export function Canvas() {
         >
           <RenderDocument
             mode="screen"
-            editScope={mode}
+            editScope={mode === 'impressao' ? 'folha' : mode}
             vista={vista}
             doc={doc}
             selection={selection}
             viewBoxMm={box}
             metersPerPixel={mpp}
-            showPageFrame={showPageFrame}
+            showPageFrame={showPageFrame && mode === 'impressao'}
             onObjectPointerDown={(id, e) => {
               if (wantsPan(e) || activeTool() !== 'select' || e.button !== 0) return;
               e.stopPropagation();
-              gestures.beginDrag(e, id);
+              if (id === DESENHO_ID) gestures.beginBloco(e);
+              else gestures.beginDrag(e, id);
             }}
           />
           <GuidedOverlay zoom={viewport.zoom} />
@@ -674,6 +685,19 @@ export function Canvas() {
                 : undefined
             }
           >
+            {mode === 'impressao' && selection.includes(DESENHO_ID) && blocoMm && (
+              <SelectionFrame
+                min={{ x: blocoMm.xMm, y: blocoMm.yMm }}
+                max={{ x: blocoMm.xMm + blocoMm.widthMm, y: blocoMm.yMm + blocoMm.heightMm }}
+                mm={(px) => px / viewport.zoom}
+                showRotate={false}
+                onRotateHandleDown={() => undefined}
+                onCornerDown={(e, corner) => {
+                  if (e.button !== 0) return;
+                  gestures.beginBlocoEscala(e, corner);
+                }}
+              />
+            )}
             {selectedArena && (
               <ArenaHandles
                 arena={selectedArena}

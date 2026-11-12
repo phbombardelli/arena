@@ -294,6 +294,25 @@ export function fitScaleToPage(doc: CourseDocument): number {
   return fitScale(e.widthM, e.heightM, a.widthMm, a.heightMm);
 }
 
+/**
+ * Na aba Impressão (B-105) a pista com o percurso é um bloco só: este id
+ * fica na seleção quando ele está escolhido. Não é objeto do croqui.
+ */
+export const DESENHO_ID = '__desenho__';
+
+/** O desenho (pista, percurso, o que fica em volta) em mm de papel. */
+export function desenhoNaFolhaMm(doc: CourseDocument): RectMm | null {
+  const e = extensaoDoDesenho(doc);
+  if (!e) return null;
+  const k = 1000 / doc.page.printScale;
+  return {
+    xMm: doc.originMm.x + e.origin.x * k,
+    yMm: doc.originMm.y + e.origin.y * k,
+    widthMm: e.widthM * k,
+    heightMm: e.heightM * k,
+  };
+}
+
 export const pageRectMm = (doc: CourseDocument) => {
   const { widthMm, heightMm } = pageSize(doc.page);
   return { x: 0, y: 0, width: widthMm, height: heightMm };

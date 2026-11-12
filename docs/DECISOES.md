@@ -2262,3 +2262,32 @@ segundo bloco de tempos. O Arena não tinha nada disso.
   rearruma os quadros e reenquadra a pista.
 - O rótulo ENTRADA/SAÍDA (`rotuloDoPortao`, no core) entra na extensão do
   desenho.
+
+## 105. Aba Impressão (B-105, etapa 1 da reforma da folha)
+
+**Decisão.** O trabalho se divide em três abas: Pista e Percurso/Ginástica
+desenham em metros, sem folha; Impressão diagrama a folha. O modo do editor
+passa a ser `ModoEditor = 'pista' | 'percurso' | 'impressao'`; o escopo dos
+objetos continua `pista`/`percurso`.
+
+- Em Pista e Percurso, `RenderDocument` (editScope `pista`/`percurso`) não
+  desenha quadro, tabela, logo, legenda de escala nem o contorno da folha.
+  O piso da pista principal é pintado de papel por baixo (`ArenaFloor`),
+  para a pista esmaecida não ficar da cor do fundo.
+- Em Impressão (editScope `folha`), só o que mora no papel se seleciona um
+  a um. Todo o resto responde como um bloco: o clique vai com `DESENHO_ID`,
+  que fica na seleção e mostra a caixa do desenho (`desenhoNaFolhaMm`) com
+  alças. Arrastar move `originMm`; o canto muda `printScale` para a escala
+  padrão mais perto, com o canto oposto parado. Com a arrumação ligada, a
+  escala nova vira a preferida e a folha se rearruma (decisão 104).
+- Retângulo de seleção e "selecionar tudo": na Impressão, só o que é da
+  folha; nas outras abas, nunca o que é da folha.
+- Inserir quadro, tabela ou logo leva à Impressão. O painel da direita,
+  na Impressão sem item escolhido (ou com o bloco), é o da folha.
+- "Ajustar à tela": na Impressão enquadra a folha; nas outras, o desenho
+  (`areaDeTrabalhoMm`). Trocar para a Impressão ou sair dela reenquadra.
+- O PDF e a impressão não mudam: saem do mesmo `RenderDocument`, em modo
+  papel.
+
+**Próximas etapas:** título e imagens (B-106), desempate em uma ou duas
+folhas com diagramação própria (B-107), folha de especificação (B-108).

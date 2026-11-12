@@ -17,6 +17,9 @@ import {
 } from '@core/model/transform';
 import { deepClone } from '@core/model/clone';
 import type { ObjectId, SceneObject } from '@core/model/types';
+import { DESENHO_ID, desenhoNaFolhaMm } from '@core/model/document';
+import { isPaperAnchored } from '@core/model/transform';
+import { STANDARD_SCALES } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 
@@ -43,7 +46,11 @@ type Gesture =
     }
   | { kind: 'path-node'; pathId: ObjectId; index: number }
   | { kind: 'path-handle'; pathId: ObjectId; index: number; which: 'in' | 'out'; origin: Vec2 }
-  | { kind: 'path-bend'; pathId: ObjectId; leg: number; startM: Vec2; half: Vec2 };
+  | { kind: 'path-bend'; pathId: ObjectId; leg: number; startM: Vec2; half: Vec2 }
+  /** Aba Impressão (B-105): o desenho inteiro andando na folha. */
+  | { kind: 'bloco'; startPaper: Vec2; originStart: Vec2 }
+  /** Aba Impressão: o canto do desenho muda a escala, de escala padrão em escala padrão. */
+  | { kind: 'bloco-escala'; ancoraPaper: Vec2; ancoraM: Vec2; startPaper: Vec2; span: Vec2; escalaStart: number };
 
 /**
  * Gestos sobre objetos: arrastar, girar e seleção por retângulo.
@@ -103,6 +110,41 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
 
       const store = useDocumentStore.getState();
       const { selection } = useEditorStore.getState();
+
+      if (current.kind === 'bloco') {
+        const agora = noPapel(store.doc, p);
+        const origem = {
+          x: Math.round((current.originStart.x + agora.x - current.startPaper.x) * 10) / 10,
+          y: Math.round((current.originStart.y + agora.y - current.startPaper.y) * 10) / 10,
+        };
+        const o = store.doc.originMm;
+        if (o.x === origem.x && o.y === origem.y) return;
+        store.apply('Mover a pista na folha', (doc) => {
+          doc.originMm = origem;
+        }, 'gesto-bloco');
+        if (!useEditorStore.getState().dragging) useEditorStore.getState().setDragging(true);
+        return;
+      }
+
+      if (current.kind === 'bloco-escala') {
+        const agora = noPapel(store.doc, p);
+        const { ancoraPaper, span } = current;
+        // Quanto o canto se afastou do oposto, pelo lado mais comprido.
+        const r =
+          Math.abs(span.x) >= Math.abs(span.y)
+            ? (agora.x - ancoraPaper.x) / span.x
+            : (agora.y - ancoraPaper.y) / span.y;
+        if (!(r > 0.05)) return;
+        const escala = escalaPadraoPerto(current.escalaStart / r);
+        if (escala === store.doc.page.printScale) return;
+        store.apply('Escala da folha', (doc) => {
+          doc.page.printScale = escala;
+          // O canto oposto fica onde estava.
+          const k = 1000 / escala;
+          doc.originMm = { x: ancoraPaper.x - current.ancoraM.x * k, y: ancoraPaper.y - current.ancoraM.y * k };
+        }, 'gesto-bloco-escala');
+        return;
+      }
 
       // Vértice e alça de canto arrastam para uma posição absoluta, e não
       // por deslocamento.
@@ -229,6 +271,50 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
       capture(e.target as Element, e.pointerId);
     },
     [toModel],
+  );
+
+  /** Aba Impressão: pega o desenho inteiro para levar a outro ponto da folha. */
+  const beginBloco = useCallback(
+    (e: React.PointerEvent) => {
+      const { doc } = useDocumentStore.getState();
+      useEditorStore.getState().setSelection([DESENHO_ID]);
+      gesture.current = {
+        kind: 'bloco',
+        startPaper: noPapel(doc, toModel(e)),
+        originStart: { ...doc.originMm },
+      };
+      capture(e.target as Element, e.pointerId);
+    },
+    [toModel],
+  );
+
+  /** Aba Impressão: canto do bloco do desenho, a partir do canto oposto. */
+  const beginBlocoEscala = useCallback(
+    (e: React.PointerEvent, corner: 0 | 1 | 2 | 3) => {
+      const { doc } = useDocumentStore.getState();
+      const r = desenhoNaFolhaMm(doc);
+      if (!r) return;
+      e.stopPropagation();
+      const cantos: Vec2[] = [
+        { x: r.xMm, y: r.yMm },
+        { x: r.xMm + r.widthMm, y: r.yMm },
+        { x: r.xMm + r.widthMm, y: r.yMm + r.heightMm },
+        { x: r.xMm, y: r.yMm + r.heightMm },
+      ];
+      const pego = cantos[corner]!;
+      const ancora = cantos[(corner + 2) % 4]!;
+      const k = 1000 / doc.page.printScale;
+      gesture.current = {
+        kind: 'bloco-escala',
+        ancoraPaper: ancora,
+        ancoraM: { x: (ancora.x - doc.originMm.x) / k, y: (ancora.y - doc.originMm.y) / k },
+        startPaper: pego,
+        span: { x: pego.x - ancora.x, y: pego.y - ancora.y },
+        escalaStart: doc.page.printScale,
+      };
+      capture(e.target as Element, e.pointerId);
+    },
+    [],
   );
 
   const beginRotate = useCallback(
@@ -389,10 +475,13 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
       const tiny =
         region.max.x - region.min.x < 0.05 && region.max.y - region.min.y < 0.05;
       const modo = useEditorStore.getState().mode;
+      // Na Impressão o retângulo pega só o que é da folha; nas outras abas, nunca.
+      const doModo = (o: SceneObject) =>
+        modo === 'impressao' ? isPaperAnchored(o) : !isPaperAnchored(o) && objectScope(o) === modo;
       const hits = tiny
         ? []
         : doc.objects
-            .filter((o) => !o.locked && o.visible && objectScope(o) === modo)
+            .filter((o) => !o.locked && o.visible && doModo(o))
             .filter((o) => boundsContains(region, boundsIn(doc, o)))
             .map((o) => o.id);
       useEditorStore.getState().setSelection(withLinked(doc, hits));
@@ -403,6 +492,8 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
 
   return {
     beginDrag,
+    beginBloco,
+    beginBlocoEscala,
     beginRotate,
     beginMarquee,
     beginVertexDrag,
@@ -415,4 +506,17 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
     onPointerUp,
     marquee,
   };
+}
+
+/** Ponto do modelo (metros) em mm de papel, com a origem de agora. */
+function noPapel(doc: { originMm: Vec2; page: { printScale: number } }, p: Vec2): Vec2 {
+  const k = 1000 / doc.page.printScale;
+  return { x: doc.originMm.x + p.x * k, y: doc.originMm.y + p.y * k };
+}
+
+/** A escala padrão mais perto (na proporção, não na diferença). */
+function escalaPadraoPerto(exata: number): number {
+  let melhor = STANDARD_SCALES[0]!;
+  for (const s of STANDARD_SCALES) if (Math.abs(Math.log(s / exata)) < Math.abs(Math.log(melhor / exata))) melhor = s;
+  return melhor;
 }

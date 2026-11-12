@@ -29,7 +29,6 @@ import { isLayerVisible } from '@core/model/document';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { Popover } from '@ui/common/Popover';
-import { SheetSettings } from '@ui/inspector/SheetSettings';
 import { t } from '@core/i18n/i18n';
 import { LanguageSwitcher } from '@ui/i18n/LanguageSwitcher';
 import { Menu, type MenuEntry } from './Menu';
@@ -132,8 +131,8 @@ export function Toolbar() {
     { label: t('inserir.partida'), onSelect: noPercurso(() => insertTimingLine('start')) },
     { label: t('inserir.chegada'), onSelect: noPercurso(() => insertTimingLine('finish')) },
     'separator',
-    { label: t('inserir.quadroTecnico'), onSelect: noPercurso(insertInfoBox) },
-    { label: t('inserir.tabelaAlturas'), onSelect: noPercurso(insertHeightTable) },
+    { label: t('inserir.quadroTecnico'), onSelect: insertInfoBox },
+    { label: t('inserir.tabelaAlturas'), onSelect: insertHeightTable },
     { label: t('inserir.logo'), onSelect: () => void insertLogo() },
     {
       label: check(doc.page.scaleLabel.visible, t('inserir.escala')),
@@ -214,23 +213,26 @@ export function Toolbar() {
         >
           {t('modo.ginastica')}
         </button>
+        <button
+          className={mode === 'impressao' ? 'active' : ''}
+          onClick={() => setMode('impressao')}
+          title={t('modo.impressaoDica')}
+        >
+          {t('modo.impressao')}
+        </button>
       </div>
 
       <span className="toolbar-spacer" />
 
       <div className="toolbar-group">
-        <Popover
-          className="sheet-popover"
-          align="right"
+        {/* A folha se arruma na aba Impressão (B-105): o botão leva até lá. */}
+        <button
+          className={mode === 'impressao' ? 'sheet-button active' : 'sheet-button'}
+          onClick={() => setMode('impressao')}
           title={t(doc.page.orientation === 'landscape' ? 'folha.dicaPaisagem' : 'folha.dicaRetrato', folha)}
-          trigger={
-            <>
-              {t('folha.botao', folha)} <span className="caret">▾</span>
-            </>
-          }
         >
-          <SheetSettings />
-        </Popover>
+          {t('folha.botao', folha)}
+        </button>
 
         <div className="zoom-control">
           <button className="icon-button" onClick={() => zoomBy(1 / 1.25)} title={t('exibir.afastar')}>−</button>

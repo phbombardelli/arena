@@ -20,6 +20,8 @@ import { useEditorStore } from '@store/editorStore';
 export function insertInfoBox(): void {
   const { doc, apply } = useDocumentStore.getState();
   const existente = doc.objects.find((o) => o.kind === 'infobox');
+  // O que é da folha se edita na aba Impressão (B-105).
+  if (useEditorStore.getState().mode !== 'impressao') useEditorStore.getState().setMode('impressao');
   if (existente) {
     useEditorStore.getState().setSelection([existente.id]);
     return;
@@ -37,6 +39,8 @@ export function insertInfoBox(): void {
 export function insertHeightTable(): void {
   const { doc, apply } = useDocumentStore.getState();
   const existente = doc.objects.find((o) => o.kind === 'heighttable');
+  // O que é da folha se edita na aba Impressão (B-105).
+  if (useEditorStore.getState().mode !== 'impressao') useEditorStore.getState().setMode('impressao');
   if (existente) {
     useEditorStore.getState().setSelection([existente.id]);
     return;

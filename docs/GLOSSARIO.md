@@ -42,6 +42,7 @@ Referência para traduzir o programa sem gafes. Toda tradução da interface, da
 | Sentido contrário (desempate) | opposite direction | sentido contrario | U | Obstáculo do percurso saltado ao contrário no desempate; no quadro, "(inv.)" / "(rev.)". |
 | Espelhar | mirror | reflejar | U | Reflete a seleção esquerda ↔ direita ou cima ↕ baixo; o sentido de salto acompanha (B-96). |
 | Duas fases | two-phase competition | dos fases | R | Prova em que a 2ª fase segue a 1ª sem parada; FEI Art. 222 (2026). Ver B-95. |
+| Impressão (a aba) | Print (tab) | Impresión (pestaña) | U | Aba onde se monta a folha: quadros, tabela, logos, posição e escala da pista. Em Pista e Percurso não há folha (B-105). |
 | Rearrumar a folha | rearrange the sheet | reordenar la hoja | U | Devolve quadro, tabela e logos à arrumação automática (coluna ou faixa), ajusta a escala e centraliza a pista (B-103). |
 | Vista (Percurso / Desempate / Ambos) | view (Course / Jump-off / Both) | vista (Recorrido / Desempate / Ambos) | U | O que aparece na tela quando há desempate. |
 | Júri de campo | Ground Jury | Jurado de Campo | R |  |

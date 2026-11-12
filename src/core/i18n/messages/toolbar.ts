@@ -103,6 +103,19 @@ export const TOOLBAR = {
     es: 'Armar gimnasias: cavalettis, pata de gallina, reloj, abanico (archivo aparte del recorrido)',
   },
 
+  'modo.impressao': { pt: 'Impressão', en: 'Print', es: 'Impresión' },
+  'modo.impressaoDica': {
+    pt: 'Montar a folha: quadros, tabela, logos, posição e escala da pista',
+    en: 'Lay out the sheet: boxes, table, logos, arena position and scale',
+    es: 'Armar la hoja: cuadros, tabla, logos, posición y escala de la pista',
+  },
+  'impressao.titulo': { pt: 'Impressão', en: 'Print', es: 'Impresión' },
+  'impressao.dica': {
+    pt: 'Aqui se monta a folha. A pista com o percurso é um bloco: arraste para mudar de lugar e puxe um canto para mudar a escala. Quadros, tabela e logos se pegam um a um.',
+    en: 'This is where the sheet is laid out. The arena with the course is one block: drag it to move it and pull a corner to change the scale. Boxes, table and logos are picked one by one.',
+    es: 'Aquí se arma la hoja. La pista con el recorrido es un bloque: arrástrelo para moverlo y tire de una esquina para cambiar la escala. Cuadros, tabla y logos se toman uno a uno.',
+  },
+
   // Folha e zoom
   'folha.botao': { pt: 'Folha {formato} · 1:{escala}', en: 'Sheet {formato} · 1:{escala}', es: 'Hoja {formato} · 1:{escala}' },
   'folha.dicaPaisagem': {

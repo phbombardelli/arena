@@ -9,7 +9,7 @@ import {
 import { linkObjects, unlinkObjects } from '@core/commands/groupOps';
 import { deepClone } from '@core/model/clone';
 import { newId } from '@core/model/ids';
-import { objectScope, translate, type EixoEspelho } from '@core/model/transform';
+import { isPaperAnchored, objectScope, translate, type EixoEspelho } from '@core/model/transform';
 import { t } from '@core/i18n/i18n';
 import type { SceneObject } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
@@ -77,7 +77,12 @@ export function selectAll(): void {
   const { doc } = useDocumentStore.getState();
   ed.setSelection(
     doc.objects
-      .filter((o) => !o.locked && o.visible && objectScope(o) === ed.mode)
+      .filter(
+        (o) =>
+          !o.locked &&
+          o.visible &&
+          (ed.mode === 'impressao' ? isPaperAnchored(o) : !isPaperAnchored(o) && objectScope(o) === ed.mode),
+      )
       .map((o) => o.id),
   );
 }

@@ -36,13 +36,20 @@ export type Tool =
   | 'text'
   | 'measure';
 
+/**
+ * As abas do trabalho (B-105): Pista e Percurso desenham em metros, sem
+ * folha; Impressão diagrama a folha, e ali a pista com o percurso é um
+ * bloco que só se move e muda de escala.
+ */
+export type ModoEditor = ObjectScope | 'impressao';
+
 interface EditorState {
   /**
    * Momento do trabalho. Só é selecionável o que pertence ao modo ativo:
    * configurando a pista não se esbarra nos obstáculos, e desenhando o
    * percurso a pista vira fundo intocável.
    */
-  mode: ObjectScope;
+  mode: ModoEditor;
   tool: Tool;
   viewport: Viewport;
   selection: ObjectId[];
@@ -120,7 +127,7 @@ interface EditorState {
    */
   showHints: boolean;
 
-  setMode: (mode: ObjectScope) => void;
+  setMode: (mode: ModoEditor) => void;
   setTool: (tool: Tool) => void;
   setViewport: (vp: Viewport) => void;
   setSelection: (ids: ObjectId[]) => void;

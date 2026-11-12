@@ -23,6 +23,19 @@ const LABEL_GAP_MM = 0.5;
 /** Largura da faixa de clique de uma linha, em pixels de tela. */
 export const HIT_BAND_PX = 16;
 
+/**
+ * Só o piso da pista, sem traço nem clique. Sem a folha por baixo (abas
+ * Pista e Percurso, B-105), a pista esmaecida ficava da cor do fundo; o
+ * piso branco por baixo a mantém com cara de papel.
+ */
+export function ArenaFloor({ arena, printScale, originMm }: { arena: Arena; printScale: number; originMm: Vec2 }) {
+  if (!arena.visible) return null;
+  const k = mmPerMeter(printScale);
+  const toPaper = (p: Vec2): Vec2 => ({ x: originMm.x + p.x * k, y: originMm.y + p.y * k });
+  const d = polygonPathD(arenaPoints(arena), arena.corner.style, arena.corner.radiusM * k, toPaper);
+  return <path d={d} fill={color.paper} stroke="none" pointerEvents="none" />;
+}
+
 export function ArenaLayer({ arena, printScale, originMm, selected, onPointerDown }: Props) {
   if (!arena.visible) return null;
   const k = mmPerMeter(printScale);

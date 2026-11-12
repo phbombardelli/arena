@@ -107,7 +107,25 @@ export function Sidebar() {
     <nav className="rail" aria-label={t('rail.ferramentas')}>
       <RailButton icon={<IconPointer {...ICONE} />} label={t('rail.selecionar')} shortcut="V" active={tool === 'select'} onClick={() => usa('select')} />
 
-      {mode === 'percurso' && ginastica ? (
+      {mode === 'impressao' ? (
+        <>
+          <RailGroup title={t('rail.folha')} />
+          <RailFlyout
+            icon={<IconTable {...ICONE} />}
+            label={t('rail.quadrosTecnicos')}
+            items={[
+              { label: t('rail.quadroTecnico'), hint: t('rail.quadroTecnicoDica'), onSelect: insertInfoBox },
+              { label: t('rail.tabelaAlturas'), hint: t('rail.tabelaAlturasDica'), onSelect: insertHeightTable },
+            ]}
+          />
+          <RailButton
+            icon={<IconPhoto {...ICONE} />}
+            label={t('rail.logo')}
+            onClick={() => void insertLogo()}
+            title={t('rail.logoDica')}
+          />
+        </>
+      ) : mode === 'percurso' && ginastica ? (
         <>
           <RailGroup title={t('rail.elementos')} />
           <RailFlyout
@@ -278,21 +296,6 @@ export function Sidebar() {
           <RailButton icon={<IconRulerMeasure {...ICONE} />} label={t('rail.trena')} shortcut="M" active={tool === 'measure'} onClick={() => usa('measure')} />
           <RailButton icon={<IconTypography {...ICONE} />} label={t('rail.texto')} shortcut="X" active={tool === 'text'} onClick={() => usa('text')} />
 
-          <RailGroup title={t('rail.folha')} />
-          <RailFlyout
-            icon={<IconTable {...ICONE} />}
-            label={t('rail.quadrosTecnicos')}
-            items={[
-              { label: t('rail.quadroTecnico'), hint: t('rail.quadroTecnicoDica'), onSelect: insertInfoBox },
-              { label: t('rail.tabelaAlturas'), hint: t('rail.tabelaAlturasDica'), onSelect: insertHeightTable },
-            ]}
-          />
-          <RailButton
-            icon={<IconPhoto {...ICONE} />}
-            label={t('rail.logo')}
-            onClick={() => void insertLogo()}
-            title={t('rail.logoDica')}
-          />
         </>
       ) : (
         <>

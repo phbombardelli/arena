@@ -50,7 +50,7 @@ export async function insertLogo(): Promise<void> {
       ligaArranjo(d);
     });
     const ed = useEditorStore.getState();
-    if (ed.mode !== 'percurso') ed.setMode('percurso');
+    if (ed.mode !== 'impressao') ed.setMode('impressao');
     ed.setSelection([logo.id]);
   } catch (err) {
     if (err instanceof ImageImportError) {

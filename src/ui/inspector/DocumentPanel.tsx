@@ -4,7 +4,8 @@ import { avisosDesempate, lerOrdem, limpaVariacoes, marcaVariacao, ordemTexto, v
 import { traceCourse } from '@ui/actions/rideActions';
 import { avisosDuasFases, fasesDoPercurso, ligaDuasFases, mudaFimDaPrimeira } from '@core/library/duasFases';
 import { findInterferences } from '@core/assist/interference';
-import { firstArena } from '@core/model/document';
+import { DESENHO_ID, firstArena } from '@core/model/document';
+import { SheetSettings } from './SheetSettings';
 import { arenaArea, arenaExtent } from '@core/model/arena';
 import { formatDistance, pathLength } from '@core/model/path';
 import type { CoursePath, FolhaDesempate, Obstacle } from '@core/model/types';
@@ -27,10 +28,14 @@ import { formatDate, t } from '@core/i18n/i18n';
  * mostra o resumo do que se está fazendo.
  */
 export function DocumentPanel() {
-  const { selection, guided, showHints, toggleHints } = useEditorStore();
+  const { selection, guided, showHints, toggleHints, mode } = useEditorStore();
+  // Na Impressão (B-105), sem nada da folha escolhido — ou com o bloco do
+  // desenho —, o painel é o da folha: formato, escala, posição da pista.
+  const soDesenho = selection.length === 0 || (selection.length === 1 && selection[0] === DESENHO_ID);
 
   let conteudo: React.ReactNode;
   if (guided) conteudo = <GuidedPanel />;
+  else if (mode === 'impressao' && soDesenho) conteudo = <PainelDaImpressao />;
   else if (selection.length > 0) conteudo = <ObjectPanel />;
   else conteudo = <Resumo />;
 
@@ -48,6 +53,16 @@ export function DocumentPanel() {
       </div>
       {conteudo}
     </aside>
+  );
+}
+
+function PainelDaImpressao() {
+  return (
+    <div className="resumo">
+      <h2>{t('impressao.titulo')}</h2>
+      <p className="hint">{t('impressao.dica')}</p>
+      <SheetSettings />
+    </div>
   );
 }
 
