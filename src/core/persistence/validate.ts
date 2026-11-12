@@ -130,6 +130,8 @@ export function validateDocument(raw: unknown): ValidationResult {
     if (!isFiniteNumber(obj.z)) obj.z = index;
     if (typeof obj.locked !== 'boolean') obj.locked = false;
     if (typeof obj.visible !== 'boolean') obj.visible = true;
+    // Encolhido pela folha (B-103): só um fator plausível.
+    if (obj.reduzido !== undefined && !(typeof obj.reduzido === 'number' && obj.reduzido >= 0.5 && obj.reduzido < 1)) delete obj.reduzido;
 
     objects.push(obj as unknown as SceneObject);
   });

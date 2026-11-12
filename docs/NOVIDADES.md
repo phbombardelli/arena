@@ -14,6 +14,13 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.2.4 — 12/11/2026
+
+- **A pista é o principal da folha:** "Rearrumar a folha" procura a maior escala para a pista e, se for preciso, encolhe quadro técnico, tabela e logos (até 70%) para ela caber maior. Com folga, eles voltam ao tamanho cheio.
+- A escala que você escolhe fica: os quadros se ajeitam (e encolhem, se preciso) para a pista caber nela; só se nem assim couber ela volta à maior que dá.
+- A posição da pista na folha não custa mais escala: se os quadros no lado oposto deixariam a pista menor, eles vão para o lado que a deixa maior, e a pista continua encostada onde você pediu.
+- Os textos ENTRADA e SAÍDA contam como parte do desenho: não ficam mais fora da área de impressão.
+
 ## 1.2.3 — 12/11/2026
 
 - **Pista na folha:** no painel da folha, uma grade 3×3 escolhe onde a pista com o percurso fica: no centro, encostada em cima, embaixo, à esquerda, à direita ou num dos quatro cantos. Os quadros vão para o lado oposto (num canto, para o dos dois lados opostos que deixa a pista maior). Se a pista não couber nem em 1:1000 com os quadros desse lado, eles vão para onde couber e a pista continua encostada onde você pediu.

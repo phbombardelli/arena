@@ -1,6 +1,6 @@
 {
   "name": "percurso",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "private": true,
   "type": "module",
   "description": "Editor vetorial de croquis de percurso de salto",

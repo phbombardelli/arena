@@ -1,4 +1,4 @@
-import { STANDARD_SCALES, usableArea } from '@core/scale/units';
+import { nextStandardScale, STANDARD_SCALES, usableArea } from '@core/scale/units';
 import type { LadoDaFolha, PosicaoDaPista } from '@core/scale/units';
 import { heightTableLayout, infoBoxLayout } from './annotationLayout';
 import { anotacaoMm, centerOriginMm, desenhoCabe, extensaoDoDesenho, firstArena, fitScaleToPage } from './document';
@@ -97,34 +97,84 @@ function itensDaFolha(doc: CourseDocument): { auto: Item[]; livres: RectMm[] } {
     if (!ehPapel(o) || !o.visible) continue;
     const r = anotacaoMm(doc, o);
     if (!r) continue;
-    if (o.livre || o.locked) livres.push(r);
-    else if (o.kind === 'infobox') {
+    if (o.livre || o.locked) {
+      livres.push(r);
+      continue;
+    }
+    // Medidas no tamanho cheio: o fator da arrumação é escolhido de novo a cada vez.
+    const cheio = 1 / (o.reduzido ?? 1);
+    const item = cheioDe(doc, o, r);
+    auto.push(comFator(item, cheio));
+  }
+  return { auto, livres };
+}
+
+/** O item como está agora (já encolhido, se a folha o encolheu). */
+function cheioDe(doc: CourseDocument, o: Papel, r: RectMm): Item {
+  {
+    if (o.kind === 'infobox') {
       const empe = infoBoxLayout({ ...o, blocos: undefined });
       const deitado = infoBoxLayout({ ...o, blocos: 'lado' });
       // Deita só se houver seções e se couber na largura da folha.
       const cabe = deitado.widthMm <= usableArea(doc.page).widthMm + 0.5;
       const muda = deitado.widthMm !== empe.widthMm && cabe;
-      auto.push({
+      return {
         obj: o,
         w: empe.widthMm,
         h: empe.heightMm,
         ...(muda ? { faixa: { w: deitado.widthMm, h: deitado.heightMm } } : {}),
-      });
+      };
     } else if (o.kind === 'heighttable' && o.widthMm == null && o.heightMm == null) {
       const obstaculos = doc.objects.filter((x): x is Obstacle => x.kind === 'obstacle');
       const base = { ...o, encaixe: undefined };
       const nat = heightTableLayout(base, obstaculos);
       const minW = heightTableLayout({ ...base, encaixe: { widthMm: 0 } }, obstaculos).widthMm;
       const minH = heightTableLayout({ ...base, encaixe: { heightMm: 0 } }, obstaculos).heightMm;
-      auto.push({
+      return {
         obj: o,
         w: nat.widthMm,
         h: nat.heightMm,
         tabela: { minW, minH, natW: nat.widthMm, natH: nat.heightMm },
-      });
-    } else auto.push({ obj: o, w: r.widthMm, h: r.heightMm });
+      };
+    }
+    return { obj: o, w: r.widthMm, h: r.heightMm };
   }
-  return { auto, livres };
+}
+
+/** O item com todas as medidas multiplicadas por `f`. */
+function comFator(it: Item, f: number): Item {
+  if (Math.abs(f - 1) < 1e-9) return it;
+  return {
+    ...it,
+    w: it.w * f,
+    h: it.h * f,
+    ...(it.faixa ? { faixa: { w: it.faixa.w * f, h: it.faixa.h * f } } : {}),
+    ...(it.tabela
+      ? { tabela: { minW: it.tabela.minW * f, minH: it.tabela.minH * f, natW: it.tabela.natW * f, natH: it.tabela.natH * f } }
+      : {}),
+  };
+}
+
+/**
+ * Encolhe (ou devolve ao tamanho) o item de verdade: letra, largura e
+ * linhas na mesma proporção, como puxar o canto. Guarda o fator para
+ * saber voltar ao tamanho cheio.
+ */
+function aplicaFator(o: Papel, f: number): void {
+  const r = f / (o.reduzido ?? 1);
+  if (Math.abs(r - 1) > 1e-9) {
+    if (o.kind === 'infobox') {
+      o.widthMm *= r;
+      o.style = { ...o.style, sizeMm: o.style.sizeMm * r };
+    } else if (o.kind === 'heighttable') {
+      o.style = { ...o.style, sizeMm: o.style.sizeMm * r, rowHeightMm: o.style.rowHeightMm * r };
+      if (o.widthMm != null) o.widthMm *= r;
+      if (o.heightMm != null) o.heightMm *= r;
+    } else o.widthMm *= r;
+  }
+  if (f >= 0.999) {
+    if (o.reduzido !== undefined) delete o.reduzido;
+  } else if (o.reduzido !== f) o.reduzido = f;
 }
 
 /**
@@ -200,26 +250,81 @@ function notaDoLado(doc: CourseDocument, itens: Item[], lado: LadoDaFolha): { ca
   return { cabe, nota };
 }
 
-/** O lado em que os quadros vão: o pedido, ou o melhor no automático. */
-export function escolheLado(doc: CourseDocument, itens: Item[] = itensDaFolha(doc).auto): LadoDaFolha {
+/**
+ * Quanto os quadros podem encolher para a pista ficar maior: o croqui é o
+ * principal da folha; os quadros, letra menor, ainda se leem até 70%.
+ */
+const FATORES = [1, 0.9, 0.8, 0.7];
+const MAIOR_ESCALA = STANDARD_SCALES[STANDARD_SCALES.length - 1]!;
+
+/** A escala padrão em que o desenho cabe com `nota` mm de papel por metro. */
+function escalaDaNota(nota: number): number {
+  if (nota <= 0) return Number.POSITIVE_INFINITY;
+  const precisa = 1000 / nota;
+  return precisa > MAIOR_ESCALA ? precisa : nextStandardScale(precisa);
+}
+
+interface Plano {
+  lado: LadoDaFolha;
+  f: number;
+}
+
+/**
+ * O lado dos quadros e quanto eles encolhem. A pista vem primeiro: vence
+ * o arranjo que deixa a pista na maior escala; entre os que empatam, o de
+ * quadros maiores. Com `alvo` (a escala que o usuário quer), basta chegar
+ * nela — e aí os quadros ficam o maior possível. Os lados possíveis vêm
+ * do lado pedido, ou da posição da pista (o lado oposto a ela).
+ */
+function planeja(doc: CourseDocument, itens: Item[], alvo?: number): Plano {
   const arranjo = doc.page.arranjo;
-  if (arranjo && arranjo.zona !== 'auto') return arranjo.zona;
-  let notas = LADOS_DA_POSICAO[arranjo?.pista ?? 'centro'].map((lado) => ({ lado, ...notaDoLado(doc, itens, lado) }));
-  // A posição pedida para a pista não deixa o desenho caber nem na maior
-  // escala: vale como preferência, e os quadros vão para onde couber.
-  const maior = STANDARD_SCALES[STANDARD_SCALES.length - 1]!;
-  if (notas.length < LADOS.length && !notas.some((n) => n.cabe && n.nota >= 1000 / maior)) {
-    notas = LADOS.map((lado) => ({ lado, ...notaDoLado(doc, itens, lado) }));
+  const ultima = arranjo?.ultima;
+  if (itens.length === 0) return { lado: ultima ?? 'direita', f: 1 };
+  const avalia = (lados: LadoDaFolha[]) =>
+    lados.flatMap((lado) =>
+      FATORES.map((f) => {
+        const { cabe, nota } = notaDoLado(doc, itens.map((i) => comFator(i, f)), lado);
+        return { lado, f, cabe, nota, escala: escalaDaNota(nota) };
+      }),
+    );
+  const pedidos = arranjo && arranjo.zona !== 'auto' ? [arranjo.zona] : LADOS_DA_POSICAO[arranjo?.pista ?? 'centro'];
+  let cands = avalia(pedidos).filter((c) => c.cabe);
+  // A pista é o principal: se os quadros no lado oposto à posição pedida
+  // custam escala (a pista sairia menor do que dá), a posição vale só para
+  // encostar a pista, e os quadros vão para o lado que a deixa maior.
+  if (pedidos.length < LADOS.length && (!arranjo || arranjo.zona === 'auto')) {
+    const todos = avalia(LADOS).filter((c) => c.cabe);
+    const menor = (l: typeof cands) => Math.min(Number.POSITIVE_INFINITY, ...l.map((c) => c.escala));
+    if (menor(todos) < menor(cands)) cands = todos;
   }
-  const possiveis = notas.filter((n) => n.cabe);
-  const lista = possiveis.length > 0 ? possiveis : notas;
-  // Na dúvida, a ordem de LADOS decide: coluna à direita, depois faixa embaixo.
-  let melhor = lista[0]!;
-  for (const n of lista) if (n.nota > melhor.nota * 1.01) melhor = n;
-  // Não troca de lado por pouco: o último continua se perder menos de 5%.
-  const ultima = lista.find((n) => n.lado === arranjo?.ultima);
-  if (ultima && ultima.nota >= melhor.nota * 0.95) return ultima.lado;
-  return melhor.lado;
+  if (cands.length === 0) {
+    const todos = avalia(pedidos).filter((c) => c.f === 1);
+    const m = todos.reduce((a, b) => (b.nota > a.nota ? b : a));
+    return { lado: m.lado, f: 1 };
+  }
+  // Ordem de preferência: quadros maiores; o lado de antes (não fica
+  // trocando por pouco); o que deixa mais folga; a ordem de LADOS.
+  const melhor = (lista: typeof cands) =>
+    lista.reduce((a, b) => {
+      if (b.f !== a.f) return b.f > a.f ? b : a;
+      if ((b.lado === ultima) !== (a.lado === ultima)) return b.lado === ultima ? b : a;
+      return b.nota > a.nota * 1.01 ? b : a;
+    });
+  if (alvo != null) {
+    const chegam = cands.filter((c) => c.escala <= alvo);
+    if (chegam.length > 0) {
+      const m = melhor(chegam);
+      return { lado: m.lado, f: m.f };
+    }
+  }
+  const menor = Math.min(...cands.map((c) => c.escala));
+  const m = melhor(cands.filter((c) => c.escala === menor));
+  return { lado: m.lado, f: m.f };
+}
+
+/** O lado em que os quadros estão (ou iriam), para o painel mostrar. */
+export function escolheLado(doc: CourseDocument): LadoDaFolha {
+  return planeja(doc, itensDaFolha(doc).auto, doc.page.arranjo?.preferida ?? doc.page.printScale).lado;
 }
 
 const cruza = (a: RectMm, b: RectMm) =>
@@ -283,12 +388,14 @@ function guardaEncaixe(tabela: HeightTable, it: Item, coluna: boolean): void {
 }
 
 /** Arruma os itens automáticos; devolve o lado e a assinatura da faixa ocupada. */
-function arrumaAnotacoes(doc: CourseDocument): string | null {
+function arrumaAnotacoes(doc: CourseDocument, alvo?: number): string | null {
   const arranjo = doc.page.arranjo;
   if (!arranjo) return null;
-  const { auto, livres } = itensDaFolha(doc);
-  const lado = escolheLado(doc, auto);
+  const { auto: cheios, livres } = itensDaFolha(doc);
+  const { lado, f } = planeja(doc, cheios, alvo);
   if (arranjo.ultima !== lado) arranjo.ultima = lado;
+  for (const it of cheios) aplicaFator(it.obj, f);
+  const auto = cheios.map((i) => comFator(i, f));
   const itens = noLado(auto, lado);
   // O quadro deita na faixa (blocos lado a lado) e fica em pé na coluna.
   for (const it of auto) {
@@ -303,7 +410,7 @@ function arrumaAnotacoes(doc: CourseDocument): string | null {
   const { espessura } = medidas(doc, itens, lado);
   return [
     Math.round(u.widthMm), Math.round(u.heightMm), m.top, m.right, m.bottom, m.left,
-    auto.length > 0 ? lado : '-', Math.round(espessura), arranjo.pista ?? 'centro',
+    auto.length > 0 ? lado : '-', Math.round(espessura), arranjo.pista ?? 'centro', arranjo.preferida ?? '',
   ].join('|');
 }
 
@@ -328,11 +435,13 @@ export function reenquadraPista(doc: CourseDocument): void {
 export function syncArranjo(doc: CourseDocument): void {
   const arranjo = doc.page.arranjo;
   if (!arranjo) return;
-  // A escala mudou desde a última arrumação: foi o usuário, e é a que ele quer.
+  // A escala mudou desde a última arrumação: foi o usuário, e é a que ele
+  // quer. Ela entra na chave, então os quadros se rearrumam (encolhendo,
+  // se preciso) para a pista caber nela.
   if (arranjo.escala !== undefined && arranjo.escala !== doc.page.printScale) {
     arranjo.preferida = doc.page.printScale;
   }
-  const chave = arrumaAnotacoes(doc);
+  const chave = arrumaAnotacoes(doc, arranjo.preferida ?? doc.page.printScale);
   if (chave != null && firstArena(doc) && arranjo.chave !== chave) {
     // Primeira vez com pista: só reenquadra se já houver quadro arrumado.
     const tinha = arranjo.chave !== undefined || !chave.includes('|-|');
@@ -350,30 +459,29 @@ export function syncArranjo(doc: CourseDocument): void {
 export function soltaNaFolha(doc: CourseDocument, obj: SceneObject): void {
   if (!ehPapel(obj) || !doc.page.arranjo) return;
   if (!obj.livre) obj.livre = true;
-  const chave = arrumaAnotacoes(doc);
+  const chave = arrumaAnotacoes(doc, doc.page.printScale);
   if (chave != null && firstArena(doc)) doc.page.arranjo.chave = chave;
 }
 
-/** "Rearrumar a folha": tudo volta ao automático, a escala se ajusta e a pista centraliza. */
+/**
+ * "Rearrumar a folha": tudo volta ao automático e a pista vai para a maior
+ * escala que dá, com os quadros encolhendo o necessário (até 70%).
+ */
 export function rearrumaFolha(doc: CourseDocument): void {
   if (!doc.page.arranjo) doc.page.arranjo = { zona: 'auto' };
-  delete doc.page.arranjo.ultima;
+  const arranjo = doc.page.arranjo;
+  delete arranjo.ultima;
   for (const o of doc.objects) if (ehPapel(o) && o.livre) delete o.livre;
-  const chave = arrumaAnotacoes(doc);
-  if (firstArena(doc)) {
-    doc.page.printScale = fitScaleToPage(doc);
-    alinhaPista(doc);
-    if (chave != null) doc.page.arranjo.chave = chave;
-    doc.page.arranjo.preferida = doc.page.printScale;
-    doc.page.arranjo.escala = doc.page.printScale;
-  }
+  arrumaAnotacoes(doc);
+  if (!firstArena(doc)) return;
+  doc.page.printScale = fitScaleToPage(doc);
+  arranjo.preferida = doc.page.printScale;
+  arranjo.escala = doc.page.printScale;
+  const chave = arrumaAnotacoes(doc, doc.page.printScale);
+  if (chave != null) arranjo.chave = chave;
+  alinhaPista(doc);
 }
 
-/**
- * Croqui de antes da arrumação: ela liga sozinha quando o usuário mexe na
- * folha (formato, orientação, margens) ou põe um quadro, uma tabela ou um
- * logo — é quando ele espera que tudo se reorganize. Já ligada, não faz nada.
- */
 /** O usuário escolheu onde a pista fica; os quadros vão para o lado oposto. */
 export function posicionaPista(doc: CourseDocument, pista: PosicaoDaPista): void {
   if (!doc.page.arranjo) rearrumaFolha(doc);
@@ -384,6 +492,11 @@ export function posicionaPista(doc: CourseDocument, pista: PosicaoDaPista): void
   // A chave muda com a posição: o syncArranjo arruma os quadros e reenquadra a pista.
 }
 
+/**
+ * Croqui de antes da arrumação: ela liga sozinha quando o usuário mexe na
+ * folha (formato, orientação, margens) ou põe um quadro, uma tabela ou um
+ * logo — é quando ele espera que tudo se reorganize. Já ligada, não faz nada.
+ */
 export function ligaArranjo(doc: CourseDocument): void {
   if (!doc.page.arranjo) rearrumaFolha(doc);
 }

@@ -2247,3 +2247,18 @@ segundo bloco de tempos. O Arena não tinha nada disso.
   caber até 1:1000, a posição vira preferência e todos os lados concorrem.
   A posição entra na chave da arrumação, então mudá-la reenquadra a pista.
   O botão Centralizar continua centralizando, sem mudar a escolha.
+
+### A pista primeiro (1.2.4, 12/11/2026)
+
+- Decisão 104: o plano da folha (`planeja`) testa cada lado com os
+  quadros a 100, 90, 80 e 70% e fica com a menor escala que a pista
+  alcança; entre os empates, quadros maiores, depois o lado de antes. Com
+  escala escolhida pelo usuário (`preferida`), basta alcançá-la, com os
+  quadros o maior possível. O fator vai para os objetos (letra, largura,
+  linhas) e fica em `reduzido`, para voltar ao tamanho cheio.
+- A posição da pista só restringe o lado dos quadros quando isso não
+  custa escala.
+- A `preferida` entra na chave da arrumação: mudar a escala à mão
+  rearruma os quadros e reenquadra a pista.
+- O rótulo ENTRADA/SAÍDA (`rotuloDoPortao`, no core) entra na extensão do
+  desenho.

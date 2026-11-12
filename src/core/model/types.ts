@@ -350,6 +350,12 @@ export interface InfoBoxField {
 
 export interface InfoBox extends BaseObject {
   kind: 'infobox';
+  /**
+   * Quanto a arrumação da folha encolheu o item para a pista ficar maior
+   * (0,7 a 1; ausente = tamanho cheio). Os tamanhos guardados já estão
+   * encolhidos; dividindo por ele volta-se ao tamanho cheio.
+   */
+  reduzido?: number;
   /** Posição em milímetros de papel: o quadro é anotação, não geometria. */
   posMm: Vec2;
   /**
@@ -391,6 +397,12 @@ export interface TemposDoQuadro {
 
 export interface HeightTable extends BaseObject {
   kind: 'heighttable';
+  /**
+   * Quanto a arrumação da folha encolheu o item para a pista ficar maior
+   * (0,7 a 1; ausente = tamanho cheio). Os tamanhos guardados já estão
+   * encolhidos; dividindo por ele volta-se ao tamanho cheio.
+   */
+  reduzido?: number;
   posMm: Vec2;
   /**
    * Posto à mão (arrastado ou com posição digitada): fica fora da
@@ -420,6 +432,12 @@ export interface HeightTable extends BaseObject {
  */
 export interface Logo extends BaseObject {
   kind: 'logo';
+  /**
+   * Quanto a arrumação da folha encolheu o item para a pista ficar maior
+   * (0,7 a 1; ausente = tamanho cheio). Os tamanhos guardados já estão
+   * encolhidos; dividindo por ele volta-se ao tamanho cheio.
+   */
+  reduzido?: number;
   posMm: Vec2;
   /**
    * Posto à mão (arrastado ou com posição digitada): fica fora da

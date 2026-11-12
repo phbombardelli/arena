@@ -2,6 +2,7 @@ import type { Vec2 } from '@core/geometry/vec';
 import { fitScale, pageSize, usableArea } from '@core/scale/units';
 import { heightTableLayout, infoBoxLayout } from './annotationLayout';
 import { arenaExtent, createRectangleArena } from './arena';
+import { rotuloDoPortao } from '@core/library/ornaments';
 import { getBounds, isPaperAnchored, unionBounds } from './transform';
 import type {
   Arena,
@@ -213,9 +214,18 @@ export function extensaoDoDesenho(doc: CourseDocument): { origin: Vec2; widthM: 
   const arena = firstArena(doc);
   if (!arena) return null;
   const visivel = (o: SceneObject) => o.visible && isLayerVisible(doc, o.layer);
-  const caixas = doc.objects
-    .filter((o) => visivel(o) && o.kind !== 'image' && !isPaperAnchored(o))
-    .map((o) => getBounds(o, doc.page.printScale));
+  const objs = doc.objects.filter((o) => visivel(o) && o.kind !== 'image' && !isPaperAnchored(o));
+  const caixas = objs.map((o) => getBounds(o, doc.page.printScale));
+  // ENTRADA/SAÍDA escritos fora da seta: o texto também tem que caber na folha.
+  const k = 1000 / doc.page.printScale;
+  for (const o of objs) {
+    if (o.kind !== 'ornament') continue;
+    const r = rotuloDoPortao(o, k);
+    if (!r) continue;
+    const w = r.meiaLarguraMm / k;
+    const h = r.meiaAlturaMm / k;
+    caixas.push({ min: { x: r.centro.x - w, y: r.centro.y - h }, max: { x: r.centro.x + w, y: r.centro.y + h } });
+  }
   const b = unionBounds(caixas);
   if (!b) {
     const e = arenaExtent(arena);

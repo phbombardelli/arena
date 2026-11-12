@@ -303,3 +303,33 @@ describe('onde a pista fica (B-103)', () => {
     expect(r.xMm - livre.xMm).toBeCloseTo(livre.xMm + livre.widthMm - (r.xMm + r.widthMm), 0);
   });
 });
+
+describe('a pista é o principal da folha (B-103)', () => {
+  it('pista grande na A4 deitada: os quadros encolhem e a pista sobe de escala', () => {
+    // 120 m: a 1:600 a pista deixa só ~59 mm para a coluna; o quadro tem 78.
+    const doc = croqui({ arena: [120, 80] });
+    delete doc.page.arranjo;
+    rearrumaFolha(doc);
+    expect(doc.page.printScale).toBe(600);
+    const quadro = doc.objects.find((o) => o.kind === 'infobox')!;
+    expect(quadro.kind === 'infobox' && quadro.reduzido).toBeGreaterThanOrEqual(0.7);
+    confereFolha(doc);
+  });
+
+  it('a escala que o usuário escolhe fica, e os quadros se ajeitam a ela', () => {
+    const doc = croqui({ arena: [120, 80] });
+    rearrumaFolha(doc);
+    const melhor = doc.page.printScale;
+    doc.page.printScale = 750;
+    syncArranjo(doc);
+    // Com folga, os quadros voltam ao tamanho cheio.
+    const quadro = doc.objects.find((o) => o.kind === 'infobox')!;
+    expect(quadro.kind === 'infobox' && quadro.reduzido).toBeFalsy();
+    doc.page.printScale = melhor;
+    syncArranjo(doc);
+    posicionaPista(doc, 'inf-dir');
+    syncArranjo(doc);
+    expect(doc.page.printScale).toBe(melhor);
+    confereFolha(doc);
+  });
+});

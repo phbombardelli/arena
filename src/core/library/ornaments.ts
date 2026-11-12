@@ -100,3 +100,34 @@ export function createOrnament(type: OrnamentType, pos: Vec2): Ornament {
     ...(isGateArrow(type) ? { showLabel: true } : {}),
   };
 }
+
+/** Corpo do texto ENTRADA/SAÍDA, em mm de papel (o mesmo `text.small` do desenho). */
+export const ROTULO_PORTAO_MM = 2.2;
+
+/**
+ * Onde fica o ENTRADA/SAÍDA: do lado de FORA da pista, atrás da cauda na
+ * entrada (que aponta para dentro), além da ponta na saída. O texto não
+ * gira. Devolve o centro em metros e a meia caixa do texto em mm de papel —
+ * a folha precisa dela para não deixar o rótulo fora da área de impressão.
+ */
+export function rotuloDoPortao(
+  o: Ornament,
+  mmPorMetro: number,
+): { centro: Vec2; meiaLarguraMm: number; meiaAlturaMm: number; texto: string } | null {
+  if ((o.type !== 'entrada' && o.type !== 'saida') || !o.showLabel) return null;
+  const a = (o.rotation * Math.PI) / 180;
+  const lado = o.type === 'entrada' ? -1 : 1;
+  const texto = gateLabel(o.type);
+  // Afastamento pelo tamanho do próprio texto na direção da seta: com a seta
+  // deitada, ENTRADA é comprido e encostava na cauda (B-66).
+  const meiaLarguraMm = (texto.length * ROTULO_PORTAO_MM * 0.74) / 2;
+  const meiaAlturaMm = (ROTULO_PORTAO_MM * 0.75) / 2;
+  const alcance = Math.abs(Math.cos(a)) * meiaLarguraMm + Math.abs(Math.sin(a)) * meiaAlturaMm;
+  const d = ((o.sizeM / 2) * mmPorMetro + 1.8 + alcance) / mmPorMetro;
+  return {
+    centro: { x: o.pos.x + Math.cos(a) * d * lado, y: o.pos.y + Math.sin(a) * d * lado },
+    meiaLarguraMm,
+    meiaAlturaMm,
+    texto,
+  };
+}
