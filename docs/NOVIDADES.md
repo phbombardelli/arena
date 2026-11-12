@@ -14,6 +14,10 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.2.3 — 12/11/2026
+
+- **Pista na folha:** no painel da folha, uma grade 3×3 escolhe onde a pista com o percurso fica: no centro, encostada em cima, embaixo, à esquerda, à direita ou num dos quatro cantos. Os quadros vão para o lado oposto (num canto, para o dos dois lados opostos que deixa a pista maior). Se a pista não couber nem em 1:1000 com os quadros desse lado, eles vão para onde couber e a pista continua encostada onde você pediu.
+
 ## 1.2.2 — 12/11/2026
 
 - A folha que se arruma enquadra o desenho inteiro, não só o contorno da pista: arquibancada, júri, entrada e saída e a régua do perímetro ficam dentro da área de impressão e fora dos quadros, também ao virar a folha de retrato para paisagem.

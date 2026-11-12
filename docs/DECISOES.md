@@ -2237,3 +2237,13 @@ segundo bloco de tempos. O Arena não tinha nada disso.
   o bloco do desempate (`ligaDesempateNosQuadros`, no `apply`). A distância
   do desempate é preenchida uma vez, quando aparece o traçado dele, e
   depois é do desenhador.
+
+### Pista na folha (1.2.3, 12/11/2026)
+
+- Decisão 104: `arranjo.pista` (centro, quatro lados, quatro cantos) é a
+  base da arrumação. A pista encosta ali dentro do que sobra (com a folga
+  da régua) e os quadros só concorrem pelos lados opostos: um lado, dois
+  num canto, os quatro no centro. Se nenhum lado oposto deixa o desenho
+  caber até 1:1000, a posição vira preferência e todos os lados concorrem.
+  A posição entra na chave da arrumação, então mudá-la reenquadra a pista.
+  O botão Centralizar continua centralizando, sem mudar a escolha.

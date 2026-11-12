@@ -7,7 +7,8 @@ import { usableArea } from '@core/scale/units';
 import { createRectangleArena } from './arena';
 import { anotacaoMm, createDocument, freeAreaMm } from './document';
 import type { RectMm } from './document';
-import { rearrumaFolha, syncArranjo } from './sheetLayout';
+import { posicionaPista, rearrumaFolha, syncArranjo } from './sheetLayout';
+import { extensaoDoDesenho } from './document';
 import type { CourseDocument, InfoBox } from './types';
 
 function croqui(opts: { retrato?: boolean; arena?: [number, number] } = {}): CourseDocument {
@@ -252,5 +253,53 @@ describe('tabela de alturas com tamanho (B-103)', () => {
     const depois = heightTableLayout(tabela, obst);
     expect(depois.widthMm).toBeCloseTo(antes.widthMm * 1.5, 0);
     expect(depois.heightMm).toBeCloseTo(antes.heightMm * 1.2, 0);
+  });
+});
+
+describe('onde a pista fica (B-103)', () => {
+  const caixaDoDesenho = (doc: CourseDocument): RectMm => {
+    const e = extensaoDoDesenho(doc)!;
+    const k = 1000 / doc.page.printScale;
+    return { xMm: doc.originMm.x + e.origin.x * k, yMm: doc.originMm.y + e.origin.y * k, widthMm: e.widthM * k, heightMm: e.heightM * k };
+  };
+
+  it('a pista no canto: encosta nele, e os quadros vão para um lado oposto', () => {
+    for (const retrato of [false, true]) {
+      const doc = croqui({ retrato });
+      rearrumaFolha(doc);
+      posicionaPista(doc, 'sup-esq');
+      syncArranjo(doc);
+      expect(['direita', 'baixo']).toContain(doc.page.arranjo!.ultima);
+      const livre = freeAreaMm(doc);
+      const r = caixaDoDesenho(doc);
+      expect(r.xMm - livre.xMm).toBeLessThanOrEqual(7.1);
+      expect(r.yMm - livre.yMm).toBeLessThanOrEqual(7.1);
+      confereFolha(doc);
+    }
+  });
+
+  it('a pista embaixo: os quadros vão para cima', () => {
+    const doc = croqui({ arena: [50, 50] });
+    rearrumaFolha(doc);
+    posicionaPista(doc, 'baixo');
+    syncArranjo(doc);
+    expect(doc.page.arranjo!.ultima).toBe('cima');
+    const livre = freeAreaMm(doc);
+    const r = caixaDoDesenho(doc);
+    expect(livre.yMm + livre.heightMm - (r.yMm + r.heightMm)).toBeLessThanOrEqual(7.1);
+    confereFolha(doc);
+  });
+
+  it('de volta ao centro, a pista centraliza no que sobra', () => {
+    const doc = croqui();
+    rearrumaFolha(doc);
+    posicionaPista(doc, 'inf-dir');
+    syncArranjo(doc);
+    posicionaPista(doc, 'centro');
+    syncArranjo(doc);
+    expect(doc.page.arranjo!.pista).toBeUndefined();
+    const livre = freeAreaMm(doc);
+    const r = caixaDoDesenho(doc);
+    expect(r.xMm - livre.xMm).toBeCloseTo(livre.xMm + livre.widthMm - (r.xMm + r.widthMm), 0);
   });
 });

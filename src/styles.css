@@ -881,3 +881,15 @@ button.mini.neutral { color: var(--text); }
 .saida-opcoes { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
 .saida-opcoes label { display: flex; gap: 6px; align-items: flex-start; }
 .vista-rotulo { font-size: 11px; color: var(--text-dim); padding: 0 4px 0 6px; }
+
+/* Pista na folha (B-103): grade 3×3, o quadradinho escuro mostra onde ela encosta. */
+.pista-posicao { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.pista-posicao > span { color: var(--text-dim); }
+.pista-grade { display: grid; grid-template-columns: repeat(3, 22px); gap: 2px; padding: 3px;
+  border: 1px solid var(--border); border-radius: 4px; background: var(--chrome); }
+.pista-grade button { width: 22px; height: 16px; padding: 0; border: 0; border-radius: 2px;
+  background: transparent; display: grid; place-items: center; cursor: pointer; }
+.pista-grade button i { width: 8px; height: 6px; border-radius: 1px; background: var(--border); }
+.pista-grade button:hover i { background: var(--text-dim); }
+.pista-grade button.ativo i { width: 12px; height: 9px; background: var(--accent, #2563eb); }
+.pista-grade button:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 1px; }

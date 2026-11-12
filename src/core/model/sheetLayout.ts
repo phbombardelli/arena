@@ -1,7 +1,8 @@
-import { usableArea } from '@core/scale/units';
-import type { LadoDaFolha } from '@core/scale/units';
+import { STANDARD_SCALES, usableArea } from '@core/scale/units';
+import type { LadoDaFolha, PosicaoDaPista } from '@core/scale/units';
 import { heightTableLayout, infoBoxLayout } from './annotationLayout';
-import { anotacaoMm, centerOnPage, desenhoCabe, extensaoDoDesenho, firstArena, fitScaleToPage } from './document';
+import { anotacaoMm, centerOriginMm, desenhoCabe, extensaoDoDesenho, firstArena, fitScaleToPage } from './document';
+import { folgaDoDesenhoMm, freeAreaMm } from './document';
 import type { RectMm } from './document';
 import type { CourseDocument, HeightTable, InfoBox, Logo, Obstacle, SceneObject } from './types';
 
@@ -12,7 +13,9 @@ import type { CourseDocument, HeightTable, InfoBox, Logo, Obstacle, SceneObject 
  * folha: uma COLUNA (direita ou esquerda), um embaixo do outro, ou uma
  * FAIXA (embaixo ou em cima), um ao lado do outro. No automático, o
  * programa testa os quatro lados e fica com o que deixa a pista maior; a
- * pista se reenquadra no que sobra.
+ * pista se reenquadra no que sobra — no centro dele, ou encostada no lado
+ * ou no canto que o usuário escolheu (`arranjo.pista`); aí os quadros vão
+ * para o lado oposto.
  *
  * Roda depois de cada edição (documentStore), então o quadro que cresce
  * (duas fases, desempate) ou a folha que vira retrato rearruma tudo sem
@@ -27,6 +30,41 @@ import type { CourseDocument, HeightTable, InfoBox, Logo, Obstacle, SceneObject 
 
 export const FOLGA_MM = 4;
 const LADOS: LadoDaFolha[] = ['direita', 'baixo', 'esquerda', 'cima'];
+
+/**
+ * Onde a pista encosta decide para que lado os quadros podem ir: o oposto.
+ * Num canto, os dois lados opostos concorrem; no centro, os quatro.
+ */
+const LADOS_DA_POSICAO: Record<PosicaoDaPista, LadoDaFolha[]> = {
+  centro: LADOS,
+  cima: ['baixo'],
+  baixo: ['cima'],
+  esquerda: ['direita'],
+  direita: ['esquerda'],
+  'sup-esq': ['direita', 'baixo'],
+  'sup-dir': ['baixo', 'esquerda'],
+  'inf-esq': ['direita', 'cima'],
+  'inf-dir': ['esquerda', 'cima'],
+};
+
+/** Quanto o desenho encosta em cada eixo: 0 começo, 0,5 meio, 1 fim. */
+const ALINHA: Record<PosicaoDaPista, { x: number; y: number }> = {
+  centro: { x: 0.5, y: 0.5 },
+  cima: { x: 0.5, y: 0 },
+  baixo: { x: 0.5, y: 1 },
+  esquerda: { x: 0, y: 0.5 },
+  direita: { x: 1, y: 0.5 },
+  'sup-esq': { x: 0, y: 0 },
+  'sup-dir': { x: 1, y: 0 },
+  'inf-esq': { x: 0, y: 1 },
+  'inf-dir': { x: 1, y: 1 },
+};
+
+/** Põe o desenho no que sobra da folha, na posição escolhida (ou no centro). */
+export function alinhaPista(doc: CourseDocument): void {
+  const o = centerOriginMm(doc, freeAreaMm(doc), ALINHA[doc.page.arranjo?.pista ?? 'centro']);
+  if (o) doc.originMm = o;
+}
 
 type Papel = InfoBox | HeightTable | Logo;
 
@@ -154,8 +192,9 @@ function notaDoLado(doc: CourseDocument, itens: Item[], lado: LadoDaFolha): { ca
   const u = usableArea(doc.page);
   const { espessura, cabe } = medidas(doc, noLado(itens, lado), lado);
   const coluna = ehColuna(lado);
-  const sobraW = coluna ? u.widthMm - espessura - FOLGA_MM : u.widthMm;
-  const sobraH = coluna ? u.heightMm : u.heightMm - espessura - FOLGA_MM;
+  const folga = 2 * folgaDoDesenhoMm(doc);
+  const sobraW = (coluna ? u.widthMm - espessura - FOLGA_MM : u.widthMm) - folga;
+  const sobraH = (coluna ? u.heightMm : u.heightMm - espessura - FOLGA_MM) - folga;
   const e = extensaoDoDesenho(doc) ?? { widthM: 80, heightM: 40 };
   const nota = Math.max(0, Math.min(sobraW / Math.max(1, e.widthM), sobraH / Math.max(1, e.heightM)));
   return { cabe, nota };
@@ -165,7 +204,13 @@ function notaDoLado(doc: CourseDocument, itens: Item[], lado: LadoDaFolha): { ca
 export function escolheLado(doc: CourseDocument, itens: Item[] = itensDaFolha(doc).auto): LadoDaFolha {
   const arranjo = doc.page.arranjo;
   if (arranjo && arranjo.zona !== 'auto') return arranjo.zona;
-  const notas = LADOS.map((lado) => ({ lado, ...notaDoLado(doc, itens, lado) }));
+  let notas = LADOS_DA_POSICAO[arranjo?.pista ?? 'centro'].map((lado) => ({ lado, ...notaDoLado(doc, itens, lado) }));
+  // A posição pedida para a pista não deixa o desenho caber nem na maior
+  // escala: vale como preferência, e os quadros vão para onde couber.
+  const maior = STANDARD_SCALES[STANDARD_SCALES.length - 1]!;
+  if (notas.length < LADOS.length && !notas.some((n) => n.cabe && n.nota >= 1000 / maior)) {
+    notas = LADOS.map((lado) => ({ lado, ...notaDoLado(doc, itens, lado) }));
+  }
   const possiveis = notas.filter((n) => n.cabe);
   const lista = possiveis.length > 0 ? possiveis : notas;
   // Na dúvida, a ordem de LADOS decide: coluna à direita, depois faixa embaixo.
@@ -258,7 +303,7 @@ function arrumaAnotacoes(doc: CourseDocument): string | null {
   const { espessura } = medidas(doc, itens, lado);
   return [
     Math.round(u.widthMm), Math.round(u.heightMm), m.top, m.right, m.bottom, m.left,
-    auto.length > 0 ? lado : '-', Math.round(espessura),
+    auto.length > 0 ? lado : '-', Math.round(espessura), arranjo.pista ?? 'centro',
   ].join('|');
 }
 
@@ -273,7 +318,7 @@ export function reenquadraPista(doc: CourseDocument): void {
   doc.page.printScale = doc.page.arranjo?.preferida ?? atual;
   // Cabe = o desenho inteiro (pista, júri, arquibancada, entrada e saída), não só o contorno.
   if (!desenhoCabe(doc)) doc.page.printScale = fitScaleToPage(doc);
-  centerOnPage(doc);
+  alinhaPista(doc);
 }
 
 /**
@@ -317,7 +362,7 @@ export function rearrumaFolha(doc: CourseDocument): void {
   const chave = arrumaAnotacoes(doc);
   if (firstArena(doc)) {
     doc.page.printScale = fitScaleToPage(doc);
-    centerOnPage(doc);
+    alinhaPista(doc);
     if (chave != null) doc.page.arranjo.chave = chave;
     doc.page.arranjo.preferida = doc.page.printScale;
     doc.page.arranjo.escala = doc.page.printScale;
@@ -329,6 +374,16 @@ export function rearrumaFolha(doc: CourseDocument): void {
  * folha (formato, orientação, margens) ou põe um quadro, uma tabela ou um
  * logo — é quando ele espera que tudo se reorganize. Já ligada, não faz nada.
  */
+/** O usuário escolheu onde a pista fica; os quadros vão para o lado oposto. */
+export function posicionaPista(doc: CourseDocument, pista: PosicaoDaPista): void {
+  if (!doc.page.arranjo) rearrumaFolha(doc);
+  const arranjo = doc.page.arranjo!;
+  if (pista === 'centro') delete arranjo.pista;
+  else arranjo.pista = pista;
+  delete arranjo.ultima;
+  // A chave muda com a posição: o syncArranjo arruma os quadros e reenquadra a pista.
+}
+
 export function ligaArranjo(doc: CourseDocument): void {
   if (!doc.page.arranjo) rearrumaFolha(doc);
 }

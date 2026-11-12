@@ -225,7 +225,7 @@ export function extensaoDoDesenho(doc: CourseDocument): { origin: Vec2; widthM: 
 }
 
 /** Folga em mm de papel em volta do desenho: a régua do perímetro e os rótulos saem para fora. */
-function folgaDoDesenhoMm(doc: CourseDocument): number {
+export function folgaDoDesenhoMm(doc: CourseDocument): number {
   const arena = firstArena(doc);
   return arena?.perimeterRuler.visible ? 7 : 3;
 }
@@ -238,14 +238,22 @@ const encolhe = (area: RectMm, mm: number): RectMm => ({
 });
 
 /** Posição em mm onde o modelo (0,0) deve cair para centralizar o desenho. */
-function centerOriginMm(doc: CourseDocument, area: RectMm): Vec2 | null {
+/**
+ * Origem que põe o desenho em `area`: `alinha` 0 encosta à esquerda (ou em
+ * cima), 0,5 centraliza, 1 encosta à direita (ou embaixo).
+ */
+export function centerOriginMm(
+  doc: CourseDocument,
+  area: RectMm,
+  alinha: { x: number; y: number } = { x: 0.5, y: 0.5 },
+): Vec2 | null {
   const e = extensaoDoDesenho(doc);
   if (!e) return null;
   const k = 1000 / doc.page.printScale;
   const a = encolhe(area, folgaDoDesenhoMm(doc));
   return {
-    x: a.xMm + (a.widthMm - e.widthM * k) / 2 - e.origin.x * k,
-    y: a.yMm + (a.heightMm - e.heightM * k) / 2 - e.origin.y * k,
+    x: a.xMm + (a.widthMm - e.widthM * k) * alinha.x - e.origin.x * k,
+    y: a.yMm + (a.heightMm - e.heightM * k) * alinha.y - e.origin.y * k,
   };
 }
 

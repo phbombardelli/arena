@@ -1,7 +1,7 @@
 import { defaultLayers } from '@core/model/document';
 import type { CourseDocument, ObjectKind, SceneObject } from '@core/model/types';
 import { LAYER_ORDER } from '@core/model/types';
-import { PAGE_FORMATS } from '@core/scale/units';
+import { PAGE_FORMATS, POSICOES_DA_PISTA, type PosicaoDaPista } from '@core/scale/units';
 import { CourseFileError } from './format';
 import { t } from '@core/i18n/i18n';
 import type { MessageKey } from '@core/i18n/messages';
@@ -84,6 +84,7 @@ export function validateDocument(raw: unknown): ValidationResult {
     const a = page.arranjo;
     const lados = ['auto', 'direita', 'esquerda', 'baixo', 'cima'];
     if (!isRecord(a) || !lados.includes(a.zona as string)) delete page.arranjo;
+    else if (a.pista !== undefined && !POSICOES_DA_PISTA.includes(a.pista as PosicaoDaPista)) delete a.pista;
   }
 
   if (!isPoint(raw.originMm)) {

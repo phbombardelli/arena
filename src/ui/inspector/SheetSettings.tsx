@@ -1,13 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { centerOnPage, fitScaleToPage } from '@core/model/document';
-import { escolheLado, ligaArranjo, rearrumaFolha } from '@core/model/sheetLayout';
+import { escolheLado, ligaArranjo, posicionaPista, rearrumaFolha } from '@core/model/sheetLayout';
 import { GRID_STEPS } from '@core/geometry/snap';
-import { PAGE_FORMATS, STANDARD_SCALES, formatMeters } from '@core/scale/units';
-import type { LadoDaFolha, Orientation, PageFormat, SheetCorner } from '@core/scale/units';
+import { PAGE_FORMATS, POSICOES_DA_PISTA, STANDARD_SCALES, formatMeters } from '@core/scale/units';
+import type { LadoDaFolha, Orientation, PageFormat, PosicaoDaPista, SheetCorner } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
 import { toggleGrid } from '@ui/actions/viewActions';
 import { t } from '@core/i18n/i18n';
 import type { MessageKey } from '@core/i18n/messages';
+
+const ROTULO_POSICAO: Record<PosicaoDaPista, MessageKey> = {
+  'sup-esq': 'folhap.pistaSupEsq',
+  cima: 'folhap.pistaCima',
+  'sup-dir': 'folhap.pistaSupDir',
+  esquerda: 'folhap.pistaEsquerda',
+  centro: 'folhap.pistaCentro',
+  direita: 'folhap.pistaDireita',
+  'inf-esq': 'folhap.pistaInfEsq',
+  baixo: 'folhap.pistaBaixo',
+  'inf-dir': 'folhap.pistaInfDir',
+};
 
 const ROTULO_LADO: Record<LadoDaFolha, MessageKey> = {
   direita: 'folhap.zonaDireita',
@@ -316,6 +328,27 @@ function QuadrosNaFolha() {
   return (
     <section>
       <h3>{t('folhap.quadros')}</h3>
+      <div className="pista-posicao">
+        <span>{t('folhap.pista')}</span>
+        <div className="pista-grade" role="radiogroup" aria-label={t('folhap.pista')}>
+          {POSICOES_DA_PISTA.map((p) => {
+            const atual = (arranjo?.pista ?? 'centro') === p && arranjo != null;
+            return (
+              <button
+                key={p}
+                role="radio"
+                aria-checked={atual}
+                className={atual ? 'ativo' : undefined}
+                title={t(ROTULO_POSICAO[p])}
+                aria-label={t(ROTULO_POSICAO[p])}
+                onClick={() => apply(t('folhap.pista'), (d) => posicionaPista(d, p))}
+              >
+                <i />
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <Field label={t('folhap.zona')}>
         <select
           value={arranjo?.zona ?? 'auto'}

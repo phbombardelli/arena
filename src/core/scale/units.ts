@@ -111,7 +111,21 @@ export interface PageSetup {
 /** De que lado da folha ficam os quadros: coluna (direita/esquerda) ou faixa (baixo/cima). */
 export type LadoDaFolha = 'direita' | 'esquerda' | 'baixo' | 'cima';
 
+/**
+ * Onde a pista (com o percurso) encosta na folha: no centro, num lado ou
+ * num canto. Os quadros vão para o lado oposto.
+ */
+export type PosicaoDaPista =
+  | 'centro' | 'cima' | 'baixo' | 'esquerda' | 'direita'
+  | 'sup-esq' | 'sup-dir' | 'inf-esq' | 'inf-dir';
+
+export const POSICOES_DA_PISTA: PosicaoDaPista[] = [
+  'sup-esq', 'cima', 'sup-dir', 'esquerda', 'centro', 'direita', 'inf-esq', 'baixo', 'inf-dir',
+];
+
 export interface ArranjoDaFolha {
+  /** Onde a pista encosta (ausente = centro). */
+  pista?: PosicaoDaPista;
   /** `auto`: o programa escolhe o lado que deixa a pista maior. */
   zona: 'auto' | LadoDaFolha;
   /** O lado escolhido da última vez, para não ficar trocando por pouco. */
