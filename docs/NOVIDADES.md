@@ -14,6 +14,12 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.2.2 — 12/11/2026
+
+- A folha que se arruma enquadra o desenho inteiro, não só o contorno da pista: arquibancada, júri, entrada e saída e a régua do perímetro ficam dentro da área de impressão e fora dos quadros, também ao virar a folha de retrato para paisagem.
+- Tabela de alturas com tamanho: largura e altura no painel ("Tamanho automático" volta ao normal) ou puxando os cantos da seleção, como o quadro técnico. Arrumada pela folha, ela acompanha sozinha o quadro: a mesma largura na coluna, a mesma altura na faixa.
+- Ao dar ordem ao desempate, o quadro técnico já liga o bloco do desempate, com a ordem e a velocidade do percurso; a distância e os tempos entram quando o traçado do desempate é desenhado.
+
 ## 1.2.1 — 12/11/2026
 
 - A arrumação da folha liga sozinha também nos croquis antigos, quando se muda a folha (formato, orientação, margens) ou se insere quadro, tabela ou logo.

@@ -9,6 +9,7 @@ export const COMMON = {
   'campo.letra': { pt: 'Letra', en: 'Text size', es: 'Tamaño de letra' },
   'campo.giro': { pt: 'Giro', en: 'Rotation', es: 'Giro' },
   'campo.largura': { pt: 'Largura', en: 'Width', es: 'Ancho' },
+  'campo.altura': { pt: 'Altura', en: 'Height', es: 'Alto' },
   'campo.comprimento': { pt: 'Comprimento', en: 'Length', es: 'Largo' },
   'campo.espessura': { pt: 'Espessura', en: 'Thickness', es: 'Grosor' },
   'campo.cor': { pt: 'Cor', en: 'Colour', es: 'Color' },

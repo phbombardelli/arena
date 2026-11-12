@@ -466,6 +466,8 @@ export function scaleMode(obj: SceneObject): 'livre' | 'proporcional' | null {
     case 'infobox':
     case 'logo':
       return 'proporcional';
+    case 'heighttable':
+      return 'livre';
     default:
       return null;
   }
@@ -481,7 +483,14 @@ export function scaleBounds(doc: CourseDocument, obj: SceneObject): Bounds {
 }
 
 /** Escala o objeto a partir de `ancora` (metros). `sx`, `sy` > 0. */
-export function scaleObject(obj: SceneObject, ancora: Vec2, sx: number, sy: number, printScale: PrintScale): void {
+export function scaleObject(
+  obj: SceneObject,
+  ancora: Vec2,
+  sx: number,
+  sy: number,
+  printScale: PrintScale,
+  tamanho?: { widthMm: number; heightMm: number },
+): void {
   const em = (p: Vec2): Vec2 => ({ x: ancora.x + (p.x - ancora.x) * sx, y: ancora.y + (p.y - ancora.y) * sy });
   switch (obj.kind) {
     case 'measure':
@@ -514,6 +523,16 @@ export function scaleObject(obj: SceneObject, ancora: Vec2, sx: number, sy: numb
       setPosition(obj, em(getPosition(obj, printScale)), printScale);
       obj.widthMm *= sx;
       return;
+    case 'heighttable': {
+      // Puxar o canto dá à tabela um tamanho escolhido, como nos campos do
+      // painel; `tamanho` é o que ela mede agora (vem de `scaleInDoc`).
+      const l = tamanho ?? heightTableLayout(obj, []);
+      setPosition(obj, em(getPosition(obj, printScale)), printScale);
+      obj.widthMm = Math.max(1, l.widthMm * sx);
+      obj.heightMm = Math.max(1, l.heightMm * sy);
+      delete obj.encaixe;
+      return;
+    }
     default:
   }
 }
@@ -529,5 +548,9 @@ export function scaleInDoc(doc: CourseDocument, obj: SceneObject, ancora: Vec2, 
     const k = 1000 / doc.page.printScale;
     a = { x: ancora.x + doc.originMm.x / k, y: ancora.y + doc.originMm.y / k };
   }
-  scaleObject(obj, a, sx, sy, doc.page.printScale);
+  const tamanho =
+    obj.kind === 'heighttable'
+      ? heightTableLayout(obj, doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'))
+      : undefined;
+  scaleObject(obj, a, sx, sy, doc.page.printScale, tamanho);
 }

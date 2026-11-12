@@ -2,6 +2,7 @@ import type { Vec2 } from '@core/geometry/vec';
 import { fitScale, pageSize, usableArea } from '@core/scale/units';
 import { heightTableLayout, infoBoxLayout } from './annotationLayout';
 import { arenaExtent, createRectangleArena } from './arena';
+import { getBounds, isPaperAnchored, unionBounds } from './transform';
 import type {
   Arena,
   CourseDocument,
@@ -72,7 +73,7 @@ export function createDocument(opts: { arena?: boolean } = {}): CourseDocument {
       technicalDelegate: '',
     },
     page,
-    originMm: centerOriginMm(arena, page, areaCheia(page)),
+    originMm: origemDaPistaPadrao(arena, page, areaCheia(page)),
     grid: {
       visible: true,
       stepM: 0,
@@ -82,6 +83,16 @@ export function createDocument(opts: { arena?: boolean } = {}): CourseDocument {
     layers: defaultLayers(),
     objects: opts.arena ? [arena] : [],
     assets: {},
+  };
+}
+
+/** Onde (0,0) cai para a pista padrão nascer no meio da folha. */
+function origemDaPistaPadrao(arena: Arena, page: CourseDocument['page'], area: RectMm): Vec2 {
+  const k = 1000 / page.printScale;
+  const e = arenaExtent(arena);
+  return {
+    x: area.xMm + (area.widthMm - e.widthM * k) / 2 - e.origin.x * k,
+    y: area.yMm + (area.heightMm - e.heightM * k) / 2 - e.origin.y * k,
   };
 }
 
@@ -190,39 +201,79 @@ export function anotacaoMm(doc: CourseDocument, obj: SceneObject): RectMm | null
   return null;
 }
 
-// Contorno livre não tem largura/altura próprias: vale a envoltória dos
-// vértices (arenaExtent), senão a escala e o centro saem de uma pista 0×0.
-function fitScaleForArena(arena: Arena, area: RectMm): number {
-  const e = arenaExtent(arena);
-  return fitScale(e.widthM, e.heightM, area.widthMm, area.heightMm);
+/**
+ * O que precisa caber na folha: a pista e tudo o que se desenha em volta
+ * dela — júri, arquibancada, entrada e saída, ornamentação, o percurso —,
+ * em metros. Enquadrar só pelo contorno da pista jogava esses detalhes
+ * para fora da área de impressão ou para baixo dos quadros. Fica de fora a
+ * imagem de fundo (o print do mapa costuma ser bem maior que a pista) e o
+ * que é da folha (quadros, tabela, logo).
+ */
+export function extensaoDoDesenho(doc: CourseDocument): { origin: Vec2; widthM: number; heightM: number } | null {
+  const arena = firstArena(doc);
+  if (!arena) return null;
+  const visivel = (o: SceneObject) => o.visible && isLayerVisible(doc, o.layer);
+  const caixas = doc.objects
+    .filter((o) => visivel(o) && o.kind !== 'image' && !isPaperAnchored(o))
+    .map((o) => getBounds(o, doc.page.printScale));
+  const b = unionBounds(caixas);
+  if (!b) {
+    const e = arenaExtent(arena);
+    return { origin: e.origin, widthM: e.widthM, heightM: e.heightM };
+  }
+  return { origin: b.min, widthM: b.max.x - b.min.x, heightM: b.max.y - b.min.y };
 }
 
-/** Posição em mm onde o modelo (0,0) deve cair para centralizar a pista. */
-function centerOriginMm(arena: Arena, page: CourseDocument['page'], area: RectMm): Vec2 {
-  const k = 1000 / page.printScale;
-  const e = arenaExtent(arena);
-  const drawW = e.widthM * k;
-  const drawH = e.heightM * k;
+/** Folga em mm de papel em volta do desenho: a régua do perímetro e os rótulos saem para fora. */
+function folgaDoDesenhoMm(doc: CourseDocument): number {
+  const arena = firstArena(doc);
+  return arena?.perimeterRuler.visible ? 7 : 3;
+}
+
+const encolhe = (area: RectMm, mm: number): RectMm => ({
+  xMm: area.xMm + mm,
+  yMm: area.yMm + mm,
+  widthMm: Math.max(10, area.widthMm - mm * 2),
+  heightMm: Math.max(10, area.heightMm - mm * 2),
+});
+
+/** Posição em mm onde o modelo (0,0) deve cair para centralizar o desenho. */
+function centerOriginMm(doc: CourseDocument, area: RectMm): Vec2 | null {
+  const e = extensaoDoDesenho(doc);
+  if (!e) return null;
+  const k = 1000 / doc.page.printScale;
+  const a = encolhe(area, folgaDoDesenhoMm(doc));
   return {
-    x: area.xMm + (area.widthMm - drawW) / 2 - e.origin.x * k,
-    y: area.yMm + (area.heightMm - drawH) / 2 - e.origin.y * k,
+    x: a.xMm + (a.widthMm - e.widthM * k) / 2 - e.origin.x * k,
+    y: a.yMm + (a.heightMm - e.heightM * k) / 2 - e.origin.y * k,
   };
+}
+
+/** O desenho inteiro cabe em `area` na escala atual (com a folga da régua)? */
+export function desenhoCabe(doc: CourseDocument, area: RectMm = freeAreaMm(doc)): boolean {
+  const e = extensaoDoDesenho(doc);
+  if (!e) return true;
+  const k = 1000 / doc.page.printScale;
+  const a = encolhe(area, folgaDoDesenhoMm(doc));
+  return e.widthM * k <= a.widthMm + 0.5 && e.heightM * k <= a.heightMm + 0.5;
 }
 
 /**
  * Recentraliza o desenho na área útil da página. Chamado explicitamente
- * pelo usuário — trocar de escala ou de formato não move o desenho sozinho.
+ * pelo usuário — trocar de escala ou de formato não move o desenho sozinho
+ * (a não ser com a arrumação da folha ligada, decisão 104).
  */
 export function centerOnPage(doc: CourseDocument): void {
-  const arena = firstArena(doc);
-  if (!arena) return;
-  doc.originMm = centerOriginMm(arena, doc.page, freeAreaMm(doc));
+  const o = centerOriginMm(doc, freeAreaMm(doc));
+  if (o) doc.originMm = o;
 }
 
-/** Escala que faz a pista caber na página, já arredondada. */
+/** Escala que faz o desenho caber na página, já arredondada. */
 export function fitScaleToPage(doc: CourseDocument): number {
-  const arena = firstArena(doc);
-  return arena ? fitScaleForArena(arena, freeAreaMm(doc)) : doc.page.printScale;
+  const e = extensaoDoDesenho(doc);
+  if (!e) return doc.page.printScale;
+  const a = encolhe(freeAreaMm(doc), folgaDoDesenhoMm(doc));
+  return fitScale(e.widthM, e.heightM, a.widthMm, a.heightMm);
 }
 
 export const pageRectMm = (doc: CourseDocument) => {

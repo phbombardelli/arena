@@ -2220,3 +2220,20 @@ segundo bloco de tempos. O Arena não tinha nada disso.
   último da 1ª (até 15 m).
 - Aviso de "volta por fora" do assistente: só com giro acima de 225°;
   reta alongada para encaixar uma curva normal não é volta por fora.
+
+### Ajustes da 1.2.2 (12/11/2026)
+
+- Decisão 104: escala e centro da pista saem da extensão do desenho todo
+  (`extensaoDoDesenho`: tudo visível menos imagens e o que mora no papel),
+  com folga para a régua do perímetro. Antes era só o contorno, e o que
+  fica fora dele (arquibancada, júri, entrada) saía da folha ou ia para
+  baixo dos quadros.
+- Tabela de alturas ganha `widthMm`/`heightMm` (escolha do usuário, pelo
+  painel ou pelos cantos) e `encaixe` (escrito pela folha: largura do
+  quadro na coluna, altura na faixa). A escolha do usuário vence o encaixe;
+  a tabela nunca encolhe abaixo do legível (70% da largura natural, linha
+  de 1,3 × a letra).
+- Desempate: quando a ordem deixa de ser vazia, todo quadro técnico liga
+  o bloco do desempate (`ligaDesempateNosQuadros`, no `apply`). A distância
+  do desempate é preenchida uma vez, quando aparece o traçado dele, e
+  depois é do desenhador.

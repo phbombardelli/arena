@@ -1,4 +1,4 @@
-import { heightRows } from '@core/model/annotationLayout';
+import { heightRows, heightTableLayout } from '@core/model/annotationLayout';
 import type { HeightTable, Obstacle } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
@@ -9,7 +9,10 @@ export function HeightTablePanel({ table }: { table: HeightTable }) {
   const { doc, apply } = useDocumentStore();
   const setDialog = useEditorStore((s) => s.setDialog);
   const travado = table.locked;
-  const linhas = heightRows(doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'));
+  const obstaculos = doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
+  const linhas = heightRows(obstaculos);
+  const medida = heightTableLayout(table, obstaculos);
+  const doUsuario = table.widthMm != null || table.heightMm != null;
 
   const edita = (rotulo: string, recipe: (t: HeightTable) => void) =>
     apply(rotulo, (d) => {
@@ -74,8 +77,56 @@ export function HeightTablePanel({ table }: { table: HeightTable }) {
         min={3}
         max={15}
         disabled={travado}
-        onCommit={(v) => edita(t('tabelap.alturaLinha'), (t) => { t.style.rowHeightMm = v; })}
+        onCommit={(v) =>
+          edita(t('tabelap.alturaLinha'), (t) => {
+            t.style.rowHeightMm = v;
+            // A altura da linha manda de novo: a altura total deixa de ser fixa.
+            delete t.heightMm;
+          })
+        }
       />
+
+      <h3>{t('tabelap.tamanho')}</h3>
+      <NumberField
+        label={t('campo.largura')}
+        unit="mm"
+        value={Math.round(medida.widthMm * 10) / 10}
+        decimals={0}
+        step={2}
+        min={20}
+        max={280}
+        disabled={travado}
+        onCommit={(v) => edita(t('tabelap.largura'), (t) => { t.widthMm = v; })}
+      />
+      <NumberField
+        label={t('campo.altura')}
+        unit="mm"
+        value={Math.round(medida.heightMm * 10) / 10}
+        decimals={0}
+        step={2}
+        min={15}
+        max={280}
+        disabled={travado}
+        onCommit={(v) => edita(t('tabelap.altura'), (t) => { t.heightMm = v; })}
+      />
+      {doUsuario ? (
+        <div className="row-buttons">
+          <button
+            disabled={travado}
+            title={t('tabelap.tamanhoAutoDica')}
+            onClick={() =>
+              edita(t('tabelap.tamanhoAuto'), (t) => {
+                delete t.widthMm;
+                delete t.heightMm;
+              })
+            }
+          >
+            {t('tabelap.tamanhoAuto')}
+          </button>
+        </div>
+      ) : (
+        <p className="note">{t(table.encaixe ? 'tabelap.tamanhoEncaixe' : 'tabelap.tamanhoNota')}</p>
+      )}
 
     </>
   );

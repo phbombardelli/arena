@@ -245,29 +245,46 @@ export function heightRows(obstacles: Obstacle[]): HeightRow[] {
     }));
 }
 
+/** A tabela não estreita além disto do natural, nem as linhas ficam mais baixas que isto da letra. */
+export const TABELA_LARGURA_MIN = 0.7;
+export const TABELA_LINHA_MIN = 1.3;
+
 export function heightTableLayout(table: HeightTable, obstacles: Obstacle[]): TableLayout {
   const rows = heightRows(obstacles);
-  const pad = padding(table.style.sizeMm);
-  const alturaLinha = table.style.rowHeightMm;
+  const s = table.style.sizeMm;
+  const pad = padding(s);
 
   const larguras: { titulo: string; widthMm: number }[] = [
-    { titulo: t('tabela.numero'), widthMm: table.style.sizeMm * 4 },
-    { titulo: t('tabela.altura'), widthMm: table.style.sizeMm * 4.5 * Math.max(1, table.elementColumns) },
+    { titulo: t('tabela.numero'), widthMm: s * 4 },
+    { titulo: t('tabela.altura'), widthMm: s * 4.5 * Math.max(1, table.elementColumns) },
   ];
-  if (table.showSpread) larguras.push({ titulo: t('tabela.largura'), widthMm: table.style.sizeMm * 6 });
-  if (table.showNote) larguras.push({ titulo: t('tabela.observacao'), widthMm: table.style.sizeMm * 12 });
+  if (table.showSpread) larguras.push({ titulo: t('tabela.largura'), widthMm: s * 6 });
+  if (table.showNote) larguras.push({ titulo: t('tabela.observacao'), widthMm: s * 12 });
+
+  // Largura pedida (pelo usuário ou pela arrumação): as colunas esticam ou
+  // encolhem na mesma proporção, até 70% do natural.
+  const natural = larguras.reduce((soma, c) => soma + c.widthMm, 0);
+  const pedida = table.widthMm ?? (table.heightMm == null ? table.encaixe?.widthMm : undefined);
+  const fator = pedida != null ? Math.max(TABELA_LARGURA_MIN, (pedida - pad * 2) / natural) : 1;
 
   let x = pad;
   const columns = larguras.map((c) => {
-    const col = { titulo: c.titulo, xMm: x, widthMm: c.widthMm };
-    x += c.widthMm;
+    const col = { titulo: c.titulo, xMm: x, widthMm: c.widthMm * fator };
+    x += col.widthMm;
     return col;
   });
 
+  // Altura pedida: as linhas se repartem nela, sem ficar mais baixas que a letra pede.
+  const alturaPedida = table.heightMm ?? (table.widthMm == null ? table.encaixe?.heightMm : undefined);
+  const nLinhas = rows.length + 1; // uma a mais para o cabeçalho
+  const alturaLinha =
+    alturaPedida != null
+      ? Math.max(s * TABELA_LINHA_MIN, (alturaPedida - pad * 2) / nLinhas)
+      : table.style.rowHeightMm;
+
   return {
     widthMm: x + pad,
-    // Uma linha a mais para o cabeçalho da tabela.
-    heightMm: pad * 2 + (rows.length + 1) * alturaLinha,
+    heightMm: pad * 2 + nLinhas * alturaLinha,
     rowHeightMm: alturaLinha,
     columns,
     rows,

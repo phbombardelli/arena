@@ -1,10 +1,9 @@
 import { usableArea } from '@core/scale/units';
 import type { LadoDaFolha } from '@core/scale/units';
-import { infoBoxLayout } from './annotationLayout';
-import { arenaExtent } from './arena';
-import { anotacaoMm, centerOnPage, firstArena, fitScaleToPage, freeAreaMm } from './document';
+import { heightTableLayout, infoBoxLayout } from './annotationLayout';
+import { anotacaoMm, centerOnPage, desenhoCabe, extensaoDoDesenho, firstArena, fitScaleToPage } from './document';
 import type { RectMm } from './document';
-import type { CourseDocument, HeightTable, InfoBox, Logo, SceneObject } from './types';
+import type { CourseDocument, HeightTable, InfoBox, Logo, Obstacle, SceneObject } from './types';
 
 /**
  * Arrumação automática da folha (B-103, decisão 104).
@@ -38,6 +37,8 @@ interface Item {
   obj: Papel;
   /** Na faixa, o quadro técnico deita (blocos lado a lado) e muda de tamanho. */
   faixa?: { w: number; h: number };
+  /** Tabela de alturas sem tamanho do usuário: casa com o quadro da mesma fila (B-105). */
+  tabela?: { minW: number; minH: number; natW: number; natH: number };
   w: number;
   h: number;
 }
@@ -70,6 +71,18 @@ function itensDaFolha(doc: CourseDocument): { auto: Item[]; livres: RectMm[] } {
         w: empe.widthMm,
         h: empe.heightMm,
         ...(muda ? { faixa: { w: deitado.widthMm, h: deitado.heightMm } } : {}),
+      });
+    } else if (o.kind === 'heighttable' && o.widthMm == null && o.heightMm == null) {
+      const obstaculos = doc.objects.filter((x): x is Obstacle => x.kind === 'obstacle');
+      const base = { ...o, encaixe: undefined };
+      const nat = heightTableLayout(base, obstaculos);
+      const minW = heightTableLayout({ ...base, encaixe: { widthMm: 0 } }, obstaculos).widthMm;
+      const minH = heightTableLayout({ ...base, encaixe: { heightMm: 0 } }, obstaculos).heightMm;
+      auto.push({
+        obj: o,
+        w: nat.widthMm,
+        h: nat.heightMm,
+        tabela: { minW, minH, natW: nat.widthMm, natH: nat.heightMm },
       });
     } else auto.push({ obj: o, w: r.widthMm, h: r.heightMm });
   }
@@ -104,6 +117,21 @@ function filas(doc: CourseDocument, itens: Item[], lado: LadoDaFolha): Item[][] 
   return out;
 }
 
+/**
+ * A tabela casa com os outros da fila: na coluna, fica da largura deles;
+ * na faixa, da altura deles — sem estreitar demais nem apertar as linhas
+ * além do que a letra pede. Faixa mais baixa é pista maior.
+ */
+function encaixa(fila: Item[], coluna: boolean): Item[] {
+  const outros = fila.filter((i) => !i.tabela);
+  if (outros.length === 0) return fila.map((i) => (i.tabela ? { ...i, w: i.tabela.natW, h: i.tabela.natH } : i));
+  const alvo = Math.max(...outros.map((i) => (coluna ? i.w : i.h)));
+  return fila.map((i) => {
+    if (!i.tabela) return i;
+    return coluna ? { ...i, w: Math.max(i.tabela.minW, alvo) } : { ...i, h: Math.max(i.tabela.minH, alvo) };
+  });
+}
+
 const espessuraDa = (fila: Item[], coluna: boolean) => Math.max(...fila.map((i) => (coluna ? i.w : i.h)));
 
 /** Quanto a zona ocupa da folha (largura das colunas, altura das faixas) e se cada item cabe. */
@@ -111,7 +139,7 @@ function medidas(doc: CourseDocument, itens: Item[], lado: LadoDaFolha): { espes
   if (itens.length === 0) return { espessura: 0, cabe: true };
   const coluna = ehColuna(lado);
   const u = usableArea(doc.page);
-  const fs = filas(doc, itens, lado);
+  const fs = filas(doc, itens, lado).map((f) => encaixa(f, coluna));
   const espessura = fs.reduce((s, f) => s + espessuraDa(f, coluna), 0) + FOLGA_MM * (fs.length - 1);
   const maior = Math.max(...itens.map((i) => (coluna ? i.h : i.w)));
   const largo = coluna ? u.widthMm : u.heightMm;
@@ -128,8 +156,7 @@ function notaDoLado(doc: CourseDocument, itens: Item[], lado: LadoDaFolha): { ca
   const coluna = ehColuna(lado);
   const sobraW = coluna ? u.widthMm - espessura - FOLGA_MM : u.widthMm;
   const sobraH = coluna ? u.heightMm : u.heightMm - espessura - FOLGA_MM;
-  const arena = firstArena(doc);
-  const e = arena ? arenaExtent(arena) : { widthM: 80, heightM: 40 };
+  const e = extensaoDoDesenho(doc) ?? { widthM: 80, heightM: 40 };
   const nota = Math.max(0, Math.min(sobraW / Math.max(1, e.widthM), sobraH / Math.max(1, e.heightM)));
   return { cabe, nota };
 }
@@ -166,7 +193,7 @@ function posiciona(doc: CourseDocument, itens: Item[], livres: RectMm[], lado: L
   const u = usableArea(doc.page);
   const coluna = ehColuna(lado);
   let recuo = 0;
-  for (const fila of filas(doc, itens, lado)) {
+  for (const fila of filas(doc, itens, lado).map((f) => encaixa(f, coluna))) {
     let cursor = coluna ? u.yMm : u.xMm;
     for (const it of fila) {
       const fixo =
@@ -183,6 +210,7 @@ function posiciona(doc: CourseDocument, itens: Item[], livres: RectMm[], lado: L
         if (!bate || guarda > livres.length) break;
         cursor = coluna ? bate.yMm + bate.heightMm + FOLGA_MM : bate.xMm + bate.widthMm + FOLGA_MM;
       }
+      if (it.tabela && it.obj.kind === 'heighttable') guardaEncaixe(it.obj, it, coluna);
       const x = Math.round(r.xMm * 10) / 10;
       const y = Math.round(r.yMm * 10) / 10;
       if (it.obj.posMm.x !== x || it.obj.posMm.y !== y) it.obj.posMm = { x, y };
@@ -190,6 +218,23 @@ function posiciona(doc: CourseDocument, itens: Item[], livres: RectMm[], lado: L
     }
     recuo += espessuraDa(fila, coluna) + FOLGA_MM;
   }
+}
+
+/** Grava na tabela o tamanho com que ela casou com o quadro (ou tira, se ficou a natural). */
+function guardaEncaixe(tabela: HeightTable, it: Item, coluna: boolean): void {
+  const nat = it.tabela!;
+  const r1 = (v: number) => Math.round(v * 10) / 10;
+  const quer =
+    coluna && Math.abs(it.w - nat.natW) > 0.05 ? { widthMm: r1(it.w) }
+    : !coluna && Math.abs(it.h - nat.natH) > 0.05 ? { heightMm: r1(it.h) }
+    : undefined;
+  if (!quer) {
+    if (tabela.encaixe) delete tabela.encaixe;
+    return;
+  }
+  const atual = tabela.encaixe;
+  if (atual?.widthMm === quer.widthMm && atual?.heightMm === quer.heightMm) return;
+  tabela.encaixe = quer;
 }
 
 /** Arruma os itens automáticos; devolve o lado e a assinatura da faixa ocupada. */
@@ -223,14 +268,11 @@ function arrumaAnotacoes(doc: CourseDocument): string | null {
  * volta à escala de antes.
  */
 export function reenquadraPista(doc: CourseDocument): void {
-  const arena = firstArena(doc);
-  if (!arena) return;
-  const area = freeAreaMm(doc);
-  const e = arenaExtent(arena);
-  const quer = doc.page.arranjo?.preferida ?? doc.page.printScale;
-  const k = 1000 / quer;
-  const cabe = e.widthM * k <= area.widthMm + 0.5 && e.heightM * k <= area.heightMm + 0.5;
-  doc.page.printScale = cabe ? quer : fitScaleToPage(doc);
+  if (!firstArena(doc)) return;
+  const atual = doc.page.printScale;
+  doc.page.printScale = doc.page.arranjo?.preferida ?? atual;
+  // Cabe = o desenho inteiro (pista, júri, arquibancada, entrada e saída), não só o contorno.
+  if (!desenhoCabe(doc)) doc.page.printScale = fitScaleToPage(doc);
   centerOnPage(doc);
 }
 

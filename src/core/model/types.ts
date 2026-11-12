@@ -402,6 +402,15 @@ export interface HeightTable extends BaseObject {
   showSpread: boolean;
   showNote: boolean;
   style: { sizeMm: Millimeters; rowHeightMm: Millimeters };
+  /** Largura e altura postas pelo usuário (B-105). Ausentes: a da letra e das linhas. */
+  widthMm?: Millimeters;
+  heightMm?: Millimeters;
+  /**
+   * Ajuste feito pela arrumação da folha (B-105): a largura da coluna ou a
+   * altura da faixa, para a tabela casar com o quadro. Vale só sem o
+   * tamanho do usuário.
+   */
+  encaixe?: { widthMm?: Millimeters; heightMm?: Millimeters };
 }
 
 /**

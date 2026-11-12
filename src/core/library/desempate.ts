@@ -1,6 +1,10 @@
 import { courseOrder, groupStops, phaseStops, type RideStop } from '@core/assist/courseRide';
 import type { CourseDocument, Desempate, ObjectId, Obstacle, VistaProva } from '@core/model/types';
 import { t } from '@core/i18n/i18n';
+import { mostraDesempate, temDesempate } from './annotations';
+import { aplicaTemposDesempate } from './courseTimes';
+import { empurraAbaixo, infoBoxLayout } from '@core/model/annotationLayout';
+import { formatDistance, pathLength } from '@core/model/path';
 import type { MessageKey } from '@core/i18n/messages';
 
 /**
@@ -193,11 +197,36 @@ export function paginasDaFolha(doc: CourseDocument): VistaProva[] {
  */
 export function syncQuadroDesempate(doc: CourseDocument): void {
   let texto: string | null = null;
+  const tracado = doc.objects.find((o) => o.kind === 'path' && o.fase === 'desempate');
   for (const o of doc.objects) {
     if (o.kind !== 'infobox') continue;
     const campo = o.fields.find((f) => f.id === 'dspOrdem' && f.enabled);
     if (!campo) continue;
     texto ??= ordemQuadro(doc);
     if (campo.value !== texto) campo.value = texto;
+    // A distância chega quando o traçado do desempate é desenhado; depois
+    // disso é do desenhador, que pode corrigi-la na pista.
+    const dist = o.fields.find((f) => f.id === 'dspDistancia' && f.enabled);
+    if (dist && dist.value.trim() === '' && tracado?.kind === 'path' && pathLength(tracado) > 0) {
+      dist.value = `${formatDistance(pathLength(tracado), 0)} m`;
+      aplicaTemposDesempate(o);
+    }
+  }
+}
+
+/**
+ * Prova que acaba de ganhar desempate: o quadro técnico já mostra o bloco
+ * dele, com a velocidade do percurso para começar (o desenhador troca se
+ * for outra). A ordem e a distância vêm de `syncQuadroDesempate`.
+ */
+export function ligaDesempateNosQuadros(doc: CourseDocument): void {
+  for (const b of doc.objects) {
+    if (b.kind !== 'infobox' || temDesempate(b)) continue;
+    const antes = infoBoxLayout(b).heightMm;
+    mostraDesempate(b, true);
+    const vel = b.fields.find((f) => f.id === 'dspVelocidade');
+    if (vel && vel.value.trim() === '') vel.value = b.fields.find((f) => f.id === 'velocidade')?.value ?? '';
+    aplicaTemposDesempate(b);
+    empurraAbaixo(doc, b, antes, infoBoxLayout(b).heightMm);
   }
 }

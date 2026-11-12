@@ -205,3 +205,52 @@ describe('quadro deitado na faixa (B-103, etapa 2)', () => {
     expect(quadro.blocos).toBeUndefined();
   });
 });
+
+describe('o que fica em volta da pista também cabe (B-103)', () => {
+  it('arquibancada e júri fora do contorno ficam na folha e fora dos quadros', () => {
+    for (const retrato of [false, true]) {
+      const doc = croqui({ retrato });
+      const arquibancada = createRectangleArena({ x: 10, y: -25 }, 60, 8);
+      arquibancada.structure = { type: 'arquibancada', label: 'Arquibancada' };
+      const juri = createRectangleArena({ x: 90, y: 10 }, 12, 6);
+      juri.structure = { type: 'edificacao', label: 'Júri' };
+      doc.objects.push(arquibancada, juri);
+      rearrumaFolha(doc);
+      const u = usableArea(doc.page);
+      const k = 1000 / doc.page.printScale;
+      const livre = freeAreaMm(doc);
+      for (const s of [arquibancada, juri]) {
+        const r: RectMm = {
+          xMm: doc.originMm.x + s.origin.x * k,
+          yMm: doc.originMm.y + s.origin.y * k,
+          widthMm: s.widthM * k,
+          heightMm: s.heightM * k,
+        };
+        expect(r.xMm).toBeGreaterThanOrEqual(u.xMm);
+        expect(r.yMm).toBeGreaterThanOrEqual(u.yMm);
+        expect(r.xMm + r.widthMm).toBeLessThanOrEqual(u.xMm + u.widthMm);
+        expect(r.yMm + r.heightMm).toBeLessThanOrEqual(u.yMm + u.heightMm);
+        expect(r.xMm).toBeGreaterThanOrEqual(livre.xMm - 0.1);
+        expect(r.xMm + r.widthMm).toBeLessThanOrEqual(livre.xMm + livre.widthMm + 0.1);
+        expect(r.yMm).toBeGreaterThanOrEqual(livre.yMm - 0.1);
+        expect(r.yMm + r.heightMm).toBeLessThanOrEqual(livre.yMm + livre.heightMm + 0.1);
+      }
+    }
+  });
+});
+
+describe('tabela de alturas com tamanho (B-103)', () => {
+  it('puxar o canto dá largura e altura à tabela', async () => {
+    const { scaleInDoc } = await import('./transform');
+    const { heightTableLayout } = await import('./annotationLayout');
+    const doc = croqui();
+    const tabela = doc.objects.find((o) => o.kind === 'heighttable')!;
+    if (tabela.kind !== 'heighttable') return;
+    const obst = doc.objects.filter((o) => o.kind === 'obstacle') as never[];
+    const antes = heightTableLayout(tabela, obst);
+    scaleInDoc(doc, tabela, { x: 0, y: 0 }, 1.5, 1.2);
+    const depois = heightTableLayout(tabela, obst);
+    expect(depois.widthMm).toBeCloseTo(antes.widthMm * 1.5, 0);
+    expect(depois.heightMm).toBeCloseTo(antes.heightMm * 1.2, 0);
+  });
+});

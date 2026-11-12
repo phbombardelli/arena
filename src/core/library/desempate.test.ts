@@ -11,7 +11,7 @@ import { createRectangleArena } from '@core/model/arena';
 import type { CourseDocument, InfoBox, Obstacle } from '@core/model/types';
 import { createInfoBox, fieldLabel, mostraDesempate } from './annotations';
 import { infoBoxLayout } from '@core/model/annotationLayout';
-import { avisosDesempate, lerOrdem, limpaVariacoes, marcaVariacao, ordemQuadro, ordemTexto, paginasDaFolha, proximoNumero, syncQuadroDesempate } from './desempate';
+import { avisosDesempate, ligaDesempateNosQuadros, lerOrdem, limpaVariacoes, marcaVariacao, ordemQuadro, ordemTexto, paginasDaFolha, proximoNumero, syncQuadroDesempate } from './desempate';
 
 function obstaculo(numero: string, letra: '' | 'A' | 'B' | 'C', x: number, y: number, rot = 0): Obstacle {
   const o = createObstacle('vertical', { x, y }, numero);
@@ -230,5 +230,22 @@ describe('quadro técnico do desempate', () => {
     const percurso = infoBoxLayout(q, 'percurso');
     expect(percurso.secoes).toHaveLength(0);
     expect(percurso.cells.some((c) => c.label === primeiroDsp.label)).toBe(false);
+  });
+});
+
+describe('quadro técnico ao ganhar desempate', () => {
+  it('liga o bloco, com a velocidade do percurso, e a ordem vem do desenho', () => {
+    let doc = produce(prova(), (d) => {
+      addObject(d, createInfoBox({ x: 0, y: 0 }));
+    });
+    doc = produce(comOrdem(doc, '1-3-5'), (d) => {
+      ligaDesempateNosQuadros(d);
+      syncQuadroDesempate(d);
+    });
+    const q = doc.objects.find((o): o is InfoBox => o.kind === 'infobox')!;
+    const campo = (id: string) => q.fields.find((f) => f.id === id)!;
+    expect(campo('dspOrdem').enabled).toBe(true);
+    expect(campo('dspOrdem').value).toBe('1-3AB-5');
+    expect(campo('dspVelocidade').value).toBe(campo('velocidade').value);
   });
 });

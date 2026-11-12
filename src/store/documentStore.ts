@@ -3,7 +3,7 @@ import { applyPatches, enablePatches, produceWithPatches, type Patch } from 'imm
 import type { CourseDocument } from '@core/model/types';
 import { createDocument } from '@core/model/document';
 import { syncTimingLines } from '@core/library/timing';
-import { syncQuadroDesempate } from '@core/library/desempate';
+import { ligaDesempateNosQuadros, syncQuadroDesempate } from '@core/library/desempate';
 import { syncDuasFases } from '@core/library/duasFases';
 import { syncArranjo } from '@core/model/sheetLayout';
 import { syncPathAnchors } from '@core/commands/pathAnchors';
@@ -60,8 +60,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   apply: (label, recipe, mergeKey) => {
     const state = get();
+    const semDesempate = (state.doc.desempate?.ordem.length ?? 0) === 0;
     const [nextDoc, redo, undo] = produceWithPatches(state.doc, (draft) => {
       recipe(draft);
+      // Ganhou desempate agora: o quadro técnico já passa a mostrá-lo.
+      if (semDesempate && (draft.desempate?.ordem.length ?? 0) > 0) ligaDesempateNosQuadros(draft);
       // Invariante da cronometragem, garantida num lugar só: a cruzada
       // vinculada acompanha o obstáculo, tenha ele sido movido, girado,
       // colado ou trazido de volta pelo desfazer. Espalhar isso pelos
