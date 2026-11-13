@@ -18,6 +18,7 @@ import { DESENHO_ID, desenhoNaFolhaMm } from '@core/model/document';
 import { areaDeTrabalhoMm } from '@ui/actions/viewActions';
 import { getRotation, scaleMode } from '@core/model/transform';
 import { mmPerMeter } from '@core/scale/units';
+import { ObstacleLayer } from '@render/layers/ObstacleLayer';
 import {
   fitToRect,
   metersPerPixel as mppOf,
@@ -284,7 +285,8 @@ export function Canvas() {
         const obstaculo = createObstacle(tipo, snapped(toModel(e)), ginastica ? '' : nextObstacleNumber(allObstacles(st.doc)));
         st.apply('Inserir obstáculo', (d) => addObject(d, obstaculo));
         setSelection([obstaculo.id]);
-        if (!e.shiftKey) setTool('select');
+        // A ferramenta continua: insere-se um atrás do outro e ajusta-se o
+        // tipo depois. Esc ou V voltam a selecionar.
         return;
       }
 
@@ -591,6 +593,15 @@ export function Canvas() {
   }, [fitPage, finishPath]);
 
   const medida = useMemo(() => measureFrame(doc), [doc]);
+  // O obstáculo a inserir acompanha o cursor até o clique.
+  const tipoObstaculo = useEditorStore((s) => s.obstacleType);
+  const guias = useEditorStore((s) => s.guias);
+  const fantasma = useMemo(() => {
+    if (tool !== 'obstacle') return null;
+    const ginastica = doc.kind === 'ginastica';
+    const tipo = ginastica || COURSE_TYPES.includes(tipoObstaculo) ? tipoObstaculo : 'vertical';
+    return createObstacle(tipo, { x: 0, y: 0 }, ginastica ? '' : nextObstacleNumber(allObstacles(doc)));
+  }, [tool, tipoObstaculo, doc]);
   const mpp = mppOf(viewport, doc.page.printScale);
   const box = viewBox(viewport, size);
   const cursor = tool === 'pan' ? 'grab' : tool === 'select' ? 'default' : 'crosshair';
@@ -732,6 +743,25 @@ export function Canvas() {
                   })
                 }
               />
+            )}
+            {guias && (
+              <g className="guias-da-folha" pointerEvents="none">
+                {guias.x.map((x) => (
+                  <line key={`gx${x}`} x1={x} x2={x} y1={-2000} y2={4000} stroke="#e0338f" strokeWidth={mpp * k} strokeDasharray={`${mpp * k * 4} ${mpp * k * 3}`} />
+                ))}
+                {guias.y.map((y) => (
+                  <line key={`gy${y}`} y1={y} y2={y} x1={-2000} x2={4000} stroke="#e0338f" strokeWidth={mpp * k} strokeDasharray={`${mpp * k * 4} ${mpp * k * 3}`} />
+                ))}
+              </g>
+            )}
+            {fantasma && cursorM && (
+              <g className="obstaculo-fantasma" opacity={0.45} pointerEvents="none">
+                <ObstacleLayer
+                  obstacle={{ ...fantasma, pos: snapped(cursorM) }}
+                  printScale={doc.page.printScale}
+                  originMm={doc.originMm}
+                />
+              </g>
             )}
             {pathDraft && (
               <PathDraft

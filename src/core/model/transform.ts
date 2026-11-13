@@ -463,9 +463,9 @@ export function scaleMode(obj: SceneObject): 'livre' | 'proporcional' | null {
     case 'arena':
       return obj.structure ? 'livre' : null;
     case 'image':
-    case 'infobox':
     case 'logo':
       return 'proporcional';
+    case 'infobox':
     case 'heighttable':
       return 'livre';
     default:
@@ -514,11 +514,14 @@ export function scaleObject(
         obj.calibration = { ...obj.calibration, pointA: em(obj.calibration.pointA), pointB: em(obj.calibration.pointB) };
       }
       return;
-    case 'infobox':
+    case 'infobox': {
+      // Como a tabela: o canto muda largura e altura, a letra fica.
+      const l = tamanho ?? infoBoxLayout(obj);
       setPosition(obj, em(getPosition(obj, printScale)), printScale);
-      obj.widthMm *= sx;
-      obj.style = { ...obj.style, sizeMm: obj.style.sizeMm * sx };
+      obj.widthMm = Math.max(30, obj.widthMm * sx);
+      obj.heightMm = Math.max(1, l.heightMm * sy);
       return;
+    }
     case 'logo':
       setPosition(obj, em(getPosition(obj, printScale)), printScale);
       obj.widthMm *= sx;
@@ -551,6 +554,8 @@ export function scaleInDoc(doc: CourseDocument, obj: SceneObject, ancora: Vec2, 
   const tamanho =
     obj.kind === 'heighttable'
       ? heightTableLayout(obj, doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'))
-      : undefined;
+      : obj.kind === 'infobox'
+        ? infoBoxLayout(obj)
+        : undefined;
   scaleObject(obj, a, sx, sy, doc.page.printScale, tamanho);
 }

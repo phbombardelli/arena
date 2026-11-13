@@ -17,7 +17,9 @@ import {
 } from '@core/model/transform';
 import { deepClone } from '@core/model/clone';
 import type { ObjectId, SceneObject } from '@core/model/types';
-import { DESENHO_ID, desenhoNaFolhaMm } from '@core/model/document';
+import { anotacaoMm, DESENHO_ID, desenhoNaFolhaMm } from '@core/model/document';
+import { metersPerPixel } from '@core/scale/viewport';
+import { alvosDaFolha, bordasX, bordasY, encaixa, uniao } from './guias';
 import { isPaperAnchored } from '@core/model/transform';
 import { PASSO_ARRASTE, STANDARD_SCALES } from '@core/scale/units';
 import { useDocumentStore } from '@store/documentStore';
@@ -64,6 +66,8 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
   const frame = useRef<number | null>(null);
   const pending = useRef<Vec2 | null>(null);
   const shiftHeld = useRef(false);
+  /** Alt solta o ímã das guias da folha. */
+  const altHeld = useRef(false);
   const [marquee, setMarquee] = useState<Marquee | null>(null);
   /** Espelho do retângulo de seleção: o `pointerup` precisa do valor já. */
   const marqueeRef = useRef<Marquee | null>(null);
@@ -99,7 +103,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
    */
   const applyPending = useCallback(
     (shift: boolean) => {
-      const p = pending.current;
+      const p = pending.current ? { ...pending.current } : null;
       const current = gesture.current;
       if (!p || !current) return;
 
@@ -111,6 +115,20 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
       const store = useDocumentStore.getState();
       const { selection } = useEditorStore.getState();
 
+      // Guias da folha (só na Impressão, e Alt desliga): quanto, em mm de
+      // papel, um retângulo que vai para `r` tem de andar para alinhar.
+      const ed = useEditorStore.getState();
+      const kDoc = 1000 / store.doc.page.printScale;
+      const comGuias = ed.mode === 'impressao' && !altHeld.current;
+      const tol = 6 * metersPerPixel(ed.viewport, store.doc.page.printScale) * kDoc;
+      const guiaPara = (r: { xMm: number; yMm: number; widthMm: number; heightMm: number }, mexendo: Set<ObjectId>, so?: { x: number[]; y: number[] }) => {
+        const alvos = alvosDaFolha(store.doc, mexendo);
+        const ex = encaixa(so?.x ?? bordasX(r), alvos.x, tol);
+        const ey = encaixa(so?.y ?? bordasY(r), alvos.y, tol);
+        ed.setGuias(ex.linhas.length + ey.linhas.length > 0 ? { x: ex.linhas, y: ey.linhas } : null);
+        return { x: ex.ajuste, y: ey.ajuste };
+      };
+
       if (current.kind === 'bloco') {
         const agora = noPapel(store.doc, p);
         const origem = {
@@ -118,6 +136,13 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
           y: Math.round((current.originStart.y + agora.y - current.startPaper.y) * 10) / 10,
         };
         const o = store.doc.originMm;
+        const bloco = comGuias ? desenhoNaFolhaMm(store.doc) : null;
+        if (bloco) {
+          const r = { ...bloco, xMm: bloco.xMm + origem.x - o.x, yMm: bloco.yMm + origem.y - o.y };
+          const aj = guiaPara(r, new Set([DESENHO_ID]));
+          origem.x = Math.round((origem.x + aj.x) * 100) / 100;
+          origem.y = Math.round((origem.y + aj.y) * 100) / 100;
+        }
         if (o.x === origem.x && o.y === origem.y) return;
         store.apply('Mover a pista na folha', (doc) => {
           doc.originMm = origem;
@@ -180,6 +205,13 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
 
       if (current.kind === 'scale') {
         const { id, original, ancora, startM, span, uniform } = current;
+        if (comGuias && isPaperAnchored(original)) {
+          // O canto puxado gruda nas bordas e meios dos outros.
+          const canto = noPapel(store.doc, { x: ancora.x + span.x + p.x - startM.x, y: ancora.y + span.y + p.y - startM.y });
+          const aj = guiaPara({ xMm: canto.x, yMm: canto.y, widthMm: 0, heightMm: 0 }, new Set([id]), { x: [canto.x], y: [canto.y] });
+          p.x += aj.x / kDoc;
+          p.y += aj.y / kDoc;
+        }
         const fator = (v: number, d: number) => (Math.abs(v) < 1e-9 ? 1 : Math.max(0.05, (v + d) / v));
         let sx = fator(span.x, p.x - startM.x);
         let sy = fator(span.y, p.y - startM.y);
@@ -215,6 +247,17 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
       if (current.kind === 'drag') {
         const total = { x: p.x - current.startM.x, y: p.y - current.startM.y };
         const before = current.applied;
+        const rects = comGuias ? selection.map((id) => {
+          const o = store.doc.objects.find((x) => x.id === id);
+          return o ? anotacaoMm(store.doc, o) : null;
+        }) : [];
+        const atual = rects.length > 0 && rects.every((r) => r != null) ? uniao(rects as NonNullable<(typeof rects)[number]>[]) : null;
+        if (atual) {
+          const r = { ...atual, xMm: atual.xMm + (total.x - before.x) * kDoc, yMm: atual.yMm + (total.y - before.y) * kDoc };
+          const aj = guiaPara(r, new Set(selection));
+          total.x += aj.x / kDoc;
+          total.y += aj.y / kDoc;
+        }
         if (Math.abs(total.x - before.x) < 1e-9 && Math.abs(total.y - before.y) < 1e-9) return;
         store.apply(
           'Mover',
@@ -437,6 +480,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
       if (!g) return false;
       pending.current = toModel(e);
       shiftHeld.current = e.shiftKey;
+      altHeld.current = e.altKey;
 
       if (frame.current !== null) return true;
       frame.current = requestAnimationFrame(() => {
@@ -457,6 +501,7 @@ export function useObjectGestures(toModel: (e: { clientX: number; clientY: numbe
     applyPending(shiftHeld.current);
     pending.current = null;
     gesture.current = null;
+    if (useEditorStore.getState().guias) useEditorStore.getState().setGuias(null);
     // Dois arrastos seguidos são dois passos de desfazer, não um.
     useDocumentStore.getState().sealHistory();
     if (useEditorStore.getState().dragging) useEditorStore.getState().setDragging(false);

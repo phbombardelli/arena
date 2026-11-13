@@ -226,6 +226,28 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
         onCommit={(v) => edita('Largura do quadro', (b) => { b.widthMm = v; })}
       />
       <NumberField
+        label={t('campo.altura')}
+        unit="mm"
+        value={Math.round(infoBoxLayout(box).heightMm * 10) / 10}
+        decimals={0}
+        step={2}
+        min={10}
+        max={280}
+        disabled={travado}
+        onCommit={(v) => edita(t('quadrop.altura'), (b) => { b.heightMm = v; })}
+      />
+      {box.heightMm != null ? (
+        <div className="row-buttons">
+          <button
+            disabled={travado}
+            title={t('quadrop.alturaAutoDica')}
+            onClick={() => edita(t('quadrop.alturaAuto'), (b) => { delete b.heightMm; })}
+          >
+            {t('quadrop.alturaAuto')}
+          </button>
+        </div>
+      ) : null}
+      <NumberField
         label={t('quadrop.colunas')}
         value={box.columns}
         decimals={0}

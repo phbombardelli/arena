@@ -88,7 +88,23 @@ export function RenderDocument(opts: RenderOptions) {
     return m;
   }, [doc, vista]);
   // O círculo da ordem entra na caixa do número: o leiaute desvia dele.
-  const rotulos = useMemo(() => layoutLabels(doc, new Set(ordemDoDesempate.keys())), [doc, ordemDoDesempate]);
+  // As etiquetas do desempate entram no leiaute junto com o número (as mesmas do ObstacleLayer).
+  const etiquetas = useMemo(() => {
+    const m = new Map<ObjectId, string[]>();
+    for (const o of doc.objects) {
+      if (o.kind !== 'obstacle' || !o.numberLabel.visible || o.number + o.letter === '') continue;
+      const lista = [
+        ...(o.soDesempate ? [t('dsp.soDesempate')] : []),
+        ...(vista === 'ambos' && naOrdem.has(o.id) && doc.desempate?.oxer?.includes(o.id) ? [t('dsp.oxerNoDesempate')] : []),
+      ];
+      if (lista.length > 0) m.set(o.id, lista);
+    }
+    return m;
+  }, [doc, vista]);
+  const rotulos = useMemo(
+    () => layoutLabels(doc, new Set(ordemDoDesempate.keys()), etiquetas),
+    [doc, ordemDoDesempate, etiquetas],
+  );
   // A cruzada do percurso que o desempate aproveita continua na vista dele.
   const cruzadasDoDesempate = new Set(
     soDesempate ? [phaseTiming(doc, 'desempate', 'start')?.id, phaseTiming(doc, 'desempate', 'finish')?.id] : [],
@@ -384,6 +400,23 @@ export function RenderDocument(opts: RenderOptions) {
 
       {/* Por último, para a legenda nunca ficar debaixo de um objeto. */}
       {!semFolha && <ScaleLegend page={doc.page} />}
+
+      {/* Autoria do programa, em toda folha (B-110). Na margem de baixo,
+          fora da área do desenho; sem opção de tirar, por enquanto. */}
+      {!semFolha && (
+        <text
+          data-part="confeccionado"
+          pointerEvents="none"
+          x={widthMm / 2}
+          y={heightMm - Math.max(1.5, doc.page.marginsMm.bottom / 2 - 0.8)}
+          textAnchor="middle"
+          fontFamily="Helvetica, Arial, sans-serif"
+          fontSize={2.2}
+          fill="#8a9097"
+        >
+          {t('folha.confeccionado')}
+        </text>
+      )}
     </>
   );
 }

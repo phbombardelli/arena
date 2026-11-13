@@ -14,6 +14,15 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.4.0 — 13/11/2026
+
+- **Obstáculos em sequência:** com a ferramenta Obstáculo, um obstáculo meio transparente acompanha o cursor até o clique, já com o tipo e o próximo número. Depois de pôr, a ferramenta continua: dá para pôr vários seguidos e ajustar o tipo depois. Esc ou V voltam a selecionar.
+- **Guias de alinhamento na folha (B-112):** na Impressão, arrastar ou puxar o canto do quadro técnico, da tabela, de um logo ou da pista gruda nas bordas e no meio dos outros itens, das margens e do centro da folha, com uma linha tracejada mostrando o alinhamento. Alt solta o ímã.
+- **Quadro técnico com tamanho livre:** puxar o canto muda largura e altura separadas, sem mudar a letra (como a tabela de alturas). O painel ganhou o campo Altura e o botão "Altura automática".
+- **Etiquetas do desempate (B-111):** "Só desempate" e "Oxer no desempate" agora desviam dos outros rótulos e não ficam coladas em outro obstáculo.
+- **Autoria (B-110):** o rodapé de toda folha traz "Confeccionado com Arena", e a barra de baixo do app mostra os direitos e quem desenvolveu.
+- Correção: inserir o primeiro quadro num croqui antigo não muda mais a escala que você escolheu.
+
 ## 1.3.1 — 12/11/2026
 
 - Escala mais flexível. Puxando o canto da pista na Impressão, ela anda de 10 em 10 (1:610, 1:620…); com Shift, pula só entre as escalas padrão. "Ajustar ao papel" e "Rearrumar a folha" procuram de 25 em 25 (1:625, 1:650…), para a pista sair a maior possível em vez de cair direto para a próxima escala padrão.

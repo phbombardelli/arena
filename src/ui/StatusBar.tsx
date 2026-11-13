@@ -35,6 +35,7 @@ export function StatusBar() {
           ? `X ${formatMeters(cursorM.x - medida.originM.x)} m · Y ${formatMeters(cursorM.y - medida.originM.y)} m`
           : 'X — · Y —'}
       </span>
+      <span className="autoria">{t('barra.autoria')}</span>
       <span className="spacer" />
 
       {/* Desempate (B-92): o que a tela mostra. A folha escolhe ao exportar. */}

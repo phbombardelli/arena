@@ -335,3 +335,40 @@ describe('a pista é o principal da folha (B-103)', () => {
     confereFolha(doc);
   });
 });
+
+describe('quadro técnico com tamanho livre', () => {
+  it('puxar o canto muda largura e altura, e a letra fica', async () => {
+    const { scaleInDoc } = await import('./transform');
+    const doc = croqui();
+    const quadro = doc.objects.find((o): o is InfoBox => o.kind === 'infobox')!;
+    const letra = quadro.style.sizeMm;
+    const antes = infoBoxLayout(quadro);
+    scaleInDoc(doc, quadro, { x: 0, y: 0 }, 1.3, 1.5);
+    const depois = infoBoxLayout(quadro);
+    expect(depois.widthMm).toBeCloseTo(antes.widthMm * 1.3, 1);
+    expect(depois.heightMm).toBeCloseTo(antes.heightMm * 1.5, 1);
+    expect(quadro.style.sizeMm).toBe(letra);
+  });
+
+  it('a altura pedida não espreme as linhas abaixo da letra', () => {
+    const doc = croqui();
+    const quadro = doc.objects.find((o): o is InfoBox => o.kind === 'infobox')!;
+    quadro.heightMm = 1;
+    expect(infoBoxLayout(quadro).rowHeightMm).toBeCloseTo(quadro.style.sizeMm * 1.3, 5);
+  });
+});
+
+describe('ligar a arrumação respeita a escala', () => {
+  it('pôr o primeiro quadro num croqui sem arrumação não muda a escala que o usuário escolheu', async () => {
+    const { ligaArranjo } = await import('./sheetLayout');
+    const doc = croqui();
+    doc.objects = doc.objects.filter((o) => o.kind !== 'infobox' && o.kind !== 'heighttable');
+    delete doc.page.arranjo;
+    doc.page.printScale = 1000;
+    doc.objects.push(createInfoBox({ x: 0, y: 0 }));
+    ligaArranjo(doc);
+    syncArranjo(doc);
+    expect(doc.page.printScale).toBe(1000);
+    confereFolha(doc);
+  });
+});

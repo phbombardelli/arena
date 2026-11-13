@@ -8,9 +8,9 @@ export const RAIL = {
   'rail.elementos': { pt: 'Elementos', en: 'Elements', es: 'Elementos' },
   'rail.obstaculo': { pt: 'Obstáculo', en: 'Obstacle', es: 'Obstáculo' },
   'rail.inserirRodape': {
-    pt: 'Clique na pista para inserir. Shift mantém a ferramenta.',
-    en: 'Click in the arena to insert. Shift keeps the tool.',
-    es: 'Haga clic en la pista para insertar. Shift mantiene la herramienta.',
+    pt: 'Clique na pista para inserir; dá para pôr vários seguidos. Esc ou V para parar.',
+    en: 'Click in the arena to insert; you can place several in a row. Esc or V to stop.',
+    es: 'Haga clic en la pista para insertar; puede poner varios seguidos. Esc o V para parar.',
   },
   'rail.ornamentos': { pt: 'Ornamentos', en: 'Decoration', es: 'Decoración' },
   'rail.cliqueColocar': { pt: 'clique para colocar', en: 'click to place', es: 'haga clic para colocar' },

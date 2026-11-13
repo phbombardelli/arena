@@ -1,3 +1,4 @@
+import type { Guias } from '@ui/canvas/guias';
 import { create } from 'zustand';
 import type { Vec2 } from '@core/geometry/vec';
 import type {
@@ -82,6 +83,9 @@ interface EditorState {
   /** Arrasto ou giro em andamento: as distâncias aparecem ao vivo (B-61). */
   dragging: boolean;
   setDragging: (dragging: boolean) => void;
+  /** Linhas de alinhamento da folha mostradas durante o gesto (mm de papel). */
+  guias: Guias | null;
+  setGuias: (guias: Guias | null) => void;
   /** Área de transferência do editor: cópias profundas, sem id. */
   clipboard: SceneObject[];
   /** Tipo de ornamento que a ferramenta de inserção vai criar. */
@@ -183,6 +187,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   pedeSaida: (saida) => set({ saida, dialog: 'saida' }),
   dragging: false,
   setDragging: (dragging) => set({ dragging }),
+  guias: null,
+  setGuias: (guias) => set({ guias }),
   clipboard: [],
   ornamentType: 'arvore',
   obstacleType: 'vertical',

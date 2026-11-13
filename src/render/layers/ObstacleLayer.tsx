@@ -6,6 +6,7 @@ import { mmPerMeter } from '@core/scale/units';
 import { JumpArrow, ObstacleShape } from '@render/symbols/obstacleShapes';
 import { color, font, text } from '@render/style/tokens';
 import { COR_DESEMPATE } from '@core/commands/pathOps';
+import { etiquetasDoNumero } from '@core/assist/labelLayout';
 
 interface Props {
   obstacle: Obstacle;
@@ -62,20 +63,9 @@ export function ObstacleLayer({
   ];
   const nx = cx + numeroEm.x * k;
   const ny = cy + numeroEm.y * k;
-  const passo = text.small * 1.2;
-  const meioNumero = text.medium * 0.5 + text.small * 0.6;
-  const etiquetaEm = (i: number): { x: number; y: number; anchor: 'start' | 'middle' | 'end' } => {
-    // Para cima se o número está acima do centro do obstáculo; para baixo
-    // se está abaixo. Assim a etiqueta nunca atravessa o número em direção
-    // ao salto, nem com o obstáculo girado na diagonal.
-    const sinal = numeroEm.y < 0 ? -1 : 1;
-    const y = ny + sinal * (meioNumero + i * passo);
-    // Número ao lado: a etiqueta cresce para fora, a partir da borda de dentro.
-    const lado = Math.abs(numeroEm.x) > Math.abs(numeroEm.y) * 0.5;
-    if (!lado) return { x: nx, y, anchor: 'middle' };
-    const borda = text.medium * 0.35;
-    return numeroEm.x > 0 ? { x: nx - borda, y, anchor: 'start' } : { x: nx + borda, y, anchor: 'end' };
-  };
+  // A mesma conta que o leiaute usou para reservar o lugar delas.
+  const posEtiquetas = etiquetasDoNumero({ x: nx, y: ny }, { x: numeroEm.x * k, y: numeroEm.y * k }, etiquetas.length);
+  const etiquetaEm = (i: number) => posEtiquetas[i]!;
 
   // Círculo da ordem do desempate (B-99): número e círculo formam um
   // rótulo só, centrado onde o leiaute pôs o número — que já reservou o

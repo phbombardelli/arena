@@ -207,10 +207,53 @@ const hitsAny = (grupos: SegmentGroup[], box: Box): number => {
  */
 export const ORDEM_NO_NUMERO = '\u2007\u2007';
 
+/** Corpos das etiquetas do desempate em volta do número, em mm de papel. */
+const ETIQUETA = { numero: 3.5, etiqueta: 2.2 } as const;
+
+/**
+ * Onde cada etiqueta do desempate ("Só desempate", "Oxer no desempate")
+ * fica, empilhada a partir do número para o lado de FORA do obstáculo.
+ * Uma conta só para o desenho e para o leiaute, em mm de papel: `numero` é
+ * o centro do número e `rel`, o número menos o centro do obstáculo.
+ */
+export function etiquetasDoNumero(
+  numero: Vec2,
+  rel: Vec2,
+  quantas: number,
+): { x: number; y: number; anchor: 'start' | 'middle' | 'end' }[] {
+  const passo = ETIQUETA.etiqueta * 1.2;
+  const meioNumero = ETIQUETA.numero * 0.5 + ETIQUETA.etiqueta * 0.6;
+  // Para cima se o número está acima do centro do obstáculo; para baixo
+  // se está abaixo: a etiqueta nunca atravessa o número rumo ao salto.
+  const sinal = rel.y < 0 ? -1 : 1;
+  const lado = Math.abs(rel.x) > Math.abs(rel.y) * 0.5;
+  const borda = ETIQUETA.numero * 0.35;
+  return Array.from({ length: quantas }, (_, i) => {
+    const y = numero.y + sinal * (meioNumero + i * passo);
+    // Número ao lado: a etiqueta cresce para fora, a partir da borda de dentro.
+    if (!lado) return { x: numero.x, y, anchor: 'middle' as const };
+    return rel.x > 0 ? { x: numero.x - borda, y, anchor: 'start' as const } : { x: numero.x + borda, y, anchor: 'end' as const };
+  });
+}
+
+/** Caixa de uma etiqueta posta por `etiquetasDoNumero`, em mm de papel. */
+function caixaDaEtiqueta(p: { x: number; y: number; anchor: 'start' | 'middle' | 'end' }, texto: string): Box {
+  const w = Math.max(1, texto.length) * ETIQUETA.etiqueta * 0.58;
+  const h = ETIQUETA.etiqueta * 1.05;
+  const x0 = p.anchor === 'start' ? p.x : p.anchor === 'end' ? p.x - w : p.x - w / 2;
+  return { min: { x: x0, y: p.y - h / 2 }, max: { x: x0 + w, y: p.y + h / 2 } };
+}
+
 export function layoutLabels(
   doc: CourseDocument,
   /** Obstáculos com o círculo da ordem do desempate ao lado do número. */
   comOrdem: ReadonlySet<ObjectId> = new Set(),
+  /**
+   * Etiquetas do desempate embaixo (ou em cima) do número de cada
+   * obstáculo: entram junto com o número, para desviar dos vizinhos e não
+   * ficar perto de outro salto a ponto de parecer dele.
+   */
+  etiquetas: ReadonlyMap<ObjectId, string[]> = new Map(),
 ): LabelLayout {
   const k = mmPerMeter(doc.page.printScale);
   const textoDoNumero = (o: Obstacle) => obstacleLabel(o) + (comOrdem.has(o.id) ? ORDEM_NO_NUMERO : '');
@@ -390,8 +433,46 @@ export function layoutLabels(
       // outro lado e, por último, a frente — por onde sai a seta.
       const tras = o.arrow.reversed ? -90 : 90;
       const angulos = [0, 180, tras - 45, tras + 45, tras, 360 - (tras - 45), 360 - (tras + 45), -tras];
-      const b = escolhe(emVolta(o.pos, o.rotation, angulos, raio, textoDoNumero(o), LABEL_FONT_MM.number, true), idx);
-      resultado.number.set(o.id, centro(b));
+      const candidatos = emVolta(o.pos, o.rotation, angulos, raio, textoDoNumero(o), LABEL_FONT_MM.number, true);
+      const textos = etiquetas.get(o.id) ?? [];
+      if (textos.length === 0) {
+        const b = escolhe(candidatos, idx);
+        resultado.number.set(o.id, centro(b));
+      } else {
+        // Número e etiquetas são um bloco: o custo é o de todas as caixas,
+        // e etiqueta perto do corpo de OUTRO obstáculo também custa — lida
+        // de relance, ela parece ser dele.
+        const deEtiquetas = (b: Box): Box[] => {
+          const c = centro(b);
+          const emMm = { x: c.x * k, y: c.y * k };
+          const rel = { x: (c.x - o.pos.x) * k, y: (c.y - o.pos.y) * k };
+          return etiquetasDoNumero(emMm, rel, textos.length).map((p, i) => {
+            const m = caixaDaEtiqueta(p, textos[i]!);
+            return { min: { x: m.min.x / k, y: m.min.y / k }, max: { x: m.max.x / k, y: m.max.y / k } };
+          });
+        };
+        let melhor = candidatos[0]!;
+        let extras: Box[] = deEtiquetas(melhor);
+        let melhorCusto = Infinity;
+        candidatos.forEach((cand, i) => {
+          const tags = deEtiquetas(cand);
+          let c = custo(cand, idx) + i * 0.8;
+          for (const tb of tags) {
+            c += custo(tb, idx);
+            const perto = inflate(tb, 2.5 / k);
+            corpos.forEach((poly, j) => {
+              if (j !== idx && polygonHitsBox(poly, perto)) c += PESO.rotulo * 0.5;
+            });
+          }
+          if (c < melhorCusto) {
+            melhorCusto = c;
+            melhor = cand;
+            extras = tags;
+          }
+        });
+        colocados.push(melhor, ...extras);
+        resultado.number.set(o.id, centro(melhor));
+      }
     }
 
     const alturas = formatHeights(o);

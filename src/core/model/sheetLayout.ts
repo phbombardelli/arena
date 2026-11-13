@@ -166,6 +166,7 @@ function aplicaFator(o: Papel, f: number): void {
     if (o.kind === 'infobox') {
       o.widthMm *= r;
       o.style = { ...o.style, sizeMm: o.style.sizeMm * r };
+      if (o.heightMm != null) o.heightMm *= r;
     } else if (o.kind === 'heighttable') {
       o.style = { ...o.style, sizeMm: o.style.sizeMm * r, rowHeightMm: o.style.rowHeightMm * r };
       if (o.widthMm != null) o.widthMm *= r;
@@ -498,5 +499,10 @@ export function posicionaPista(doc: CourseDocument, pista: PosicaoDaPista): void
  * logo — é quando ele espera que tudo se reorganize. Já ligada, não faz nada.
  */
 export function ligaArranjo(doc: CourseDocument): void {
-  if (!doc.page.arranjo) rearrumaFolha(doc);
+  if (doc.page.arranjo) return;
+  // A escala que está é a que o usuário escolheu: os quadros se arrumam
+  // em volta dela (o syncArranjo encolhe-os ou, se nem assim couber,
+  // reduz a pista). Não é o "Rearrumar", que busca a maior escala.
+  for (const o of doc.objects) if (ehPapel(o) && o.livre) delete o.livre;
+  doc.page.arranjo = { zona: 'auto', preferida: doc.page.printScale, escala: doc.page.printScale };
 }

@@ -306,6 +306,12 @@ input.full, textarea.full { box-sizing: border-box; resize: vertical; width: 100
   min-width: 190px;
 }
 .statusbar .spacer { flex: 1; }
+.statusbar .autoria {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
 
 /* ------------------------------------------------- quadro tecnico */
 

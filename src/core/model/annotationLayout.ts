@@ -62,7 +62,22 @@ const padding = (sizeMm: number) => sizeMm * 0.8;
  */
 export type ParteDoQuadro = 'tudo' | 'percurso' | 'desempate';
 
+/** As linhas do quadro não ficam mais baixas que isto da letra. */
+export const QUADRO_LINHA_MIN = 1.3;
+
 export function infoBoxLayout(box: InfoBox, parte: ParteDoQuadro = 'tudo'): BoxLayout {
+  const natural = box.style.sizeMm * 1.75;
+  if (box.heightMm == null) return montaQuadro(box, parte, natural);
+  // A altura cresce em linha reta com a altura da linha: duas medidas
+  // dão a conta, e a linha que chega na altura pedida sai dela.
+  const a = montaQuadro(box, parte, natural).heightMm;
+  const b = montaQuadro(box, parte, natural * 2).heightMm;
+  const porLinha = (b - a) / natural;
+  const linha = porLinha > 1e-6 ? natural + (box.heightMm - a) / porLinha : natural;
+  return montaQuadro(box, parte, Math.max(box.style.sizeMm * QUADRO_LINHA_MIN, linha));
+}
+
+function montaQuadro(box: InfoBox, parte: ParteDoQuadro, alturaLinha: number): BoxLayout {
   const ligados = box.fields.filter((f) => f.enabled);
   const desempate = parte === 'percurso' ? [] : ligados.filter((f) => doDesempate(f.id));
   const soDesempate = parte === 'desempate' && desempate.length > 0;
@@ -76,7 +91,6 @@ export function infoBoxLayout(box: InfoBox, parte: ParteDoQuadro = 'tudo'): BoxL
       (!soDesempate || f.id === 'prova'),
   );
   const colunas = Math.max(1, Math.round(box.columns));
-  const alturaLinha = box.style.sizeMm * 1.75;
   const pad = padding(box.style.sizeMm);
   const larguraColuna = (box.widthMm - pad * 2) / colunas;
   const s = box.style.sizeMm;

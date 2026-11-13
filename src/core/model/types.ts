@@ -364,6 +364,12 @@ export interface InfoBox extends BaseObject {
    */
   livre?: true;
   widthMm: Millimeters;
+  /**
+   * Altura pedida (painel ou canto puxado): as linhas se repartem nela,
+   * sem ficar mais baixas que 1,3× a letra. Ausente: a altura sai das
+   * linhas, 1,75× a letra cada.
+   */
+  heightMm?: Millimeters;
   columns: number;
   fields: InfoBoxField[];
   style: { sizeMm: Millimeters; borderMm: Millimeters };

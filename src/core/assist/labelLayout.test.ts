@@ -116,3 +116,29 @@ describe('círculo da ordem do desempate (B-99)', () => {
     expect(cobre).toBe(false);
   });
 });
+
+describe('etiquetas do desempate junto do número', () => {
+  it('"Só desempate" não fica colada em outro obstáculo', async () => {
+    const { etiquetasDoNumero } = await import('./labelLayout');
+    const { obstacleFootprint } = await import('./ridePath');
+    const doc = cena((d) => {
+      const a = createObstacle('vertical', { x: 40, y: 30 }, '10');
+      a.soDesempate = true;
+      addObject(d, a);
+      addObject(d, createObstacle('vertical', { x: 46, y: 32.2 }, '2'));
+    });
+    const [a, b] = doc.objects as Obstacle[];
+    const texto = 'Só desempate';
+    const c = layoutLabels(doc, new Set(), new Map([[a!.id, [texto]]])).number.get(a!.id)!;
+    const [p] = etiquetasDoNumero({ x: c.x * k, y: c.y * k }, { x: (c.x - a!.pos.x) * k, y: (c.y - a!.pos.y) * k }, 1);
+    const w = texto.length * 2.2 * 0.58;
+    const x0 = p!.anchor === 'start' ? p!.x : p!.anchor === 'end' ? p!.x - w : p!.x - w / 2;
+    const tag = { min: { x: x0 / k, y: (p!.y - 1.2) / k }, max: { x: (x0 + w) / k, y: (p!.y + 1.2) / k } };
+    const corpo = obstacleFootprint(b!);
+    const folga = 2 / k;
+    const perto = corpo.some(
+      (q) => q.x > tag.min.x - folga && q.x < tag.max.x + folga && q.y > tag.min.y - folga && q.y < tag.max.y + folga,
+    );
+    expect(perto).toBe(false);
+  });
+});

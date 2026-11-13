@@ -73,6 +73,8 @@ export const DIALOGS = {
   'contato.fechar': { pt: 'Fechar', en: 'Close', es: 'Cerrar' },
   'ajuda.contato': { pt: 'Sugestões e contato…', en: 'Suggestions and contact…', es: 'Sugerencias y contacto…' },
   'barra.contato': { pt: 'Sugestões', en: 'Suggestions', es: 'Sugerencias' },
+  'barra.autoria': { pt: 'Arena · direitos reservados · desenvolvido por Pedro Henrique Bombardelli', en: 'Arena · all rights reserved · developed by Pedro Henrique Bombardelli', es: 'Arena · derechos reservados · desarrollado por Pedro Henrique Bombardelli' },
+  'folha.confeccionado': { pt: 'Confeccionado com Arena - phbombardelli.github.io/arena', en: 'Made with Arena - phbombardelli.github.io/arena', es: 'Confeccionado con Arena - phbombardelli.github.io/arena' },
   'barra.contatoDica': { pt: 'Mandar uma sugestão, avisar de um erro ou falar com o desenvolvedor', en: 'Send a suggestion, report a bug or contact the developer', es: 'Enviar una sugerencia, avisar de un error o hablar con el desarrollador' },
   'dialogo.alturas': { pt: 'Alturas dos obstáculos', en: 'Obstacle heights', es: 'Alturas de los obstáculos' },
   'dialogo.sobre': { pt: 'Sobre o Arena', en: 'About Arena', es: 'Acerca de Arena' },
