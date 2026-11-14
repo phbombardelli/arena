@@ -176,6 +176,18 @@ function checkGeometry(obj: Record<string, unknown>, index: number): void {
       if (!isFiniteNumber(obj.rotation)) fail('val.c.rotacao');
       if (!isFiniteNumber(obj.faceWidthM)) fail('val.c.largura');
       if (!Array.isArray(obj.elements)) fail('val.c.elementos');
+      if (
+        obj.montagem !== undefined &&
+        !(
+          isRecord(obj.montagem) &&
+          Array.isArray(obj.montagem.pecas) &&
+          (obj.montagem.pecas as unknown[]).every(
+            (p) => isRecord(p) && typeof p.tipo === 'string' && isFiniteNumber(p.esq) && isFiniteNumber(p.dir),
+          )
+        )
+      ) {
+        fail('val.c.elementos');
+      }
       break;
     case 'ornament':
     case 'text':

@@ -9,6 +9,9 @@ import { APP_VERSION } from '@core/persistence/serialize';
 import { ContactForm } from '@ui/help/ContactForm';
 import { TutorialsBody, WelcomeBody } from '@ui/help/Tutorials';
 import { SaidaDialogBody } from '@ui/files/SaidaDialog';
+import { MontagemEditor, tituloMontagem } from '@ui/inspector/MontagemEditor';
+import { useDocumentStore } from '@store/documentStore';
+import type { Obstacle } from '@core/model/types';
 
 /** A lista na língua atual: montada a cada abertura, não no carregamento. */
 const atalhos = (): [string, string][] => [
@@ -45,8 +48,19 @@ const atalhos = (): [string, string][] => [
 
 /** As janelas abertas por menu. Só uma de cada vez. */
 export function Dialogs() {
-  const { dialog, setDialog, saida } = useEditorStore();
+  const { dialog, setDialog, saida, montagemId } = useEditorStore();
+  const objetos = useDocumentStore((s) => s.doc.objects);
   const fecha = () => setDialog(null);
+
+  if (dialog === 'montagem') {
+    const o = objetos.find((x): x is Obstacle => x.id === montagemId && x.kind === 'obstacle');
+    if (!o) return null;
+    return (
+      <Dialog title={tituloMontagem(o)} onClose={fecha} larga>
+        <MontagemEditor />
+      </Dialog>
+    );
+  }
 
   if (dialog === 'atalhos') {
     return (

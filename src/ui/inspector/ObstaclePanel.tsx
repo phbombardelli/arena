@@ -12,6 +12,7 @@ import {
   setObstacleType,
   setSoDesempate,
   setSpread,
+  setElementHeight,
 } from '@core/commands/obstacleOps';
 import {
   obstacleTypesFor,
@@ -22,7 +23,14 @@ import {
 } from '@core/library/obstacles';
 import type { BarStyle, Obstacle, ObstacleType } from '@core/model/types';
 import { useDocumentStore } from '@store/documentStore';
+import { useEditorStore } from '@store/editorStore';
+import { descreveMaterial, disposicaoAtual, materialDe, montagemDe, topoMontagem } from '@core/library/montagem';
+import { escalaCm, planosDoObstaculo, VistaFrente, VistaPerfil } from '@render/montagemDesenho';
+import { nomePlano } from './MontagemEditor';
+import type { MessageKey } from '@core/i18n/messages';
 import { NumberField } from './NumberField';
+import { phaseStops, viraOxer } from '@core/assist/courseRide';
+import { marcaVariacao, variacoesDe } from '@core/library/desempate';
 import { WingStyleField } from './WingStyleField';
 import { t } from '@core/i18n/i18n';
 
@@ -135,28 +143,139 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
         )}
       </div>
 
-      <label className="field" title={t('obstp.setaDica')}>
+      {/* Sentido em quatro botões (revisão de UX): um clique, e nunca corta. */}
+      <div className="field" title={t('obstp.setaDica')}>
         <span>{t('obstp.sentido')}</span>
-        <select
-          value={!obstacle.arrow.visible ? 'sem' : obstacle.arrow.both ? 'duplo' : obstacle.arrow.reversed ? 'inverso' : 'frente'}
-          disabled={travado}
-          onChange={(e) => {
-            const v = e.target.value;
-            apply('Sentido do salto', (d) =>
-              setArrow(d, obstacle.id, {
-                visible: v !== 'sem',
-                both: v === 'duplo',
-                reversed: v === 'inverso' ? true : v === 'frente' ? false : obstacle.arrow.reversed,
-              }),
+        <div className="segmentado" role="radiogroup" aria-label={t('obstp.sentido')}>
+          {(
+            [
+              ['frente', '→', 'obstp.paraFrente'],
+              ['inverso', '←', 'obstp.invertido'],
+              ['duplo', '↔', 'obstp.duplo'],
+              ['sem', '⌀', 'obstp.semSeta'],
+            ] as const
+          ).map(([v, icone, rotulo]) => {
+            const atual = !obstacle.arrow.visible ? 'sem' : obstacle.arrow.both ? 'duplo' : obstacle.arrow.reversed ? 'inverso' : 'frente';
+            return (
+              <button
+                key={v}
+                role="radio"
+                aria-checked={atual === v}
+                className={atual === v ? 'active' : ''}
+                title={t(rotulo)}
+                aria-label={t(rotulo)}
+                disabled={travado}
+                onClick={() =>
+                  apply('Sentido do salto', (d) =>
+                    setArrow(d, obstacle.id, {
+                      visible: v !== 'sem',
+                      both: v === 'duplo',
+                      reversed: v === 'inverso' ? true : v === 'frente' ? false : obstacle.arrow.reversed,
+                    }),
+                  )
+                }
+              >
+                {icone}
+              </button>
             );
-          }}
-        >
-          <option value="frente">{t('obstp.paraFrente')}</option>
-          <option value="inverso">{t('obstp.invertido')}</option>
-          <option value="duplo">{t('obstp.duplo')}</option>
-          <option value="sem">{t('obstp.semSeta')}</option>
-        </select>
+          })}
+        </div>
+      </div>
+
+    </>
+  );
+}
+
+/**
+ * O que muda no desempate, direto no obstáculo (revisão de UX): só aparece
+ * se ele está na ordem do desempate. É a mesma marca da lista do resumo.
+ */
+export function DesempateDoObstaculo({ obstacle }: { obstacle: Obstacle }) {
+  const { doc, apply } = useDocumentStore();
+  if ((doc.desempate?.ordem.length ?? 0) === 0) return null;
+  const stops = phaseStops(doc, 'desempate');
+  const i = stops.findIndex((st) => st.elements.some((e) => e.id === obstacle.id));
+  if (i < 0) return null;
+  const stop = stops[i]!;
+  const tem = (v: 'contrario' | 'oxer') => stop.elements.every((e) => variacoesDe(doc.desempate, e.id).includes(v));
+  const podeOxer = stop.elements.length === 1 && viraOxer(obstacle);
+  const alterna = (v: 'contrario' | 'oxer') =>
+    apply(t(v === 'contrario' ? 'dsp.contrario' : 'dsp.oxer'), (d) => marcaVariacao(d, stop, v, !tem(v)));
+  return (
+    <>
+      <h3>{t('dsp.noDesempate', { n: i + 1 })}</h3>
+      <label className="check">
+        <input type="checkbox" checked={tem('contrario')} disabled={obstacle.locked} onChange={() => alterna('contrario')} />
+        {t('dsp.saltadoContrario')}
       </label>
+      {podeOxer && (
+        <label className="check">
+          <input type="checkbox" checked={tem('oxer')} disabled={obstacle.locked} onChange={() => alterna('oxer')} />
+          {t('dsp.oxer')}
+        </label>
+      )}
+    </>
+  );
+}
+
+const ROTULO_DISPOSICAO: Record<ReturnType<typeof disposicaoAtual>, MessageKey> = {
+  paralelas: 'mont.paralelas',
+  'leque-dir': 'mont.lequeDir',
+  'leque-esq': 'mont.lequeEsq',
+  z: 'mont.z',
+  'z-inv': 'mont.zInv',
+  livre: 'mont.livre',
+};
+
+/**
+ * A montagem no painel (B-108): só a miniatura e o resumo. Editar abre a
+ * janela, que tem espaço para arrastar as varas com precisão.
+ */
+export function ResumoMontagem({ obstacle }: { obstacle: Obstacle }) {
+  const abreMontagem = useEditorStore((s) => s.abreMontagem);
+  const { apply } = useDocumentStore();
+  const m = montagemDe(obstacle);
+  const varas = m.pecas.filter((p) => p.tipo === 'vara').length;
+  const abre = () => abreMontagem(obstacle.id);
+  const n = obstacle.elements.length;
+  const maxCm = escalaCm(Math.max(topoMontagem(m), ...obstacle.elements.map((e) => Math.round((e.height ?? 0) * 100))));
+  const perfil = planosDoObstaculo(obstacle);
+  return (
+    <>
+      <h3>{t('mont.titulo')}</h3>
+      {/* As alturas de cada plano, aqui mesmo: as mesmas da tabela de alturas. */}
+      <div className="montagem-alturas">
+        {obstacle.elements.map((e, i) => (
+          <NumberField
+            key={i}
+            label={n > 1 ? nomePlano(i, n) : t('mont.altura')}
+            unit="cm"
+            value={e.height == null ? 0 : Math.round(e.height * 100)}
+            vazio={e.height == null}
+            decimals={0}
+            step={5}
+            min={0}
+            max={200}
+            disabled={obstacle.locked}
+            onCommit={(v) => apply(t('mont.alturaCm'), (d) => setElementHeight(d, obstacle.id, i, v > 0 ? v / 100 : null))}
+          />
+        ))}
+      </div>
+      <button className="montagem-miniatura dupla" onClick={abre} title={t('mont.editar')} aria-label={t('mont.editar')}>
+        <svg viewBox="0 0 170 64">
+          <VistaFrente pecas={m.pecas} caixa={{ x: 4, y: 3, w: 162, h: 58 }} maxCm={maxCm} traco={1.1} />
+        </svg>
+        <svg viewBox="0 0 74 64">
+          <VistaPerfil {...perfil} caixa={{ x: 2, y: 3, w: 70, h: 58 }} maxCm={maxCm} traco={1.1} />
+        </svg>
+      </button>
+      <p className="montagem-resumo">
+        {descreveMaterial(materialDe(obstacle))}
+        {varas >= 2 && ` · ${t(ROTULO_DISPOSICAO[disposicaoAtual(m)]).toLowerCase()}`}
+      </p>
+      <div className="row-buttons">
+        <button onClick={abre}>{t('mont.editar')}</button>
+      </div>
     </>
   );
 }

@@ -2300,3 +2300,30 @@ folhas com diagramação própria (B-107), folha de especificação (B-108).
   de 25 em 25 (`escalaQueCabe`, `PASSO_AJUSTE`), entre 1:250 e 1:1000. A
   lista de escalas padrão continua no seletor do painel. No croqui modelo
   (AMAN), Rearrumar passou de 1:750 para 1:625.
+
+## 106. Montagem do obstáculo e folha de especificação (B-108, 1.5.0, 14/11/2026)
+
+- `Obstacle.montagem` guarda só a pilha do 1º plano (`PecaMontagem`: tipo
+  e as alturas esquerda/direita em cm; vara = centro, sólida = topo). Os
+  outros planos são sempre uma vara reta na altura do elemento. Sem
+  montagem salva, vale `montagemPadrao` (varas a cada ~40 cm). O topo da
+  pilha é `elements[0].height`, nos dois sentidos (`setMontagem`,
+  `ajustaAoTopo`).
+- Nenhuma peça inclina de perfil. Leque: a partir de 3 varas, aberto por
+  igual do lado do nome, juntas a 10 cm do outro. Z: só com 3 varas, a do
+  meio na diagonal a 10 cm das outras. Espaçar igual segue a altura, não a
+  ordem da lista.
+- Peça nova (`comPecaNova`): nunca atrás de outra nem mudando a altura. A
+  vara vai ao maior vão livre; sem vão, ao topo, e a sólida de lá desce. A
+  sólida vai ao vão mais baixo em que cabe; sem vão, em cima do muro ou no
+  chão, subindo as varas tapadas.
+- Folha de especificação (`doc.especificacao`): página extra depois do
+  croqui (`paginasDaSaida`). Uma escala vertical para a folha toda. Linha
+  de desempate abaixo de quem vira oxer (vara de trás desenhada a 1,50 m)
+  ou é saltado ao contrário (frente espelhada). A observação é `o.note`, a
+  mesma do painel e da tabela de alturas.
+- Impressão: as folhas ficam empilhadas na tela (`folhaRectMm`); só a
+  primeira se edita. A primeira mostra o que sai nela, e a chave
+  Percurso/Desempate/Ambos fica só na aba Percurso.
+- Revisão de interface: editar no lugar, sem abas para um número; o que se
+  usa raramente vai para "Mais opções"; explicações longas só com o "?".

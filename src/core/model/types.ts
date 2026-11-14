@@ -136,6 +136,29 @@ export interface ObstacleElement {
   label?: string;
 }
 
+/** Peças do 1º plano, na folha de especificação (B-108). */
+export type TipoPeca = 'vara' | 'testeira' | 'painel' | 'portao' | 'muro';
+
+/**
+ * Uma peça do 1º plano. Alturas em centímetros, uma por ponta (no poste da
+ * esquerda e no da direita, vistos da aproximação): é o que permite leque
+ * e Z. Na vara é o centro dela; nas peças sólidas, o topo.
+ */
+export interface PecaMontagem {
+  tipo: TipoPeca;
+  esq: number;
+  dir: number;
+}
+
+/**
+ * Como o 1º plano é montado (B-108): as peças na ordem de montagem, de
+ * baixo para cima. Os outros planos têm sempre uma vara reta, na altura
+ * do elemento. O topo da pilha é a altura do 1º elemento.
+ */
+export interface Montagem {
+  pecas: PecaMontagem[];
+}
+
 export type BarStyle = 'lisa' | 'listrada' | 'pontas';
 
 /** Aparência das varas. Só se aplica aos tipos que têm vara. */
@@ -219,6 +242,8 @@ export interface Obstacle extends BaseObject {
    * na folha com a etiqueta "Só desempate".
    */
   soDesempate?: true;
+  /** Montagem do 1º plano (B-108). Ausente = varas paralelas, a padrão. */
+  montagem?: Montagem;
 }
 
 /* -------------------------------------------------------------- traçado */
@@ -620,6 +645,11 @@ export interface CourseDocument {
   desempate?: Desempate;
   /** Prova em duas fases (B-95). Ausente = prova de uma fase só. */
   duasFases?: DuasFases;
+  /**
+   * Folha de especificação dos obstáculos (B-108) no PDF e na impressão,
+   * depois do croqui. Ausente = não sai.
+   */
+  especificacao?: boolean;
 }
 
 /**

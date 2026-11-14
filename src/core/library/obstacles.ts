@@ -162,15 +162,16 @@ export function createObstacle(type: ObstacleType, pos: Vec2, numero = ''): Obst
     wings: { style: semParaflanco(type) ? 'nenhum' : 'paraflanco', widthM: 0.4, depthM: 0.9, color: '#2e7d32' },
     liverpool: {
       enabled: false,
-      // 3 x 0,50 m: mais estreito que a vara de 3,50 m, de modo que as
+      // 3 x 1 m: mais estreito que a vara de 3,50 m, de modo que as
       // pontas dela ficam para fora da água, como na pista.
       widthM: 3,
-      spreadM: 0.5,
+      spreadM: 1,
       offsetM: 0,
       color: '#2b7fd4',
     },
     arrow: { visible: true, reversed: false, lengthMm: 6 },
-    heightLabel: { visible: true, auto: true, offsetM: { x: 0, y: 0 } },
+    // As alturas vão para a tabela; no desenho, só se o desenhador pedir.
+    heightLabel: { visible: false, auto: true, offsetM: { x: 0, y: 0 } },
     numberLabel: { visible: true, auto: true, offsetM: { x: 0, y: 0 } },
     note: '',
   };

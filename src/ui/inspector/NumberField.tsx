@@ -9,6 +9,8 @@ interface Props {
   min?: number;
   max?: number;
   disabled?: boolean;
+  /** Valor ainda não informado: o campo fica vazio, com "—" de dica. */
+  vazio?: boolean;
   onCommit: (value: number) => void;
 }
 
@@ -26,20 +28,23 @@ export function NumberField({
   min,
   max,
   disabled,
+  vazio = false,
   onCommit,
 }: Props) {
-  const [text, setText] = useState(() => format(value, decimals));
+  const mostra = (v: number) => (vazio ? '' : format(v, decimals));
+  const [text, setText] = useState(() => mostra(value));
   const editing = useRef(false);
 
   useEffect(() => {
-    if (!editing.current) setText(format(value, decimals));
-  }, [value, decimals]);
+    if (!editing.current) setText(mostra(value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, decimals, vazio]);
 
   const commit = (raw: string) => {
     const parsed = parse(raw);
     editing.current = false;
     if (parsed === null) {
-      setText(format(value, decimals));
+      setText(mostra(value));
       return;
     }
     const clamped = clamp(parsed, min, max);
@@ -55,6 +60,7 @@ export function NumberField({
           type="text"
           inputMode="decimal"
           value={text}
+          placeholder={vazio ? '—' : undefined}
           disabled={disabled}
           onFocus={() => {
             editing.current = true;
@@ -67,7 +73,7 @@ export function NumberField({
               (e.target as HTMLInputElement).blur();
             } else if (e.key === 'Escape') {
               editing.current = false;
-              setText(format(value, decimals));
+              setText(mostra(value));
               (e.target as HTMLInputElement).blur();
             } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
               e.preventDefault();

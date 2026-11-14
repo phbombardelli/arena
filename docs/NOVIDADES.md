@@ -14,6 +14,16 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.5.0 — 14/11/2026
+
+- **Montagem do obstáculo (B-108):** cada vertical, oxer, tríplice e muro tem a montagem da entrada: peça por peça (vara, testeira, painel, portão, muro), de baixo para cima, com a altura de cada ponta. Arraste a vara pelo meio para subir ou descer, pela ponta para inclinar. Disposições prontas: paralelas, leque à direita ou à esquerda, Z, Z invertido e espaçar igual. A peça nova nunca nasce atrás de outra e não muda a altura do obstáculo. A janela tem as alturas de entrada, meio e saída editáveis no topo, o liverpool, a observação e setas para o obstáculo anterior e o próximo.
+- **No painel do obstáculo:** as alturas de cada plano e a miniatura de frente e de perfil, logo abaixo da rotação.
+- **Folha de especificação dos obstáculos:** uma linha por obstáculo, com perfil, vista de frente, material, alturas e observação, e o total de material da prova. Quem muda no desempate ganha uma linha logo abaixo, com o número e a etiqueta "Desempate". Liga-se na aba Impressão e sai no PDF e na impressão depois do croqui.
+- **Impressão como visualização de impressão:** todas as folhas que vão sair ficam na tela, uma embaixo da outra, com setas no pé para passar de uma a outra e "Todas" para ver tudo. A observação se edita direto na folha de especificação. O painel ficou mais enxuto: Páginas (desempate e especificação), Papel e escala, Diagramação e, fechado, Mais opções.
+- **Desempate mais claro:** no resumo da prova, cada obstáculo do desempate tem "ao contrário" e "vira oxer" escritos; no painel do obstáculo aparece a seção "No desempate". O que sai no papel se escolhe só na Impressão.
+- **Revisão da interface:** Sentido em quatro botões (→ ← ↔ ⌀); "Pista pelo mapa" e "Modelos de pista" saíram da barra lateral (seguem no painel e no menu Arquivo); o botão "Folha A4 · 1:600" saiu do topo; avisos do desempate em laranja; altura não informada aparece vazia, não "0".
+- Liverpool nasce com 1 m de profundidade, e as alturas no desenho nascem desligadas (vão para a tabela).
+
 ## 1.4.0 — 13/11/2026
 
 - **Obstáculos em sequência:** com a ferramenta Obstáculo, um obstáculo meio transparente acompanha o cursor até o clique, já com o tipo e o próximo número. Depois de pôr, a ferramenta continua: dá para pôr vários seguidos e ajustar o tipo depois. Esc ou V voltam a selecionar.

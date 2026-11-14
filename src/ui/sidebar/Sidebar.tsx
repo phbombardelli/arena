@@ -4,7 +4,7 @@ import { DEFAULT_CAVALETES, DEFAULT_LEQUE, DEFAULT_RELOGIO, defaultPeDeGalinha }
 import { useDocumentStore } from '@store/documentStore';
 import { ORNAMENTS } from '@core/library/ornaments';
 import { STRUCTURES } from '@core/library/structures';
-import { importBackgroundImage, startMapWizard } from '@ui/actions/imageActions';
+import { importBackgroundImage } from '@ui/actions/imageActions';
 import { traceCourse } from '@ui/actions/rideActions';
 import { insertHeightTable, insertInfoBox } from '@ui/actions/annotationActions';
 import { startGuidedRide } from '@ui/actions/guidedActions';
@@ -15,7 +15,6 @@ import type { ExerciseKind, OrnamentType } from '@core/model/types';
 import {
   IconBarrierBlock,
   IconArrowsSplit,
-  IconBooks,
   IconChartArcs,
   IconClockHour3,
   IconGripHorizontal,
@@ -24,7 +23,6 @@ import {
   IconDoorEnter,
   IconFlag,
   IconHandStop,
-  IconMap2,
   IconPencil,
   IconPhoto,
   IconPlant,
@@ -66,7 +64,6 @@ export function Sidebar() {
     setPathSmooth,
     structureType,
     setStructureType,
-    setDialog,
   } = useEditorStore();
 
   const usa = (alvo: Tool) => setTool(alvo);
@@ -299,13 +296,9 @@ export function Sidebar() {
         </>
       ) : (
         <>
+          {/* Pista pelo mapa e modelos abrem um processo: ficam no painel e no
+              menu Arquivo. A barra é só do que se usa no desenho (revisão de UX). */}
           <RailGroup title={t('rail.local')} />
-          <RailButton
-            icon={<IconMap2 {...ICONE} />}
-            label={t('rail.pistaPeloMapa')}
-            onClick={() => void startMapWizard()}
-            title={t('rail.pistaPeloMapaDica')}
-          />
           <RailFlyout
             icon={<IconSquare {...ICONE} />}
             label={t('rail.contorno')}
@@ -331,12 +324,6 @@ export function Sidebar() {
             label={t('rail.imagemFundo')}
             onClick={() => void importBackgroundImage()}
             title={t('rail.imagemFundoDica')}
-          />
-          <RailButton
-            icon={<IconBooks {...ICONE} />}
-            label={t('rail.modelosPista')}
-            onClick={() => setDialog('modelos')}
-            title={t('rail.modelosPistaDica')}
           />
 
           <RailGroup title={t('rail.cenario')} />

@@ -48,7 +48,7 @@ export function SheetSettings() {
   return (
     <div className="settings">
       <section>
-        <h3>{t('folhap.folha')}</h3>
+        <h3>{t('folhas.papel')}</h3>
         <Field label={t('folhap.formato')}>
           <select
             value={doc.page.format}
@@ -79,10 +79,6 @@ export function SheetSettings() {
             <option value="portrait">{t('folhap.retrato')}</option>
           </select>
         </Field>
-      </section>
-
-      <section>
-        <h3>{t('folhap.escalaImpressao')}</h3>
         <Field label={t('folhap.escala')}>
           <ScaleInput
             value={doc.page.printScale}
@@ -93,7 +89,7 @@ export function SheetSettings() {
             }
           />
         </Field>
-        <p className="note">1 m no terreno = {formatMeters(1000 / doc.page.printScale, 2)} mm no papel.</p>
+        <p className="note dim">1 m no terreno = {formatMeters(1000 / doc.page.printScale, 2)} mm no papel.</p>
         <div className="row-buttons">
           <button
             className="primary"
@@ -113,6 +109,9 @@ export function SheetSettings() {
 
       <QuadrosNaFolha />
 
+      {/* O que se ajusta raramente fica fechado. */}
+      <details className="fold">
+        <summary>{t('objeto.maisOpcoes')}</summary>
       <section>
         <h3>{t('folhap.margens')}</h3>
         <div className="margin-grid">
@@ -198,6 +197,7 @@ export function SheetSettings() {
           </>
         )}
       </section>
+      </details>
     </div>
   );
 }
@@ -327,7 +327,7 @@ function QuadrosNaFolha() {
   const temPapel = doc.objects.some((o) => o.kind === 'infobox' || o.kind === 'heighttable' || o.kind === 'logo');
   return (
     <section>
-      <h3>{t('folhap.quadros')}</h3>
+      <h3>{t('folhas.diagramacao')}</h3>
       <div className="pista-posicao">
         <span>{t('folhap.pista')}</span>
         <div className="pista-grade" role="radiogroup" aria-label={t('folhap.pista')}>
@@ -349,7 +349,7 @@ function QuadrosNaFolha() {
           })}
         </div>
       </div>
-      <Field label={t('folhap.zona')}>
+      <Field label={t('folhap.quadros')}>
         <select
           value={arranjo?.zona ?? 'auto'}
           onChange={(e) => {
@@ -373,7 +373,7 @@ function QuadrosNaFolha() {
           {t('folhap.rearrumar')}
         </button>
       </div>
-      <p className="note">
+      <p className="note dim">
         {arranjo ? t('folhap.arranjoNota') : t('folhap.arranjoAntigo')}
         {arranjo && livres > 0 && <> {t('folhap.arranjoLivres', { n: livres })}</>}
       </p>

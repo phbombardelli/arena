@@ -23,7 +23,7 @@ import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
  */
 
 /** Janelas que se abrem por menu. Só uma de cada vez. */
-export type DialogId = 'atalhos' | 'modelos' | 'folha' | 'sobre' | 'alturas' | 'novo' | 'nova-ginastica' | 'outro-ginastica' | 'outro-percurso' | 'abrir' | 'nuvem' | 'admin' | 'contato' | 'tutoriais' | 'boas-vindas' | 'saida';
+export type DialogId = 'atalhos' | 'modelos' | 'folha' | 'sobre' | 'alturas' | 'novo' | 'nova-ginastica' | 'outro-ginastica' | 'outro-percurso' | 'abrir' | 'nuvem' | 'admin' | 'contato' | 'tutoriais' | 'boas-vindas' | 'saida' | 'montagem';
 
 export type Tool =
   | 'select'
@@ -165,6 +165,9 @@ interface EditorState {
   setPathSmooth: (v: boolean) => void;
   setStructureType: (t: StructureType | null) => void;
   setDialog: (d: DialogId | null) => void;
+  /** Obstáculo aberto na janela de montagem (B-108). */
+  montagemId: ObjectId | null;
+  abreMontagem: (id: ObjectId) => void;
   setMapWizard: (img: ImportedImage | null) => void;
   toggleHints: () => void;
 }
@@ -207,6 +210,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   // mais selecionável, e uma seleção invisível é fonte de confusão.
   setStructureType: (structureType) => set({ structureType }),
   setDialog: (dialog) => set({ dialog }),
+  montagemId: null,
+  abreMontagem: (montagemId) => set({ montagemId, dialog: 'montagem' }),
   exerciseEditor: null,
   setExerciseEditor: (exerciseEditor) => set({ exerciseEditor }),
   setMapWizard: (mapWizard) => set({ mapWizard }),

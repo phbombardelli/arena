@@ -1,8 +1,12 @@
 import { createRoot, type Root } from 'react-dom/client';
 import { flushSync } from 'react-dom';
-import type { CourseDocument, VistaProva } from '@core/model/types';
+import type { CourseDocument } from '@core/model/types';
 import { pageSize } from '@core/scale/units';
 import { RenderDocument } from '@render/renderDocument';
+import { FolhaEspecificacao } from '@render/FolhaEspecificacao';
+import type { PaginaDaSaida } from '@core/library/paginas';
+
+export { paginasDaSaida, type PaginaDaSaida } from '@core/library/paginas';
 
 /**
  * Monta o SVG no modo papel em um contêiner fora da tela e entrega o
@@ -17,7 +21,7 @@ export interface PaperSvgHandle {
   dispose: () => void;
 }
 
-export function buildPaperSvg(doc: CourseDocument, vista: VistaProva = 'ambos'): PaperSvgHandle {
+export function buildPaperSvg(doc: CourseDocument, vista: PaginaDaSaida = 'ambos'): PaperSvgHandle {
   const { widthMm, heightMm } = pageSize(doc.page);
 
   const host = document.createElement('div');
@@ -35,15 +39,19 @@ export function buildPaperSvg(doc: CourseDocument, vista: VistaProva = 'ambos'):
         height={`${heightMm}mm`}
         viewBox={`0 0 ${widthMm} ${heightMm}`}
       >
-        <RenderDocument
-          mode="paper"
-          doc={doc}
-          vista={vista}
-          selection={[]}
-          viewBoxMm={{ x: 0, y: 0, width: widthMm, height: heightMm }}
-          metersPerPixel={0}
-          showPageFrame={false}
-        />
+        {vista === 'especificacao' ? (
+          <FolhaEspecificacao doc={doc} />
+        ) : (
+          <RenderDocument
+            mode="paper"
+            doc={doc}
+            vista={vista}
+            selection={[]}
+            viewBoxMm={{ x: 0, y: 0, width: widthMm, height: heightMm }}
+            metersPerPixel={0}
+            showPageFrame={false}
+          />
+        )}
       </svg>,
     );
   });

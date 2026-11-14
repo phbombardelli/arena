@@ -2,10 +2,12 @@ import { toMillimeterPrecision } from '@core/geometry/snap';
 import type { Vec2 } from '@core/geometry/vec';
 import { acceptsLiverpool, fitElementsToType, obstacleDef } from '@core/library/obstacles';
 import { proximoNumero } from '@core/library/desempate';
+import { ajustaAoTopo, temMontagem, topoMontagem } from '@core/library/montagem';
 import type {
   BarAppearance,
   CourseDocument,
   LiverpoolOption,
+  Montagem,
   Obstacle,
   ObstacleType,
   ObjectId,
@@ -32,6 +34,9 @@ export function setObstacleType(doc: CourseDocument, id: ObjectId, type: Obstacl
   const def = obstacleDef(type);
   const eraSemLargura = obstacle.spreadM === null;
 
+  // Muro e obstáculo de varas não se montam igual: troca entre eles volta
+  // ao padrão; o que não se monta perde a montagem.
+  if (!temMontagem(type) || (type === 'muro') !== (obstacle.type === 'muro')) delete obstacle.montagem;
   obstacle.type = type;
   obstacle.elements = fitElementsToType(obstacle.elements, type);
   // O liverpool só existe acoplado a vertical ou oxer.
@@ -90,6 +95,26 @@ export function setElementHeight(
   element.height = height === null || !Number.isFinite(height) || height <= 0
     ? null
     : toMillimeterPrecision(height);
+  // O topo da montagem é a altura do 1º elemento: a peça de cima acompanha.
+  if (index === 0 && obstacle.montagem && element.height !== null) {
+    obstacle.montagem = ajustaAoTopo(obstacle.montagem, Math.round(element.height * 100));
+  }
+}
+
+/**
+ * Grava a montagem do 1º plano (B-108) e, com ela, a altura do 1º
+ * elemento, que é o topo da pilha. Pilha vazia volta ao padrão.
+ */
+export function setMontagem(doc: CourseDocument, id: ObjectId, montagem: Montagem | null): void {
+  const obstacle = obstacleOf(doc, id);
+  if (!obstacle) return;
+  if (!montagem || montagem.pecas.length === 0) {
+    delete obstacle.montagem;
+    return;
+  }
+  obstacle.montagem = { pecas: montagem.pecas.map((p) => ({ ...p })) };
+  const el = obstacle.elements[0];
+  if (el) el.height = toMillimeterPrecision(topoMontagem(montagem) / 100);
 }
 
 export function addElement(doc: CourseDocument, id: ObjectId): void {
@@ -181,7 +206,7 @@ export function setLiverpool(
   if (!obstacle) return;
   if (patch.enabled === true && !acceptsLiverpool(obstacle.type)) return;
   obstacle.liverpool = { ...obstacle.liverpool, ...patch };
-  if (!(obstacle.liverpool.spreadM > 0)) obstacle.liverpool.spreadM = 0.5;
+  if (!(obstacle.liverpool.spreadM > 0)) obstacle.liverpool.spreadM = 1;
   if (!(obstacle.liverpool.widthM > 0)) obstacle.liverpool.widthM = 3;
 }
 

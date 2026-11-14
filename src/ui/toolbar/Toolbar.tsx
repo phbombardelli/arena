@@ -173,7 +173,6 @@ export function Toolbar() {
   ];
 
   const pct = Math.round((viewport.zoom / ZOOM_ACTUAL_SIZE) * 100);
-  const folha = { formato: doc.page.format, escala: String(doc.page.printScale) };
 
   return (
     <header className="toolbar">
@@ -225,15 +224,6 @@ export function Toolbar() {
       <span className="toolbar-spacer" />
 
       <div className="toolbar-group">
-        {/* A folha se arruma na aba Impressão (B-105): o botão leva até lá. */}
-        <button
-          className={mode === 'impressao' ? 'sheet-button active' : 'sheet-button'}
-          onClick={() => setMode('impressao')}
-          title={t(doc.page.orientation === 'landscape' ? 'folha.dicaPaisagem' : 'folha.dicaRetrato', folha)}
-        >
-          {t('folha.botao', folha)}
-        </button>
-
         <div className="zoom-control">
           <button className="icon-button" onClick={() => zoomBy(1 / 1.25)} title={t('exibir.afastar')}>−</button>
           <Popover

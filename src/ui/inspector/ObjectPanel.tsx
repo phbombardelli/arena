@@ -9,7 +9,8 @@ import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { ArenaPanel } from './ArenaPanel';
 import { ImagePanel } from './ImagePanel';
-import { ObstacleMore, ObstaclePanel } from './ObstaclePanel';
+import { DesempateDoObstaculo, ObstacleMore, ObstaclePanel, ResumoMontagem } from './ObstaclePanel';
+import { temMontagem } from '@core/library/montagem';
 import { PathPanel } from './PathPanel';
 import { CombinationPanel } from './CombinationPanel';
 import { LinkRow } from './LinkRow';
@@ -208,6 +209,11 @@ export function ObjectPanel() {
                 disabled={single.locked}
               />
             </>
+          )}
+          {/* A montagem vem depois da posição no chão (giro): é o próximo passo. */}
+          {single.kind === 'obstacle' && doc.kind !== 'ginastica' && <DesempateDoObstaculo obstacle={single} />}
+          {single.kind === 'obstacle' && doc.kind !== 'ginastica' && temMontagem(single.type) && (
+            <ResumoMontagem obstacle={single} />
           )}
           {mostraPosicao(single) && (
           <details className="fold">

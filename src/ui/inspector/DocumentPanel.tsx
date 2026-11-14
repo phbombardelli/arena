@@ -6,6 +6,8 @@ import { avisosDuasFases, fasesDoPercurso, ligaDuasFases, mudaFimDaPrimeira } fr
 import { findInterferences } from '@core/assist/interference';
 import { DESENHO_ID, firstArena } from '@core/model/document';
 import { SheetSettings } from './SheetSettings';
+import { paginasDaSaida } from '@core/library/paginas';
+import { irParaFolha } from '@ui/actions/viewActions';
 import { arenaArea, arenaExtent } from '@core/model/arena';
 import { formatDistance, pathLength } from '@core/model/path';
 import type { CoursePath, FolhaDesempate, Obstacle } from '@core/model/types';
@@ -60,9 +62,61 @@ function PainelDaImpressao() {
   return (
     <div className="resumo">
       <h2>{t('impressao.titulo')}</h2>
-      <p className="hint">{t('impressao.dica')}</p>
+      <p className="note dim">{t('impressao.dica')}</p>
+      <FolhasDaSaida />
       <SheetSettings />
     </div>
+  );
+}
+
+/**
+ * O que sai impresso, folha por folha (B-108): fica no alto do painel da
+ * Impressão, e cada folha se vê na tela, empilhada abaixo da primeira.
+ */
+function FolhasDaSaida() {
+  const { doc, apply } = useDocumentStore();
+  return (
+    <section className="folhas-saida">
+      <h3>{t('folhas.paginas')}</h3>
+      {doc.kind !== 'ginastica' && doc.desempate && doc.desempate.ordem.length > 0 && (
+        <label className="field" title={t('saida.pergunta')}>
+          <span>{t('folhas.desempate')}</span>
+          <select
+            value={doc.desempate.folha ?? 'percurso'}
+            onChange={(e) => {
+              const folha = e.target.value as FolhaDesempate;
+              apply(t('saida.pergunta'), (d) => {
+                if (d.desempate) d.desempate.folha = folha;
+              });
+            }}
+          >
+            {(['percurso', 'duas', 'uma'] as const).map((o) => (
+              <option key={o} value={o} title={t(`saida.${o}`)}>
+                {t(`folhas.dsp.${o}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {doc.kind !== 'ginastica' && (
+        <label className="check" title={t('espec.incluirDica')}>
+          <input
+            type="checkbox"
+            checked={doc.especificacao === true}
+            onChange={(e) => {
+              const liga = e.target.checked;
+              apply(t('espec.incluir'), (d) => {
+                if (liga) d.especificacao = true;
+                else delete d.especificacao;
+              });
+              // Mostra a folha nova assim que ela aparece.
+              if (liga) requestAnimationFrame(() => irParaFolha(paginasDaSaida(useDocumentStore.getState().doc).length - 1));
+            }}
+          />
+          {t('espec.incluir')}
+        </label>
+      )}
+    </section>
   );
 }
 
@@ -300,7 +354,7 @@ function Desempate() {
           )}
 
           <h4>{t('dsp.variacoes')}</h4>
-          <div className="dsp-variacoes">
+          <div className="dsp-lista">
             {stops.map((stop, i) => {
               const tem = (v: 'contrario' | 'oxer') =>
                 stop.elements.every((e) => variacoesDe(doc.desempate, e.id).includes(v));
@@ -312,38 +366,30 @@ function Desempate() {
                   marcaVariacao(d, stop, v, !tem(v)),
                 );
               return (
-                <span className="dsp-degrau" key={`${stop.label}-${i}`}>
+                <div className="dsp-linha" key={`${stop.label}-${i}`}>
                   <strong>{stop.label}</strong>
-                  <button
-                    className={tem('contrario') ? 'active' : ''}
-                    title={t('dsp.contrario')}
-                    aria-pressed={tem('contrario')}
-                    onClick={() => alterna('contrario')}
-                  >
-                    ↩
-                  </button>
+                  <label className="check">
+                    <input type="checkbox" checked={tem('contrario')} onChange={() => alterna('contrario')} />
+                    {t('dsp.aoContrario')}
+                  </label>
                   {podeOxer && (
-                    <button
-                      className={tem('oxer') ? 'active' : ''}
-                      title={t('dsp.oxer')}
-                      aria-pressed={tem('oxer')}
-                      onClick={() => alterna('oxer')}
-                    >
-                      oxer
-                    </button>
+                    <label className="check">
+                      <input type="checkbox" checked={tem('oxer')} onChange={() => alterna('oxer')} />
+                      {t('dsp.viraOxer')}
+                    </label>
                   )}
-                </span>
+                </div>
               );
             })}
           </div>
           <p className="note dim">{t('dsp.variacoesNota')}</p>
 
-          <div className="row-buttons">
+          <div className="row-buttons pares">
             <button onClick={() => insertTimingLine('start', 'desempate')}>
-              {tem('start') ? t('resumo.recolocarPartida') : t('resumo.colocarPartida')}
+              {tem('start') ? t('resumo.recolocarPartida') : t('dsp.partidaDoDesempate')}
             </button>
             <button onClick={() => insertTimingLine('finish', 'desempate')}>
-              {tem('finish') ? t('resumo.recolocarChegada') : t('resumo.colocarChegada')}
+              {tem('finish') ? t('resumo.recolocarChegada') : t('dsp.chegadaDoDesempate')}
             </button>
           </div>
           <p className="note dim">{t('dsp.partidaNota')}</p>
@@ -367,21 +413,6 @@ function Desempate() {
               }
             />
             {t('dsp.ordemNoObstaculo')}
-          </label>
-          <label className="field">
-            <span>{t('dsp.naFolha')}</span>
-            <select
-              value={doc.desempate?.folha ?? 'percurso'}
-              onChange={(e) =>
-                apply(t('dsp.naFolha'), (d) => {
-                  if (d.desempate) d.desempate.folha = e.target.value as FolhaDesempate;
-                })
-              }
-            >
-              {(['percurso', 'duas', 'uma'] as const).map((f) => (
-                <option key={f} value={f}>{t(`dsp.folha.${f}`)}</option>
-              ))}
-            </select>
           </label>
           <p className="note dim">{t('dsp.vistaNota')}</p>
         </>

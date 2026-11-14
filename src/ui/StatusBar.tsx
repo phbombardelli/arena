@@ -21,7 +21,9 @@ import { t } from '@core/i18n/i18n';
 export function StatusBar() {
   const doc = useDocumentStore((s) => s.doc);
   const { cursorM, viewport, mode, setDialog, vista, setVista } = useEditorStore();
-  const temDesempate = doc.kind !== 'ginastica' && (doc.desempate?.ordem.length ?? 0) > 0;
+  // Só no Percurso: na Pista não há prova, e na Impressão cada folha já
+  // mostra o que sai nela.
+  const temDesempate = doc.kind !== 'ginastica' && (doc.desempate?.ordem.length ?? 0) > 0 && mode === 'percurso';
 
   const mpp = metersPerPixel(viewport, doc.page.printScale);
   const step = doc.grid.stepM > 0 ? doc.grid.stepM : visibleGridStep(mpp, 8);

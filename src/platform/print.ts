@@ -1,7 +1,6 @@
 import type { CourseDocument } from '@core/model/types';
-import { buildPaperSvg } from './paperSvg';
+import { buildPaperSvg, paginasDaSaida } from './paperSvg';
 import { t } from '@core/i18n/i18n';
-import { paginasDaFolha } from '@core/library/desempate';
 
 /**
  * Impressão direta pelo navegador, também vetorial. Rota secundária ao
@@ -12,7 +11,7 @@ export function printDocument(doc: CourseDocument): void {
   // Uma página por vista: o percurso e, se pedido, o desempate (B-92).
   let widthMm = 0;
   let heightMm = 0;
-  const paginas = paginasDaFolha(doc).map((vista) => {
+  const paginas = paginasDaSaida(doc).map((vista) => {
     const handle = buildPaperSvg(doc, vista);
     widthMm = handle.widthMm;
     heightMm = handle.heightMm;

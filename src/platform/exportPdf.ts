@@ -1,9 +1,8 @@
 import { jsPDF } from 'jspdf';
 import 'svg2pdf.js';
 import type { CourseDocument } from '@core/model/types';
-import { buildPaperSvg } from './paperSvg';
+import { buildPaperSvg, paginasDaSaida } from './paperSvg';
 import { t } from '@core/i18n/i18n';
-import { paginasDaFolha } from '@core/library/desempate';
 
 /**
  * Exportação em PDF **vetorial**: texto continua texto, linhas continuam
@@ -26,7 +25,7 @@ function makeDoc(widthMm: number, heightMm: number): jsPDF {
  */
 async function folhaPdf(doc: CourseDocument): Promise<jsPDF> {
   let pdf: jsPDF | null = null;
-  for (const vista of paginasDaFolha(doc)) {
+  for (const vista of paginasDaSaida(doc)) {
     const handle = buildPaperSvg(doc, vista);
     try {
       const { widthMm, heightMm } = handle;

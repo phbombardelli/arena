@@ -318,10 +318,10 @@ describe('estilo das varas', () => {
 });
 
 describe('liverpool como opção', () => {
-  it('nasce 3,00 x 0,50 m, mais estreito que a vara de 4 m', () => {
+  it('nasce 3,00 x 1,00 m, mais estreito que a vara de 4 m', () => {
     const o = createObstacle('vertical', { x: 0, y: 0 });
     expect(o.liverpool.widthM).toBe(3);
-    expect(o.liverpool.spreadM).toBe(0.5);
+    expect(o.liverpool.spreadM).toBe(1);
     // As pontas da vara ficam para fora da água.
     expect(o.liverpool.widthM).toBeLessThan(o.faceWidthM);
   });

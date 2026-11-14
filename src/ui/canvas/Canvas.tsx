@@ -28,6 +28,8 @@ import {
   viewBoxAttr,
   zoomAt,
 } from '@core/scale/viewport';
+import { FolhasExtras, NavegaFolhas } from './FolhasDaImpressao';
+import { paginasDaSaida } from '@core/library/paginas';
 import { RenderDocument } from '@render/renderDocument';
 import { color } from '@render/style/tokens';
 import { useDocumentStore } from '@store/documentStore';
@@ -613,6 +615,9 @@ export function Canvas() {
   });
   const selectedObjects = doc.objects.filter((o) => selection.includes(o.id));
   const blocoMm = mode === 'impressao' ? desenhoNaFolhaMm(doc) : null;
+  // Na Impressão a 1ª folha mostra o que sai nela de fato (B-108).
+  const primeira = paginasDaSaida(doc)[0];
+  const vistaNaTela = mode === 'impressao' && primeira && primeira !== 'especificacao' ? primeira : vista;
   const selectedArena =
     selectedObjects.length === 1 && selectedObjects[0]!.kind === 'arena'
       ? selectedObjects[0]
@@ -653,7 +658,7 @@ export function Canvas() {
           <RenderDocument
             mode="screen"
             editScope={mode === 'impressao' ? 'folha' : mode}
-            vista={vista}
+            vista={vistaNaTela}
             doc={doc}
             selection={selection}
             viewBoxMm={box}
@@ -666,6 +671,7 @@ export function Canvas() {
               else gestures.beginDrag(e, id);
             }}
           />
+          {mode === 'impressao' && <FolhasExtras doc={doc} zoom={viewport.zoom} />}
           <GuidedOverlay zoom={viewport.zoom} />
 
           <InterferenceOverlay zoom={viewport.zoom} />
@@ -791,6 +797,8 @@ export function Canvas() {
           </SelectionOverlay>
         </svg>
       </div>
+
+      {mode === 'impressao' && <NavegaFolhas />}
 
       {/* As réguas marcam 0 no canto superior esquerdo da pista (decisão 60). */}
       <Rulers

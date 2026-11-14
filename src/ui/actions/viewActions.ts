@@ -1,5 +1,6 @@
 import { clamp } from '@core/geometry/vec';
 import { desenhoNaFolhaMm, pageRectMm } from '@core/model/document';
+import { folhaEm, folhaRectMm, paginasDaSaida, todasAsFolhasMm } from '@core/library/paginas';
 import type { CourseDocument } from '@core/model/types';
 import type { ModoEditor } from '@store/editorStore';
 import { fitToRect, MAX_ZOOM, MIN_ZOOM, ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
@@ -28,7 +29,28 @@ export function fitPage(): void {
   if (!el) return;
   const { doc } = useDocumentStore.getState();
   const ed = useEditorStore.getState();
-  ed.setViewport(fitToRect(areaDeTrabalhoMm(doc, ed.mode), { width: el.clientWidth, height: el.clientHeight }));
+  // Na Impressão, a folha que está no centro da tela.
+  const area =
+    ed.mode === 'impressao' ? folhaRectMm(doc, folhaEm(doc, ed.viewport.centerMm.y)) : areaDeTrabalhoMm(doc, ed.mode);
+  ed.setViewport(fitToRect(area, { width: el.clientWidth, height: el.clientHeight }));
+}
+
+/** Impressão: enquadra a folha `i` (as folhas ficam empilhadas). */
+export function irParaFolha(i: number): void {
+  const el = document.querySelector('.canvas-svg') as SVGSVGElement | null;
+  if (!el) return;
+  const { doc } = useDocumentStore.getState();
+  const n = paginasDaSaida(doc).length;
+  const j = Math.max(0, Math.min(n - 1, i));
+  useEditorStore.getState().setViewport(fitToRect(folhaRectMm(doc, j), { width: el.clientWidth, height: el.clientHeight }));
+}
+
+/** Impressão: todas as folhas de uma vez. */
+export function verTodasAsFolhas(): void {
+  const el = document.querySelector('.canvas-svg') as SVGSVGElement | null;
+  if (!el) return;
+  const { doc } = useDocumentStore.getState();
+  useEditorStore.getState().setViewport(fitToRect(todasAsFolhasMm(doc), { width: el.clientWidth, height: el.clientHeight }));
 }
 
 
