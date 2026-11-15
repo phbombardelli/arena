@@ -2327,3 +2327,20 @@ folhas com diagramação própria (B-107), folha de especificação (B-108).
   Percurso/Desempate/Ambos fica só na aba Percurso.
 - Revisão de interface: editar no lugar, sem abas para um número; o que se
   usa raramente vai para "Mais opções"; explicações longas só com o "?".
+
+## 107. Caixa de texto e desempate com diagramação própria (B-106, B-107, 1.6.0, 15/11/2026)
+
+- Caixa de texto (`TituloDaFolha`, kind `titulo`): item de papel que
+  FLUTUA. Não entra na arrumação (`itensDaFolha`), não desconta área livre
+  (`freeAreaMm`) e é desenhada por último (`sortForRender`). Nasce por
+  arrasto (ferramenta `caixa-texto`); vazia ao terminar, some.
+- Redimensiona livre: `heightMm` guarda a altura escolhida, nunca menor que
+  o texto (`tituloLayout`). Borda (`borda`) e fundo (`fundo`) opcionais.
+- Fontes: `padrao` é a Helvetica dos outros textos do croqui. As abertas
+  ficam em public/fonts (TTF, subconjunto latino, do Fontsource), declaradas
+  por @font-face e embutidas no PDF (`embuteFontes`), porque o jsPDF só tem
+  as 14 básicas. Nomes curtos, só o nome da fonte aberta (nunca o da
+  comercial que ela substitui).
+- Desempate em folha própria: a folha à vista mora nos campos de sempre e a
+  outra em `desempate.outraFolha` (`trocaFolha`, `docDaFolha`); o conteúdo é
+  um só. `titulo.folha` limita a caixa a uma folha.

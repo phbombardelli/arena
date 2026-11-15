@@ -21,6 +21,8 @@ import { ScaleLegend } from './layers/ScaleLegend';
 import { PathLayer } from './layers/PathLayer';
 import { TimingLayer } from './layers/TimingLayer';
 import { LogoLayer } from './layers/LogoLayer';
+import { TituloLayer } from './layers/TituloLayer';
+import { tituloAparece } from '@core/model/annotationLayout';
 import { color, stroke } from './style/tokens';
 import { useMemo } from 'react';
 import { layoutLabels } from '@core/assist/labelLayout';
@@ -28,6 +30,9 @@ import { layoutLabels } from '@core/assist/labelLayout';
 /** Ordem de empilhamento: camada primeiro, depois z dentro da camada. */
 function sortForRender(doc: CourseDocument): SceneObject[] {
   return [...doc.objects].sort((a, b) => {
+    // A caixa de texto da folha (B-106) fica por cima de tudo.
+    const tit = Number(a.kind === 'titulo') - Number(b.kind === 'titulo');
+    if (tit !== 0) return tit;
     const byLayer = LAYER_ORDER.indexOf(a.layer) - LAYER_ORDER.indexOf(b.layer);
     return byLayer !== 0 ? byLayer : a.z - b.z;
   });
@@ -56,6 +61,8 @@ export interface RenderOptions {
    * não entra nele fica apagado, e o traçado do percurso some.
    */
   vista?: VistaProva;
+  /** A caixa de texto da folha sendo editada no lugar (B-106): some o texto dela. */
+  editandoId?: ObjectId | null;
   onObjectPointerDown?: (id: ObjectId, e: React.PointerEvent) => void;
 }
 
@@ -248,13 +255,23 @@ export function RenderDocument(opts: RenderOptions) {
                 onPointerDown={onPointerDown}
               />
             );
+          case 'titulo':
+            if (!tituloAparece(doc, obj)) return null;
+            return (
+              <TituloLayer
+                key={obj.id}
+                titulo={obj}
+                editando={opts.editandoId === obj.id}
+                onPointerDown={onPointerDown}
+              />
+            );
           case 'infobox':
             return (
               <InfoBoxLayer
                 key={obj.id}
                 box={obj}
                 parte={
-                  mode !== 'paper' ? 'tudo'
+                  mode !== 'paper' && !naFolha ? 'tudo'
                   : soDesempate ? 'desempate'
                   : vista === 'percurso' && doc.desempate?.folha === 'duas' ? 'percurso'
                   : 'tudo'
@@ -383,8 +400,12 @@ export function RenderDocument(opts: RenderOptions) {
 
       {frente.map(desenha)}
 
-      {/* A página do desempate no papel diz o que é (B-92). */}
-      {mode === 'paper' && soDesempate && (
+      {/* A página do desempate no papel diz o que é (B-92) — a não ser que
+          ela já tenha um título escrito pelo usuário (B-106). Na Impressão
+          aparece também na tela: é o que sai. */}
+      {(mode === 'paper' || naFolha) &&
+        soDesempate &&
+        !doc.objects.some((o) => o.kind === 'titulo' && o.visible && tituloAparece(doc, o)) && (
         <text
           x={widthMm / 2}
           y={doc.page.marginsMm.top + 5}
@@ -426,7 +447,7 @@ const HIT_MARGIN_PX = 9;
 
 /** Tipos que ganham a área de clique pela envoltória. Obstáculo, pista e
  * traçado têm a sua, feita sob medida na própria camada. */
-const GENEROUS_HIT = new Set<SceneObject['kind']>(['timing', 'ornament', 'text', 'infobox', 'heighttable', 'logo']);
+const GENEROUS_HIT = new Set<SceneObject['kind']>(['timing', 'ornament', 'text', 'infobox', 'heighttable', 'logo', 'titulo']);
 
 function hitBox(doc: CourseDocument, obj: SceneObject, onPointerDown: (e: React.PointerEvent) => void) {
   const b = boundsIn(doc, obj);

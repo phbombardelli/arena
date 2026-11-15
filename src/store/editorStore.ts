@@ -35,7 +35,9 @@ export type Tool =
   | 'obstacle'
   | 'path'
   | 'text'
-  | 'measure';
+  | 'measure'
+  /** Caixa de texto na folha (B-106): arrasta-se o retângulo. */
+  | 'caixa-texto';
 
 /**
  * As abas do trabalho (B-105): Pista e Percurso desenham em metros, sem
@@ -86,6 +88,9 @@ interface EditorState {
   /** Linhas de alinhamento da folha mostradas durante o gesto (mm de papel). */
   guias: Guias | null;
   setGuias: (guias: Guias | null) => void;
+  /** Pede ao desenho que abra a edição no lugar deste texto (caixa de texto nova, B-106). */
+  editarTexto: string | null;
+  setEditarTexto: (id: string | null) => void;
   /** Área de transferência do editor: cópias profundas, sem id. */
   clipboard: SceneObject[];
   /** Tipo de ornamento que a ferramenta de inserção vai criar. */
@@ -192,6 +197,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   setDragging: (dragging) => set({ dragging }),
   guias: null,
   setGuias: (guias) => set({ guias }),
+  editarTexto: null,
+  setEditarTexto: (editarTexto) => set({ editarTexto }),
   clipboard: [],
   ornamentType: 'arvore',
   obstacleType: 'vertical',

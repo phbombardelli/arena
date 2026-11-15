@@ -18,6 +18,7 @@ import { DESENHO_ID, desenhoNaFolhaMm } from '@core/model/document';
 import { areaDeTrabalhoMm } from '@ui/actions/viewActions';
 import { getRotation, scaleMode } from '@core/model/transform';
 import { mmPerMeter } from '@core/scale/units';
+import { criaCaixaDeTexto } from '@ui/actions/tituloActions';
 import { ObstacleLayer } from '@render/layers/ObstacleLayer';
 import {
   fitToRect,
@@ -29,7 +30,7 @@ import {
   zoomAt,
 } from '@core/scale/viewport';
 import { FolhasExtras, NavegaFolhas } from './FolhasDaImpressao';
-import { paginasDaSaida } from '@core/library/paginas';
+import { indiceDaFolhaAtiva, paginasDaSaida } from '@core/library/paginas';
 import { RenderDocument } from '@render/renderDocument';
 import { color } from '@render/style/tokens';
 import { useDocumentStore } from '@store/documentStore';
@@ -110,6 +111,12 @@ export function Canvas() {
   const measureDraft = useRef<{ id: string; a: Vec2 } | null>(null);
   /** Texto sendo editado no próprio desenho (B-68). */
   const [editingText, setEditingText] = useState<string | null>(null);
+  const editarTexto = useEditorStore((s) => s.editarTexto);
+  useEffect(() => {
+    if (!editarTexto) return;
+    setEditingText(editarTexto);
+    useEditorStore.getState().setEditarTexto(null);
+  }, [editarTexto]);
   const spaceDown = useRef(false);
 
   const localPoint = useCallback((e: { clientX: number; clientY: number }): Vec2 => {
@@ -168,6 +175,23 @@ export function Canvas() {
     ed.setSelection([traco.id]);
     ed.setActiveNode(null);
     ed.setTool('select');
+  }, []);
+
+  /** Solta o arrasto da caixa de texto: o retângulo vira a caixa (B-106). */
+  const finishCaixa = useCallback(() => {
+    const ed = useEditorStore.getState();
+    const draft = ed.draft;
+    ed.clearDraft();
+    if (!draft) return;
+    const { doc: d } = useDocumentStore.getState();
+    const k = mmPerMeter(d.page.printScale);
+    const a = draft.points[0]!;
+    const b = draft.cursor ?? a;
+    const ax = d.originMm.x + a.x * k;
+    const ay = d.originMm.y + a.y * k;
+    const bx = d.originMm.x + b.x * k;
+    const by = d.originMm.y + b.y * k;
+    criaCaixaDeTexto({ xMm: Math.min(ax, bx), yMm: Math.min(ay, by), widthMm: Math.abs(bx - ax), heightMm: Math.abs(by - ay) });
   }, []);
 
   const finishRectangle = useCallback(() => {
@@ -257,6 +281,15 @@ export function Canvas() {
 
       if (tool === 'arena-rect') {
         useEditorStore.getState().startDraft(snapped(toModel(e)));
+        return;
+      }
+
+      if (tool === 'caixa-texto') {
+        // Sem ímã: a caixa vai exatamente onde se arrastou.
+        const p = toModel(e);
+        const ed = useEditorStore.getState();
+        ed.startDraft(p);
+        ed.setDraftCursor(p);
         return;
       }
 
@@ -403,6 +436,7 @@ export function Canvas() {
       if (panState.current?.pointerId === e.pointerId) panState.current = null;
       pathDragFrom.current = null;
       if (activeTool() === 'arena-rect') finishRectangle();
+      if (activeTool() === 'caixa-texto') finishCaixa();
       const trena = measureDraft.current;
       if (trena) {
         measureDraft.current = null;
@@ -419,7 +453,7 @@ export function Canvas() {
       }
       gestures.onPointerUp();
     },
-    [gestures, finishRectangle, setSelection, setTool],
+    [gestures, finishRectangle, finishCaixa, setSelection, setTool],
   );
 
   /* ------------------------------------------------------------ teclado */
@@ -616,7 +650,7 @@ export function Canvas() {
   const selectedObjects = doc.objects.filter((o) => selection.includes(o.id));
   const blocoMm = mode === 'impressao' ? desenhoNaFolhaMm(doc) : null;
   // Na Impressão a 1ª folha mostra o que sai nela de fato (B-108).
-  const primeira = paginasDaSaida(doc)[0];
+  const primeira = paginasDaSaida(doc)[indiceDaFolhaAtiva(doc)];
   const vistaNaTela = mode === 'impressao' && primeira && primeira !== 'especificacao' ? primeira : vista;
   const selectedArena =
     selectedObjects.length === 1 && selectedObjects[0]!.kind === 'arena'
@@ -645,10 +679,10 @@ export function Canvas() {
           onPointerLeave={() => setCursor(null)}
           onDoubleClick={(e) => {
             if (activeTool() !== 'select') return;
-            const alvo = (e.target as Element).closest?.('[data-kind="text"]');
+            const alvo = (e.target as Element).closest?.('[data-kind="text"], [data-kind="titulo"]');
             const id = alvo?.getAttribute('data-object');
             const obj = id ? useDocumentStore.getState().doc.objects.find((o) => o.id === id) : null;
-            if (obj?.kind === 'text' && !obj.locked) {
+            if ((obj?.kind === 'text' || obj?.kind === 'titulo') && !obj.locked) {
               e.stopPropagation();
               setSelection([obj.id]);
               setEditingText(obj.id);
@@ -659,6 +693,7 @@ export function Canvas() {
             mode="screen"
             editScope={mode === 'impressao' ? 'folha' : mode}
             vista={vistaNaTela}
+            editandoId={editingText}
             doc={doc}
             selection={selection}
             viewBoxMm={box}

@@ -1,6 +1,6 @@
 import type { Vec2 } from '@core/geometry/vec';
 import { fitScale, pageSize, usableArea } from '@core/scale/units';
-import { heightTableLayout, infoBoxLayout } from './annotationLayout';
+import { heightTableLayout, infoBoxLayout, parteDaFolha, tituloAparece, tituloLayout } from './annotationLayout';
 import { arenaExtent, createRectangleArena } from './arena';
 import { rotuloDoPortao } from '@core/library/ornaments';
 import { getBounds, isPaperAnchored, unionBounds } from './transform';
@@ -135,7 +135,8 @@ export function freeAreaMm(doc: CourseDocument): RectMm {
   let fundo = 0;
 
   for (const obj of doc.objects) {
-    if (!obj.visible) continue;
+    // A caixa de texto (B-106) flutua por cima: não tira espaço da pista.
+    if (!obj.visible || obj.kind === 'titulo') continue;
     const caixa = anotacaoMm(doc, obj);
     if (!caixa) continue;
 
@@ -185,7 +186,7 @@ function ladoArrumado(doc: CourseDocument, obj: SceneObject): 'esq' | 'dir' | 't
 /** Retângulo em mm de uma anotação de papel; `null` para o resto. */
 export function anotacaoMm(doc: CourseDocument, obj: SceneObject): RectMm | null {
   if (obj.kind === 'infobox') {
-    const l = infoBoxLayout(obj);
+    const l = infoBoxLayout(obj, parteDaFolha(doc));
     return { xMm: obj.posMm.x, yMm: obj.posMm.y, widthMm: l.widthMm, heightMm: l.heightMm };
   }
   if (obj.kind === 'heighttable') {
@@ -198,6 +199,11 @@ export function anotacaoMm(doc: CourseDocument, obj: SceneObject): RectMm | null
   if (obj.kind === 'logo') {
     const h = (obj.widthMm * obj.heightPx) / Math.max(1, obj.widthPx);
     return { xMm: obj.posMm.x, yMm: obj.posMm.y, widthMm: obj.widthMm, heightMm: h };
+  }
+  if (obj.kind === 'titulo') {
+    if (!tituloAparece(doc, obj)) return null;
+    const l = tituloLayout(obj);
+    return { xMm: obj.posMm.x, yMm: obj.posMm.y, widthMm: l.widthMm, heightMm: l.heightMm };
   }
   return null;
 }

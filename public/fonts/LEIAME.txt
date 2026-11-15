@@ -1,0 +1,6 @@
+Fontes da caixa de texto (B-106), subconjunto latino, baixadas do Fontsource
+(cdn.jsdelivr.net/fontsource). Todas de licenca aberta:
+- Apache 2.0: Arimo, Tinos, Cousine, Roboto
+- SIL Open Font License 1.1: Carlito, Caladea, Open Sans, Noto Sans, Noto Serif,
+  Source Sans 3, Source Serif 4, Lato, Montserrat
+Usadas na tela (@font-face) e embutidas no PDF (jsPDF). Ver src/render/fontes.ts.

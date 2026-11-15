@@ -23,6 +23,7 @@ import { insertHeightTable, insertInfoBox } from '@ui/actions/annotationActions'
 import { insertTimingLine } from '@ui/actions/timingActions';
 import { importBackgroundImage, pasteImageFromSystemClipboard, startMapWizard } from '@ui/actions/imageActions';
 import { insertLogo } from '@ui/actions/logoActions';
+import { ferramentaCaixaDeTexto } from '@ui/actions/tituloActions';
 import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
 import { hasLinked } from '@core/commands/groupOps';
 import { isLayerVisible } from '@core/model/document';
@@ -133,6 +134,7 @@ export function Toolbar() {
     'separator',
     { label: t('inserir.quadroTecnico'), onSelect: insertInfoBox },
     { label: t('inserir.tabelaAlturas'), onSelect: insertHeightTable },
+    { label: t('inserir.titulo'), onSelect: ferramentaCaixaDeTexto },
     { label: t('inserir.logo'), onSelect: () => void insertLogo() },
     {
       label: check(doc.page.scaleLabel.visible, t('inserir.escala')),

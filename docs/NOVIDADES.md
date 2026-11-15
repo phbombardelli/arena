@@ -14,6 +14,12 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.6.0 — 15/11/2026
+
+- **Caixa de texto na folha (B-106):** na aba Impressão, escolha "Caixa de texto" e arraste na folha para desenhá-la onde quiser: título da prova, patrocinador, observações. A caixa fica por cima de tudo e não mexe na pista nem nos quadros. Duplo clique para editar: Enter termina, Shift+Enter quebra a linha, Esc desiste. Pelos cantos, largura e altura mudam livremente, sem mudar a letra.
+- **Aparência da caixa:** 14 fontes (a padrão é a mesma dos quadros do croqui; as outras são fontes abertas como Arimo, Tinos, Carlito, Open Sans, Roboto, Lato e Montserrat, embutidas no PDF e disponíveis sem internet), tamanho, negrito, itálico, alinhamento, cor, borda contínua, tracejada ou pontilhada com espessura e cor, e fundo opcional.
+- **Desempate com folha própria (B-107):** com "Percurso + folha do desempate", cada folha tem a sua diagramação: posição e escala da pista, lugar dos quadros e das caixas de texto. Clique na folha (ou use "Folha em edição") para editá-la. A escala do desempate acompanha a do percurso até ser mudada. Cada caixa de texto sai só na folha em que foi criada, ou nas duas, se marcado.
+
 ## 1.5.0 — 14/11/2026
 
 - **Montagem do obstáculo (B-108):** cada vertical, oxer, tríplice e muro tem a montagem da entrada: peça por peça (vara, testeira, painel, portão, muro), de baixo para cima, com a altura de cada ponta. Arraste a vara pelo meio para subir ou descer, pela ponta para inclinar. Disposições prontas: paralelas, leque à direita ou à esquerda, Z, Z invertido e espaçar igual. A peça nova nunca nasce atrás de outra e não muda a altura do obstáculo. A janela tem as alturas de entrada, meio e saída editáveis no topo, o liverpool, a observação e setas para o obstáculo anterior e o próximo.

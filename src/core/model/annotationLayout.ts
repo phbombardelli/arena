@@ -1,5 +1,5 @@
 import { formatHeights } from '@core/library/obstacles';
-import type { CourseDocument, HeightTable, InfoBox, Obstacle } from './types';
+import type { CourseDocument, HeightTable, InfoBox, Obstacle, TituloDaFolha } from './types';
 import { t } from '@core/i18n/i18n';
 import { fieldLabel } from '@core/library/annotations';
 
@@ -260,6 +260,41 @@ export function heightRows(obstacles: Obstacle[]): HeightRow[] {
 }
 
 /** A tabela não estreita além disto do natural, nem as linhas ficam mais baixas que isto da letra. */
+/**
+ * Caixa de texto da folha (B-106): uma linha por quebra, 1,25× a letra,
+ * com um respiro de um quarto da letra em cima e embaixo.
+ */
+export const TITULO_LINHA = 1.25;
+export function tituloLayout(t: TituloDaFolha): {
+  widthMm: number;
+  heightMm: number;
+  linhas: string[];
+  padMm: number;
+  /** Altura que o texto ocupa (com o respiro): a caixa nunca fica menor. */
+  textoMm: number;
+} {
+  const linhas = t.text.split('\n');
+  const padMm = t.sizeMm * 0.25;
+  const textoMm = padMm * 2 + linhas.length * t.sizeMm * TITULO_LINHA + 2 * (t.borda?.espessuraMm ?? 0);
+  return { widthMm: t.widthMm, heightMm: Math.max(t.heightMm ?? 0, textoMm), linhas, padMm, textoMm };
+}
+
+/**
+ * Que parte do quadro técnico a folha à vista mostra (B-107): com o
+ * desempate em folha própria, a do percurso leva o percurso e a do
+ * desempate, o desempate. A arrumação e a seleção medem o que se vê.
+ */
+export function parteDaFolha(doc: CourseDocument): ParteDoQuadro {
+  if ((doc.desempate?.ordem.length ?? 0) === 0 || doc.desempate?.folha !== 'duas') return 'tudo';
+  return doc.desempate.folhaAtiva === 'desempate' ? 'desempate' : 'percurso';
+}
+
+/** A caixa de texto aparece na folha à vista? (B-107: pode ser só de uma.) */
+export function tituloAparece(doc: CourseDocument, t: TituloDaFolha): boolean {
+  const parte = parteDaFolha(doc);
+  return !t.folha || parte === 'tudo' || t.folha === parte;
+}
+
 export const TABELA_LARGURA_MIN = 0.7;
 export const TABELA_LINHA_MIN = 1.3;
 

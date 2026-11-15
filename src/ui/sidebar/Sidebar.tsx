@@ -9,6 +9,7 @@ import { traceCourse } from '@ui/actions/rideActions';
 import { insertHeightTable, insertInfoBox } from '@ui/actions/annotationActions';
 import { startGuidedRide } from '@ui/actions/guidedActions';
 import { insertLogo } from '@ui/actions/logoActions';
+import { ferramentaCaixaDeTexto } from '@ui/actions/tituloActions';
 import { insertTimingLine } from '@ui/actions/timingActions';
 import { useEditorStore, type Tool } from '@store/editorStore';
 import type { ExerciseKind, OrnamentType } from '@core/model/types';
@@ -107,6 +108,13 @@ export function Sidebar() {
       {mode === 'impressao' ? (
         <>
           <RailGroup title={t('rail.folha')} />
+          <RailButton
+            icon={<IconTypography {...ICONE} />}
+            label={t('rail.titulo')}
+            active={tool === 'caixa-texto'}
+            onClick={ferramentaCaixaDeTexto}
+            title={t('rail.tituloDica')}
+          />
           <RailFlyout
             icon={<IconTable {...ICONE} />}
             label={t('rail.quadrosTecnicos')}

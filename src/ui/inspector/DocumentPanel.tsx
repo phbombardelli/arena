@@ -7,6 +7,7 @@ import { findInterferences } from '@core/assist/interference';
 import { DESENHO_ID, firstArena } from '@core/model/document';
 import { SheetSettings } from './SheetSettings';
 import { paginasDaSaida } from '@core/library/paginas';
+import { folhaAtiva, temDuasFolhas } from '@core/library/folhas';
 import { irParaFolha } from '@ui/actions/viewActions';
 import { arenaArea, arenaExtent } from '@core/model/arena';
 import { formatDistance, pathLength } from '@core/model/path';
@@ -97,6 +98,25 @@ function FolhasDaSaida() {
             ))}
           </select>
         </label>
+      )}
+      {temDuasFolhas(doc) && (
+        // B-107: cada folha com a sua diagramação; aqui se escolhe qual se edita.
+        <div className="field" title={t('folhas.editandoDica')}>
+          <span>{t('folhas.editando')}</span>
+          <div className="segmentado texto" role="radiogroup" aria-label={t('folhas.editando')}>
+            {(['percurso', 'desempate'] as const).map((f) => (
+              <button
+                key={f}
+                role="radio"
+                aria-checked={folhaAtiva(doc) === f}
+                className={folhaAtiva(doc) === f ? 'active' : ''}
+                onClick={() => irParaFolha(paginasDaSaida(doc).indexOf(f))}
+              >
+                {t(`vista.${f}`)}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
       {doc.kind !== 'ginastica' && (
         <label className="check" title={t('espec.incluirDica')}>

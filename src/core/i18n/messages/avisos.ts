@@ -145,6 +145,7 @@ export const AVISOS = {
   'val.c.posicao': { pt: 'a posição', en: 'position', es: 'la posición' },
   'val.c.rotacao': { pt: 'a rotação', en: 'rotation', es: 'la rotación' },
   'val.c.largura': { pt: 'a largura', en: 'width', es: 'el ancho' },
+  'val.c.texto': { pt: 'o texto', en: 'text', es: 'el texto' },
   'val.c.elementos': { pt: 'a lista de elementos', en: 'list of elements', es: 'la lista de elementos' },
   'val.c.escala': { pt: 'a escala', en: 'scale', es: 'la escala' },
   'val.c.nos': { pt: 'a lista de nós', en: 'list of points', es: 'la lista de puntos' },

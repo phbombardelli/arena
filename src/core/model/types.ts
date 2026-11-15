@@ -1,5 +1,5 @@
 import type { Vec2 } from '@core/geometry/vec';
-import type { Meters, Millimeters, PageSetup } from '@core/scale/units';
+import type { ArranjoDaFolha, Meters, Millimeters, PageSetup } from '@core/scale/units';
 
 /**
  * Modelo de dados do documento. Toda geometria em METROS; todo tamanho de
@@ -482,6 +482,56 @@ export interface Logo extends BaseObject {
   heightPx: number;
 }
 
+/**
+ * Caixa de texto da FOLHA (B-106): o título da prova e o que mais se
+ * quiser escrever no papel. Mora em milímetros de papel, como o logo, e
+ * nunca entra na arrumação automática: fica onde foi posta, e os quadros
+ * se arrumam em volta dela.
+ */
+export interface TituloDaFolha extends BaseObject {
+  kind: 'titulo';
+  posMm: Vec2;
+  /** Largura da caixa; o texto se alinha dentro dela. */
+  widthMm: Millimeters;
+  /**
+   * Altura da caixa, como foi desenhada ou puxada pelo canto. Nunca menor
+   * que o texto: se o texto crescer, a caixa cresce junto. Ausente = a do texto.
+   */
+  heightMm?: Millimeters;
+  text: string;
+  sizeMm: Millimeters;
+  fonte: FonteDoTitulo;
+  bold: boolean;
+  italic: boolean;
+  align: 'start' | 'middle' | 'end';
+  color: string;
+  /** Contorno da caixa. Ausente = sem contorno. */
+  borda?: BordaDaCaixa;
+  /** Cor de fundo da caixa. Ausente = transparente (o desenho aparece por trás). */
+  fundo?: string;
+  /**
+   * Com o desempate em folha própria (B-107): a folha em que a caixa
+   * aparece — a em que foi criada. Ausente = nas duas.
+   */
+  folha?: 'percurso' | 'desempate';
+}
+
+/**
+ * `padrao` é a dos outros textos do croqui (quadros, números); as outras
+ * são fontes abertas que o Arena carrega e embute no PDF (public/fonts).
+ */
+export type FonteDoTitulo =
+  | 'padrao'
+  | 'arimo' | 'tinos' | 'cousine' | 'carlito' | 'caladea'
+  | 'open-sans' | 'noto-sans' | 'noto-serif' | 'source-sans-3' | 'source-serif-4'
+  | 'roboto' | 'lato' | 'montserrat';
+
+export interface BordaDaCaixa {
+  estilo: 'continua' | 'tracejada' | 'pontilhada';
+  espessuraMm: Millimeters;
+  cor: string;
+}
+
 /* --------------------------------------------- partida e chegada */
 
 /**
@@ -592,7 +642,8 @@ export type SceneObject =
   | HeightTable
   | BackgroundImage
   | Ornament
-  | Logo;
+  | Logo
+  | TituloDaFolha;
 
 export type ObjectKind = SceneObject['kind'];
 
@@ -679,6 +730,29 @@ export interface Desempate {
    * (B-99), com o desempate à vista. Ausente = mostra.
    */
   ordemNoObstaculo?: boolean;
+  /**
+   * Com o desempate em folha própria (B-107): a folha que está à vista e
+   * se edita na aba Impressão. Ausente = a do percurso.
+   */
+  folhaAtiva?: 'desempate';
+  /**
+   * A diagramação da folha que NÃO está à vista (B-107). A que está à vista
+   * mora nos campos de sempre (origem, escala, arranjo, posição dos itens
+   * de papel), e trocar de folha troca uma pela outra. Ausente = a folha do
+   * desempate ainda não foi aberta: nasce igual à do percurso.
+   */
+  outraFolha?: DiagramacaoDaFolha;
+}
+
+/** Onde estão a pista e os itens de papel numa folha do croqui (B-107). */
+export interface DiagramacaoDaFolha {
+  originMm: Vec2;
+  printScale: number;
+  arranjo?: ArranjoDaFolha;
+  /** Por item de papel: os campos de posição e tamanho (`CAMPOS_DA_FOLHA`). */
+  itens: Record<ObjectId, Record<string, unknown>>;
+  /** O usuário mudou a escala desta folha; sem isso, ela segue a do percurso. */
+  escalaPropria?: true;
 }
 
 /**

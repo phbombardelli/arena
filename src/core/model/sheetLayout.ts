@@ -1,6 +1,6 @@
 import { escalaQueCabe, STANDARD_SCALES, usableArea } from '@core/scale/units';
 import type { LadoDaFolha, PosicaoDaPista } from '@core/scale/units';
-import { heightTableLayout, infoBoxLayout } from './annotationLayout';
+import { heightTableLayout, infoBoxLayout, parteDaFolha } from './annotationLayout';
 import { anotacaoMm, centerOriginMm, desenhoCabe, extensaoDoDesenho, firstArena, fitScaleToPage } from './document';
 import { folgaDoDesenhoMm, freeAreaMm } from './document';
 import type { RectMm } from './document';
@@ -94,6 +94,8 @@ function itensDaFolha(doc: CourseDocument): { auto: Item[]; livres: RectMm[] } {
   const auto: Item[] = [];
   const livres: RectMm[] = [];
   for (const o of doc.objects) {
+    // A caixa de texto (B-106) flutua por cima de tudo: não empurra nada.
+    if (o.kind === 'titulo') continue;
     if (!ehPapel(o) || !o.visible) continue;
     const r = anotacaoMm(doc, o);
     if (!r) continue;
@@ -113,8 +115,9 @@ function itensDaFolha(doc: CourseDocument): { auto: Item[]; livres: RectMm[] } {
 function cheioDe(doc: CourseDocument, o: Papel, r: RectMm): Item {
   {
     if (o.kind === 'infobox') {
-      const empe = infoBoxLayout({ ...o, blocos: undefined });
-      const deitado = infoBoxLayout({ ...o, blocos: 'lado' });
+      const parte = parteDaFolha(doc);
+      const empe = infoBoxLayout({ ...o, blocos: undefined }, parte);
+      const deitado = infoBoxLayout({ ...o, blocos: 'lado' }, parte);
       // Deita só se houver seções e se couber na largura da folha.
       const cabe = deitado.widthMm <= usableArea(doc.page).widthMm + 0.5;
       const muda = deitado.widthMm !== empe.widthMm && cabe;

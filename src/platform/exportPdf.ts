@@ -3,6 +3,11 @@ import 'svg2pdf.js';
 import type { CourseDocument } from '@core/model/types';
 import { buildPaperSvg, paginasDaSaida } from './paperSvg';
 import { t } from '@core/i18n/i18n';
+import { carregaFontes, embuteFontes } from '@render/fontes';
+
+/** As fontes das caixas de texto do documento. */
+const fontesDoDoc = (doc: CourseDocument): string[] =>
+  doc.objects.flatMap((o) => (o.kind === 'titulo' && o.visible ? [o.fonte] : []));
 
 /**
  * Exportação em PDF **vetorial**: texto continua texto, linhas continuam
@@ -25,12 +30,16 @@ function makeDoc(widthMm: number, heightMm: number): jsPDF {
  */
 async function folhaPdf(doc: CourseDocument): Promise<jsPDF> {
   let pdf: jsPDF | null = null;
+  const fontes = fontesDoDoc(doc);
+  await carregaFontes(fontes);
   for (const vista of paginasDaSaida(doc)) {
     const handle = buildPaperSvg(doc, vista);
     try {
       const { widthMm, heightMm } = handle;
-      if (!pdf) pdf = makeDoc(widthMm, heightMm);
-      else pdf.addPage([widthMm, heightMm], widthMm >= heightMm ? 'landscape' : 'portrait');
+      if (!pdf) {
+        pdf = makeDoc(widthMm, heightMm);
+        await embuteFontes(pdf, fontes);
+      } else pdf.addPage([widthMm, heightMm], widthMm >= heightMm ? 'landscape' : 'portrait');
       await pdf.svg(handle.svg, { x: 0, y: 0, width: widthMm, height: heightMm });
     } finally {
       handle.dispose();

@@ -22,6 +22,7 @@ import { TextPanel } from './TextPanel';
 import { MeasurePanel } from './MeasurePanel';
 import { TimingPanel } from './TimingPanel';
 import { LogoPanel } from './LogoPanel';
+import { TituloPanel } from './TituloPanel';
 import { NumberField } from './NumberField';
 import { t } from '@core/i18n/i18n';
 import type { MessageKey } from '@core/i18n/messages';
@@ -39,6 +40,7 @@ const KIND_LABEL: Record<SceneObject['kind'], MessageKey> = {
   ornament: 'objeto.ornament',
   timing: 'objeto.timing',
   logo: 'objeto.logo',
+  titulo: 'objeto.titulo',
 };
 
 export function ObjectPanel() {
@@ -125,6 +127,7 @@ export function ObjectPanel() {
           {single.kind === 'infobox' && <InfoBoxPanel box={single} />}
           {single.kind === 'heighttable' && <HeightTablePanel table={single} />}
           {single.kind === 'logo' && <LogoPanel logo={single} />}
+          {single.kind === 'titulo' && <TituloPanel titulo={single} />}
           {single.kind === 'ornament' && (
             <>
               <label className="field">

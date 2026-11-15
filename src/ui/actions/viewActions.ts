@@ -1,6 +1,7 @@
 import { clamp } from '@core/geometry/vec';
 import { desenhoNaFolhaMm, pageRectMm } from '@core/model/document';
 import { folhaEm, folhaRectMm, paginasDaSaida, todasAsFolhasMm } from '@core/library/paginas';
+import { folhaAtiva, folhaDaVista, temDuasFolhas, trocaFolha } from '@core/library/folhas';
 import type { CourseDocument } from '@core/model/types';
 import type { ModoEditor } from '@store/editorStore';
 import { fitToRect, MAX_ZOOM, MIN_ZOOM, ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
@@ -39,9 +40,16 @@ export function fitPage(): void {
 export function irParaFolha(i: number): void {
   const el = document.querySelector('.canvas-svg') as SVGSVGElement | null;
   if (!el) return;
+  const { doc: antes, apply } = useDocumentStore.getState();
+  const paginas = paginasDaSaida(antes);
+  const j = Math.max(0, Math.min(paginas.length - 1, i));
+  // Folha do croqui com a outra diagramação (B-107): ela passa a ser a que se edita.
+  const p = paginas[j];
+  if (p && p !== 'especificacao' && temDuasFolhas(antes) && folhaDaVista(p) !== folhaAtiva(antes)) {
+    apply(t('folhas.trocar'), (d) => trocaFolha(d, folhaDaVista(p)));
+    useEditorStore.getState().setSelection([]);
+  }
   const { doc } = useDocumentStore.getState();
-  const n = paginasDaSaida(doc).length;
-  const j = Math.max(0, Math.min(n - 1, i));
   useEditorStore.getState().setViewport(fitToRect(folhaRectMm(doc, j), { width: el.clientWidth, height: el.clientHeight }));
 }
 

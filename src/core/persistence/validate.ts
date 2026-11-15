@@ -37,6 +37,7 @@ const KNOWN_KINDS: readonly ObjectKind[] = [
   'ornament',
   'timing',
   'logo',
+  'titulo',
 ] as const;
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
@@ -222,6 +223,11 @@ function checkGeometry(obj: Record<string, unknown>, index: number): void {
       if (!isPoint(obj.posMm)) fail('val.c.papel');
       if (!isFiniteNumber(obj.widthMm) || obj.widthMm <= 0) fail('val.c.largura');
       if (typeof obj.assetId !== 'string') fail('val.c.referencia');
+      break;
+    case 'titulo':
+      if (!isPoint(obj.posMm)) fail('val.c.papel');
+      if (!isFiniteNumber(obj.widthMm) || obj.widthMm <= 0) fail('val.c.largura');
+      if (typeof obj.text !== 'string') fail('val.c.texto');
       break;
   }
 }

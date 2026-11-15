@@ -965,6 +965,10 @@ p.state.warn { background: var(--warn-soft); color: var(--warn); font-weight: 50
 .segmentado { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 .segmentado button { border: 0; border-radius: 0; min-width: 32px; height: 28px; padding: 0 6px; font-size: 15px; background: transparent; }
 .segmentado button + button { border-left: 1px solid var(--border); }
+.inline-text.titulo { border: none; border-radius: 0; outline: 0.4px solid var(--act); outline-offset: 0; }
+.titulo-estilo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.titulo-estilo input[type=color] { width: 32px; height: 28px; padding: 0 2px; }
+.segmentado.texto button { font-size: 12.5px; padding: 0 10px; }
 .segmentado button.active { background: var(--act-soft); color: var(--act-ink); font-weight: 700; }
 .dsp-lista { margin: 4px 0; }
 .dsp-linha { display: flex; align-items: center; gap: 14px; padding: 5px 2px; border-top: 1px solid var(--border); }

@@ -1,6 +1,7 @@
 import type { CourseDocument } from '@core/model/types';
 import { buildPaperSvg, paginasDaSaida } from './paperSvg';
 import { t } from '@core/i18n/i18n';
+import { cssDasFontes } from '@render/fontes';
 
 /**
  * Impressão direta pelo navegador, também vetorial. Rota secundária ao
@@ -37,6 +38,7 @@ export function printDocument(doc: CourseDocument): void {
   docFrame.write(`<!doctype html><html><head><meta charset="utf-8">
 <title>${t('aviso.croqui')}</title>
 <style>
+  ${cssDasFontes()}
   @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; }
   html, body { margin: 0; padding: 0; }
   svg { display: block; break-after: page; }
@@ -49,10 +51,12 @@ export function printDocument(doc: CourseDocument): void {
 
   const cleanup = () => window.setTimeout(() => frame.remove(), 1000);
   win.addEventListener('afterprint', cleanup, { once: true });
-  window.setTimeout(() => {
+  // As fontes das caixas de texto (B-106) carregam antes de imprimir.
+  const pronto = docFrame.fonts?.ready ?? Promise.resolve();
+  void Promise.race([pronto, new Promise((r) => window.setTimeout(r, 3000))]).then(() => window.setTimeout(() => {
     win.focus();
     win.print();
     // Navegadores que não disparam afterprint não deixam o iframe órfão.
     window.setTimeout(cleanup, 60_000);
-  }, 100);
+  }, 100));
 }

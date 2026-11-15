@@ -1,4 +1,5 @@
-import { folhaEm, folhaRectMm, paginasDaSaida, type PaginaDaSaida } from '@core/library/paginas';
+import { folhaEm, folhaRectMm, indiceDaFolhaAtiva, paginasDaSaida, type PaginaDaSaida } from '@core/library/paginas';
+import { docDaFolha } from '@core/library/folhas';
 import type { CourseDocument } from '@core/model/types';
 import { RenderDocument } from '@render/renderDocument';
 import { FolhaEspecificacao } from '@render/FolhaEspecificacao';
@@ -10,20 +11,46 @@ import { setObstacleNote } from '@core/commands/obstacleOps';
 
 /**
  * Aba Impressão como visualização de impressão: as folhas que saem no PDF
- * ficam empilhadas, uma embaixo da outra. A primeira é a que se edita (o
- * Canvas a desenha); estas são as outras, só para ver.
+ * ficam empilhadas, uma embaixo da outra. A que se edita o Canvas desenha;
+ * estas são as outras. A do croqui com outra diagramação (desempate em
+ * folha própria, B-107) vira a que se edita com um clique.
  */
 export function FolhasExtras({ doc, zoom }: { doc: CourseDocument; zoom: number }) {
   const paginas = paginasDaSaida(doc);
   if (paginas.length < 2) return null;
+  const ativa = indiceDaFolhaAtiva(doc);
   return (
     // Só a observação da especificação responde ao clique; o resto é para ver.
     <g pointerEvents="none" data-layer="folhas-extras">
-      {paginas.slice(1).map((p, j) => {
-        const r = folhaRectMm(doc, j + 1);
+      {paginas.map((p, i) => {
+        if (i === ativa) return null;
+        const r = folhaRectMm(doc, i);
+        const croqui = p !== 'especificacao';
+        const daFolha = croqui ? docDaFolha(doc, p) : doc;
         return (
-          <g key={`${p}-${j}`} transform={`translate(${r.x} ${r.y})`}>
-            <rect x={0} y={0} width={r.width} height={r.height} fill="#ffffff" stroke="#9aa0a6" strokeWidth={1 / zoom} />
+          <g key={`${p}-${i}`} transform={`translate(${r.x} ${r.y})`}>
+            <rect
+              x={0}
+              y={0}
+              width={r.width}
+              height={r.height}
+              fill="#ffffff"
+              stroke="#9aa0a6"
+              strokeWidth={1 / zoom}
+              {...(croqui
+                ? {
+                    pointerEvents: 'all',
+                    style: { cursor: 'pointer' },
+                    onPointerDown: (e: React.PointerEvent) => {
+                      if (e.button !== 0) return;
+                      e.stopPropagation();
+                      irParaFolha(i);
+                    },
+                  }
+                : {})}
+            >
+              {croqui && <title>{t('folhas.cliqueParaEditar')}</title>}
+            </rect>
             <svg x={0} y={0} width={r.width} height={r.height} viewBox={`0 0 ${r.width} ${r.height}`} overflow="hidden">
               {p === 'especificacao' ? (
                 <FolhaEspecificacao
@@ -33,7 +60,7 @@ export function FolhasExtras({ doc, zoom }: { doc: CourseDocument; zoom: number 
               ) : (
                 <RenderDocument
                   mode="paper"
-                  doc={doc}
+                  doc={daFolha}
                   vista={p}
                   selection={[]}
                   viewBoxMm={{ x: 0, y: 0, width: r.width, height: r.height }}

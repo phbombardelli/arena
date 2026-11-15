@@ -6,7 +6,7 @@ import { useDocumentStore } from '@store/documentStore';
 import { NumberField } from './NumberField';
 import { fieldLabel, mostraDesempate, temDesempate, temFase2 } from '@core/library/annotations';
 import { preencheFases } from '@core/library/duasFases';
-import { empurraAbaixo, heightTableLayout, infoBoxLayout } from '@core/model/annotationLayout';
+import { empurraAbaixo, heightTableLayout, infoBoxLayout, parteDaFolha } from '@core/model/annotationLayout';
 import { pageSize } from '@core/scale/units';
 import { ordemQuadro } from '@core/library/desempate';
 import { aplicaTempos, aplicaTemposDesempate, aplicaTemposFase2, FORMATOS_TEMPO, type FormatoTempo } from '@core/library/courseTimes';
@@ -60,7 +60,7 @@ function saiDaFolha(doc: CourseDocument): boolean {
   const obstaculos = doc.objects.filter((x): x is Obstacle => x.kind === 'obstacle');
   return doc.objects.some((o) =>
     o.kind === 'infobox'
-      ? o.posMm.y + infoBoxLayout(o).heightMm > limite
+      ? o.posMm.y + infoBoxLayout(o, parteDaFolha(doc)).heightMm > limite
       : o.kind === 'heighttable' && o.posMm.y + heightTableLayout(o, obstaculos).heightMm > limite,
   );
 }
@@ -228,7 +228,7 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
       <NumberField
         label={t('campo.altura')}
         unit="mm"
-        value={Math.round(infoBoxLayout(box).heightMm * 10) / 10}
+        value={Math.round(infoBoxLayout(box, parteDaFolha(doc)).heightMm * 10) / 10}
         decimals={0}
         step={2}
         min={10}

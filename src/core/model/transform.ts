@@ -2,7 +2,7 @@ import type { Vec2 } from '@core/geometry/vec';
 import { normalizeAngle, rotate } from '@core/geometry/vec';
 import { obstacleExtent } from '@core/library/obstacles';
 import { timingExtent } from '@core/library/timing';
-import { heightTableLayout, infoBoxLayout } from './annotationLayout';
+import { heightTableLayout, infoBoxLayout, parteDaFolha, tituloLayout, type ParteDoQuadro } from './annotationLayout';
 import { arenaPoints, toPolygon } from './arena';
 import { flattenPath } from './path';
 import { paperToMeters } from '@core/scale/units';
@@ -49,7 +49,7 @@ export const objectScope = (obj: SceneObject): ObjectScope =>
 
 /** Objetos posicionados em milímetros de papel, não em metros do terreno. */
 export function isPaperAnchored(obj: SceneObject): boolean {
-  return obj.kind === 'infobox' || obj.kind === 'heighttable' || obj.kind === 'logo';
+  return obj.kind === 'infobox' || obj.kind === 'heighttable' || obj.kind === 'logo' || obj.kind === 'titulo';
 }
 
 export function getPosition(obj: SceneObject, printScale: PrintScale): Vec2 {
@@ -65,6 +65,7 @@ export function getPosition(obj: SceneObject, printScale: PrintScale): Vec2 {
     case 'infobox':
     case 'heighttable':
     case 'logo':
+    case 'titulo':
       return {
         x: paperToMeters(obj.posMm.x, printScale),
         y: paperToMeters(obj.posMm.y, printScale),
@@ -92,7 +93,8 @@ export function translate(obj: SceneObject, deltaM: Vec2, printScale: PrintScale
       return;
     case 'infobox':
     case 'heighttable':
-    case 'logo': {
+    case 'logo':
+    case 'titulo': {
       const k = 1000 / printScale;
       obj.posMm = { x: obj.posMm.x + deltaM.x * k, y: obj.posMm.y + deltaM.y * k };
       return;
@@ -254,6 +256,8 @@ export function getBounds(
   printScale: PrintScale,
   /** Só a tabela de alturas precisa: ela mede pelas linhas que vai imprimir. */
   obstacles: Obstacle[] = [],
+  /** Que parte do quadro técnico a folha mostra (B-107). */
+  parte: ParteDoQuadro = 'tudo',
 ): Bounds {
   switch (obj.kind) {
     case 'arena':
@@ -328,7 +332,7 @@ export function getBounds(
     // real e uma altura por linha — quem precisa do exato passa a lista.
     case 'infobox': {
       const pos = getPosition(obj, printScale);
-      const l = infoBoxLayout(obj);
+      const l = infoBoxLayout(obj, parte);
       return {
         min: pos,
         max: {
@@ -344,6 +348,17 @@ export function getBounds(
         max: {
           x: pos.x + paperToMeters(obj.widthMm, printScale),
           y: pos.y + paperToMeters(logoHeightMm(obj), printScale),
+        },
+      };
+    }
+    case 'titulo': {
+      const pos = getPosition(obj, printScale);
+      const l = tituloLayout(obj);
+      return {
+        min: pos,
+        max: {
+          x: pos.x + paperToMeters(l.widthMm, printScale),
+          y: pos.y + paperToMeters(l.heightMm, printScale),
         },
       };
     }
@@ -437,6 +452,7 @@ export function boundsIn(doc: CourseDocument, obj: SceneObject): Bounds {
     obj,
     doc.page.printScale,
     doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'),
+    parteDaFolha(doc),
   );
   if (!isPaperAnchored(obj)) return b;
   // Quadro, tabela e logo moram em mm da FOLHA: para cair no mesmo sistema
@@ -465,6 +481,7 @@ export function scaleMode(obj: SceneObject): 'livre' | 'proporcional' | null {
     case 'image':
     case 'logo':
       return 'proporcional';
+    case 'titulo':
     case 'infobox':
     case 'heighttable':
       return 'livre';
@@ -526,6 +543,14 @@ export function scaleObject(
       setPosition(obj, em(getPosition(obj, printScale)), printScale);
       obj.widthMm *= sx;
       return;
+    case 'titulo': {
+      // Como o quadro: o canto muda largura e altura, a letra fica.
+      const l = tituloLayout(obj);
+      setPosition(obj, em(getPosition(obj, printScale)), printScale);
+      obj.widthMm = Math.max(5, obj.widthMm * sx);
+      obj.heightMm = Math.max(1, l.heightMm * sy);
+      return;
+    }
     case 'heighttable': {
       // Puxar o canto dá à tabela um tamanho escolhido, como nos campos do
       // painel; `tamanho` é o que ela mede agora (vem de `scaleInDoc`).
@@ -555,7 +580,7 @@ export function scaleInDoc(doc: CourseDocument, obj: SceneObject, ancora: Vec2, 
     obj.kind === 'heighttable'
       ? heightTableLayout(obj, doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle'))
       : obj.kind === 'infobox'
-        ? infoBoxLayout(obj)
+        ? infoBoxLayout(obj, parteDaFolha(doc))
         : undefined;
   scaleObject(obj, a, sx, sy, doc.page.printScale, tamanho);
 }

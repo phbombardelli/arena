@@ -6,6 +6,7 @@ import { syncTimingLines } from '@core/library/timing';
 import { ligaDesempateNosQuadros, syncQuadroDesempate } from '@core/library/desempate';
 import { syncDuasFases } from '@core/library/duasFases';
 import { syncArranjo } from '@core/model/sheetLayout';
+import { syncFolhas } from '@core/library/folhas';
 import { syncPathAnchors } from '@core/commands/pathAnchors';
 import { enforceLockedDistances } from '@core/commands/distanceOps';
 import type { FileHandleLike } from '@platform/fileSystem';
@@ -74,6 +75,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       syncPathAnchors(draft);
       enforceLockedDistances(draft);
       syncQuadroDesempate(draft);
+      syncFolhas(draft);
       // Por último: o quadro já tem a altura final (desempate, duas fases).
       syncArranjo(draft);
     });

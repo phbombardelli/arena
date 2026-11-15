@@ -5,6 +5,7 @@ import { pageSize } from '@core/scale/units';
 import { RenderDocument } from '@render/renderDocument';
 import { FolhaEspecificacao } from '@render/FolhaEspecificacao';
 import type { PaginaDaSaida } from '@core/library/paginas';
+import { docDaFolha } from '@core/library/folhas';
 
 export { paginasDaSaida, type PaginaDaSaida } from '@core/library/paginas';
 
@@ -21,7 +22,9 @@ export interface PaperSvgHandle {
   dispose: () => void;
 }
 
-export function buildPaperSvg(doc: CourseDocument, vista: PaginaDaSaida = 'ambos'): PaperSvgHandle {
+export function buildPaperSvg(docDoEditor: CourseDocument, vista: PaginaDaSaida = 'ambos'): PaperSvgHandle {
+  // Cada folha com a sua diagramação (B-107).
+  const doc = vista === 'especificacao' ? docDoEditor : docDaFolha(docDoEditor, vista);
   const { widthMm, heightMm } = pageSize(doc.page);
 
   const host = document.createElement('div');
