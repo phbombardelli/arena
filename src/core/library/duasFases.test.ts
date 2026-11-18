@@ -196,6 +196,19 @@ describe('prova em duas fases (B-95)', () => {
     expect(avisosDuasFases(comDesempate).map((a) => a.chave)).toContain('df.avisoDesempate');
   });
 
+  it('na especial, com menos de 7 na 1ª, a 2ª pode ter até 13 menos a 1ª', () => {
+    const fim = (n: number, ultimo: string) =>
+      produce(prova(n), (d) => {
+        ligaDuasFases(d, true);
+        mudaFimDaPrimeira(d, d.objects.find((o) => o.kind === 'obstacle' && o.number === ultimo)!.id);
+      });
+    // 5 + 8 = 13: duas fases especial, dentro da regra.
+    expect(avisosDuasFases(fim(13, '5')).map((a) => a.chave)).toEqual([]);
+    // 5 + 9 = 14: a 2ª passou de 8.
+    const longa = avisosDuasFases(fim(14, '5'));
+    expect(longa.find((a) => a.chave === 'df.avisoSegundaEspecial')?.params).toEqual({ n: 9, n1: 5, max: 8 });
+  });
+
   it('a divisa sai quando a 2ª fase fica sem obstáculo', () => {
     const doc = produce(prova(), (d) => {
       ligaDuasFases(d, true);

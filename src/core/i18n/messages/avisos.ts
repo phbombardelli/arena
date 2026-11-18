@@ -51,6 +51,7 @@ export const AVISOS = {
   'interf.sobreAgua': { pt: 'O {a} está sobre uma massa d\'água', en: '{a} is on a pond or stream', es: 'El {a} está sobre una laguna o arroyo' },
   'interf.sobreIlha': { pt: 'O traçado passa por cima de uma ilha', en: 'The track runs over an island', es: 'El trazado pasa por encima de una isla' },
   'interf.sobreVaso': { pt: 'O traçado passa por cima de um vaso', en: 'The track runs over a planter', es: 'El trazado pasa por encima de una maceta' },
+  'interf.tripliceNaCombinacao': { pt: 'Na combinação, a tríplice só pode ser o 1º elemento, e a {a} não é (Art. 237.5)', en: 'In a combination a triple bar can only be the 1st element, and {a} is not (Art. 237.5)', es: 'En la combinación, la triple barra solo puede ser el 1º elemento, y la {a} no lo es (Art. 237.5)' },
   'interf.semSaltar': { pt: 'O traçado passa pelo {a} sem saltá-lo', en: 'The track goes past {a} without jumping it', es: 'El trazado pasa por el {a} sin saltarlo' },
   'ride.partida': { pt: 'partida', en: 'start', es: 'partida' },
   'ride.chegada': { pt: 'chegada', en: 'finish', es: 'llegada' },

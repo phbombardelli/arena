@@ -194,3 +194,19 @@ describe('ornamentos que ocupam o chão (decisão 74)', () => {
     expect(vaso.scope).toBe('percurso');
   });
 });
+
+describe('regra da combinação (237.5)', () => {
+  it('a tríplice só pode ser o primeiro elemento', () => {
+    const doc = (tipoB: 'triplice' | 'vertical', tipoA: 'triplice' | 'vertical') =>
+      comPista((d) => {
+        const a = createObstacle(tipoA, { x: 30, y: 25 }, '3');
+        a.letter = 'A';
+        const b = createObstacle(tipoB, { x: 40, y: 25 }, '3');
+        b.letter = 'B';
+        addObject(d, a);
+        addObject(d, b);
+      });
+    expect(tipos(doc('triplice', 'vertical'))).toContain('triplice-na-combinacao');
+    expect(tipos(doc('vertical', 'triplice'))).not.toContain('triplice-na-combinacao');
+  });
+});

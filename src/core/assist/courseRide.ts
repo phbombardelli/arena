@@ -94,8 +94,23 @@ export function phaseStops(doc: CourseDocument, fase: Fase): RideStop[] {
   return groupStops(elementosDoDesempate(obstacles, doc.desempate));
 }
 
-/** Vertical que pode virar oxer no desempate (FEI 218.2.7). */
-export const viraOxer = (o: Obstacle): boolean => o.type === 'vertical';
+/**
+ * O tipo para o qual o obstáculo pode mudar no desempate (FEI 218.2.7.1):
+ * vertical vira oxer, oxer vira vertical. Os outros não mudam.
+ */
+export const tipoTrocado = (o: Obstacle): 'oxer' | 'vertical' | null =>
+  o.type === 'vertical' ? 'oxer' : o.type === 'oxer' ? 'vertical' : null;
+
+/** O obstáculo pode trocar de tipo no desempate (vertical ↔ oxer). */
+export const viraOxer = (o: Obstacle): boolean => tipoTrocado(o) != null;
+
+/**
+ * O degrau pode ser saltado ao contrário no desempate. O obstáculo
+ * isolado, sempre; a combinação, só inteira e de dois verticais
+ * (FEI e CBH 218.2.7.2).
+ */
+export const podeContrario = (originais: Obstacle[]): boolean =>
+  originais.length === 1 || (originais.length === 2 && originais.every((o) => o.type === 'vertical'));
 
 /**
  * O obstáculo como ele é saltado no desempate: no sentido contrário, a
@@ -105,11 +120,26 @@ export const viraOxer = (o: Obstacle): boolean => o.type === 'vertical';
  */
 export function comoNoDesempate(o: Obstacle, desempate: Desempate | undefined): Obstacle {
   const contrario = desempate?.contrario?.includes(o.id) === true;
-  const oxer = desempate?.oxer?.includes(o.id) === true && viraOxer(o);
-  if (!contrario && !oxer) return o;
+  const troca =
+    desempate?.oxer?.includes(o.id) === true && !desempate.oxerPreso?.includes(o.id) ? tipoTrocado(o) : null;
+  if (!contrario && !troca) return o;
   const copia: Obstacle = { ...o, arrow: { ...o.arrow } };
   if (contrario) copia.arrow.reversed = !o.arrow.reversed;
-  if (oxer) {
+  if (troca === 'vertical') {
+    // O oxer que vira vertical perde a vara de trás, ou a da frente quando
+    // a distância para o seguinte está marcada e vale no desempate: o
+    // vertical fica onde estava a vara que ficou.
+    copia.type = 'vertical';
+    copia.spreadM = obstacleDef('vertical').spreadM;
+    if (desempate?.varaFrente?.includes(o.id)) {
+      const meia = (o.spreadM ?? 0) / 2;
+      const sentido = fromAngle(o.rotation + (o.arrow.reversed ? 90 : -90));
+      copia.pos = add(o.pos, scale(sentido, meia));
+      copia.elements = o.elements.slice(-1);
+    } else {
+      copia.elements = fitElementsToType(o.elements, 'vertical');
+    }
+  } else if (troca === 'oxer') {
     copia.type = 'oxer';
     // A vara de trás nasce na altura da da frente, até o desenhador dizer.
     const frente = o.elements[0]?.height ?? null;
@@ -292,9 +322,11 @@ export function courseGates(
 ): CoursePrep | null {
   const obstacles = doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle');
   const arena = doc.objects.find((o) => o.kind === 'arena' && !o.structure);
+  // No desempate, o que saiu da pista não é barreira.
+  const retirados = fase === 'desempate' ? new Set(doc.desempate?.retirados ?? []) : new Set<string>();
   const field: Field = fieldFrom(
     arena?.kind === 'arena' ? arena : null,
-    obstacles,
+    obstacles.filter((o) => !retirados.has(o.id)),
     decorBodies(doc).map((d) => d.outline),
   );
 

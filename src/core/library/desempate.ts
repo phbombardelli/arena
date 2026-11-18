@@ -1,5 +1,5 @@
-import { courseOrder, groupStops, phaseStops, type RideStop } from '@core/assist/courseRide';
-import type { CourseDocument, Desempate, ObjectId, Obstacle, VistaProva } from '@core/model/types';
+import { courseOrder, groupStops, phaseStops, podeContrario, tipoTrocado, type RideStop } from '@core/assist/courseRide';
+import type { CourseDocument, CoursePath, Desempate, ObjectId, Obstacle, VistaProva } from '@core/model/types';
 import { t } from '@core/i18n/i18n';
 import { mostraDesempate, temDesempate } from './annotations';
 import { aplicaTemposDesempate } from './courseTimes';
@@ -26,8 +26,22 @@ const obstaculosDe = (doc: CourseDocument): Obstacle[] =>
 /** A ordem como se digita: "1-2-5AB-6-14". */
 export const ordemTexto = (stops: RideStop[]): string => stops.map((s) => s.label).join('-');
 
-/** O que muda no obstáculo no desempate (FEI 218.2.7). */
+/**
+ * O que muda no obstáculo no desempate (FEI 218.2.7). 'oxer' é a troca de
+ * tipo: o vertical vira oxer e o oxer vira vertical (o nome ficou do tempo
+ * em que só havia o primeiro caso, e é o que os arquivos guardam).
+ */
 export type Variacao = 'contrario' | 'oxer';
+
+/** Os obstáculos do degrau como estão no percurso, antes do desempate. */
+export const originaisDe = (doc: CourseDocument, stop: RideStop): Obstacle[] =>
+  stop.elements
+    .map((e) => obstaculosDe(doc).find((o) => o.id === e.id))
+    .filter((o): o is Obstacle => o != null);
+
+/** Rótulo da troca de tipo para o obstáculo do percurso. */
+export const chaveDaTroca = (o: Obstacle | undefined): 'dsp.oxer' | 'dsp.vertical' =>
+  o && tipoTrocado(o) === 'vertical' ? 'dsp.vertical' : 'dsp.oxer';
 
 export const variacoesDe = (desempate: Desempate | undefined, id: ObjectId): Variacao[] => [
   ...(desempate?.contrario?.includes(id) ? (['contrario'] as const) : []),
@@ -36,7 +50,9 @@ export const variacoesDe = (desempate: Desempate | undefined, id: ObjectId): Var
 
 /** O degrau mudou no desempate: algum elemento invertido ou virado oxer. */
 const degrauMudou = (desempate: Desempate | undefined, stop: RideStop): boolean =>
-  stop.elements.some((e) => variacoesDe(desempate, e.id).length > 0);
+  stop.elements.some((e) =>
+    variacoesDe(desempate, e.id).some((v) => v === 'contrario' || !desempate?.oxerPreso?.includes(e.id)),
+  );
 
 /**
  * A ordem como sai no quadro, com o que muda: "1-4-7 (inv.)-8 (oxer)".
@@ -47,7 +63,9 @@ export function ordemQuadro(doc: CourseDocument): string {
   return phaseStops(doc, 'desempate')
     .map((s) => {
       const marcas = [...new Set(s.elements.flatMap((e) => variacoesDe(doc.desempate, e.id)))];
-      const sufixo = marcas.map((m) => t(m === 'contrario' ? 'dsp.marcaContrario' : 'dsp.marcaOxer')).join(' ');
+      const original = originaisDe(doc, s)[0];
+      const marcaTroca = original && tipoTrocado(original) === 'vertical' ? 'dsp.marcaVertical' : 'dsp.marcaOxer';
+      const sufixo = marcas.map((m) => t(m === 'contrario' ? 'dsp.marcaContrario' : marcaTroca)).join(' ');
       return sufixo ? `${s.label} ${sufixo}` : s.label;
     })
     .join('-');
@@ -73,6 +91,84 @@ export function limpaVariacoes(desempate: Desempate): void {
     if (ficam && ficam.length > 0) desempate[v] = ficam;
     else delete desempate[v];
   }
+}
+
+/**
+ * Qual vara sai do oxer que vira vertical no desempate. Pesa a distância
+ * marcada para aparecer no croqui (a que o armador mede no detalhe na
+ * pista) e/ou travada no cadeado, para o obstáculo anterior e para o
+ * seguinte, e se ela vale no desempate: o vizinho vem logo antes (ou logo
+ * depois) também na ordem do desempate, os dois no sentido do percurso.
+ * - só a do anterior vale: sai a de trás (a entrada fica);
+ * - só a do seguinte vale: sai a da frente (a saída fica);
+ * - as duas valem: ele não pode virar vertical;
+ * - nenhuma: sai a de trás.
+ */
+export function varaQueSai(doc: CourseDocument, o: Obstacle): 'tras' | 'frente' | 'nenhuma' {
+  const desempate = doc.desempate;
+  const percurso = courseOrder(obstaculosDe(doc)).flatMap((s) => s.elements);
+  const i = percurso.findIndex((e) => e.id === o.id);
+  const ordem = desempate?.ordem ?? [];
+  const j = ordem.indexOf(o.id);
+  if (i < 0 || j < 0) return 'tras';
+  const tracados = doc.objects.filter(
+    (p): p is CoursePath => p.kind === 'path' && !p.exercise && p.fase !== 'desempate',
+  );
+  const marcada = (de: ObjectId, para: ObjectId) =>
+    tracados.some((p) => p.obstacleDistances[`${de}>${para}`] === true || p.lockedDistances?.[`${de}>${para}`] != null);
+  const invertido = (id: ObjectId) => desempate?.contrario?.includes(id) === true;
+  const vale = (vizinho: Obstacle | undefined, noDesempate: ObjectId | undefined, antes: boolean) =>
+    vizinho != null &&
+    vizinho.id === noDesempate &&
+    !invertido(vizinho.id) &&
+    !invertido(o.id) &&
+    (antes ? marcada(vizinho.id, o.id) : marcada(o.id, vizinho.id));
+  const anterior = vale(percurso[i - 1], ordem[j - 1], true);
+  const seguinte = vale(percurso[i + 1], ordem[j + 1], false);
+  if (anterior && seguinte) return 'nenhuma';
+  return seguinte ? 'frente' : 'tras';
+}
+
+/** Recalcula, depois de cada edição, qual vara sai dos oxers que viram vertical. */
+export function syncVarasDoDesempate(doc: CourseDocument): void {
+  const d = doc.desempate;
+  if (!d) return;
+  // Quem entrou na ordem (ou foi apagado) deixa de estar retirado.
+  if (d.retirados) {
+    const existe = new Set(obstaculosDe(doc).map((o) => o.id));
+    const ficam = d.retirados.filter((id) => existe.has(id) && !d.ordem.includes(id));
+    if (ficam.length !== d.retirados.length) {
+      if (ficam.length > 0) d.retirados = ficam;
+      else delete d.retirados;
+    }
+  }
+  const frente: ObjectId[] = [];
+  const presos: ObjectId[] = [];
+  for (const id of d.oxer ?? []) {
+    const o = obstaculosDe(doc).find((x) => x.id === id);
+    if (!o || tipoTrocado(o) !== 'vertical') continue;
+    const sai = varaQueSai(doc, o);
+    if (sai === 'frente') frente.push(id);
+    else if (sai === 'nenhuma') presos.push(id);
+  }
+  const igual = (a: ObjectId[] | undefined, b: ObjectId[]) => (a ?? []).join() === b.join();
+  if (!igual(d.varaFrente, frente)) {
+    if (frente.length > 0) d.varaFrente = frente;
+    else delete d.varaFrente;
+  }
+  if (!igual(d.oxerPreso, presos)) {
+    if (presos.length > 0) d.oxerPreso = presos;
+    else delete d.oxerPreso;
+  }
+}
+
+/** Marca (ou desmarca) que o obstáculo sai da pista no desempate. */
+export function marcaRetirado(doc: CourseDocument, id: ObjectId, sai: boolean): void {
+  if (!doc.desempate) return;
+  const atual = doc.desempate.retirados ?? [];
+  const nova = sai ? [...new Set([...atual, id])] : atual.filter((x) => x !== id);
+  if (nova.length > 0) doc.desempate.retirados = nova;
+  else delete doc.desempate.retirados;
 }
 
 export interface OrdemLida {
@@ -144,11 +240,26 @@ export function avisosDesempate(doc: CourseDocument): AvisoDesempate[] {
   if (temCombinacao(percurso) && !temCombinacao(desempate)) avisos.push({ key: 'dsp.avisoCombinacao' });
 
   // 218.2.7: no máximo dois obstáculos a mais. Contam o novo, o saltado
-  // no sentido contrário e o vertical que vira oxer.
-  const extras = desempate.filter(
-    (s) => s.elements.some((e) => e.soDesempate) || degrauMudou(doc.desempate, s),
-  ).length;
+  // no sentido contrário e o que troca de tipo (vertical ↔ oxer). A
+  // combinação de dois verticais saltada ao contrário vale pelos dois
+  // (218.2.7.2); outra combinação não pode ser saltada ao contrário.
+  let extras = 0;
+  for (const s of desempate) {
+    const contrario = s.elements.some((e) => variacoesDe(doc.desempate, e.id).includes('contrario'));
+    if (s.elements.length > 1 && contrario) {
+      if (podeContrario(originaisDe(doc, s))) extras += 2;
+      else avisos.push({ key: 'dsp.avisoContrarioComb', params: { o: s.label } });
+    } else if (s.elements.some((e) => e.soDesempate) || degrauMudou(doc.desempate, s)) {
+      extras += 1;
+    }
+  }
   if (extras > 2) avisos.push({ key: 'dsp.avisoExtras', params: { n: extras } });
+
+  // O oxer marcado para virar vertical, com as duas distâncias valendo.
+  for (const id of doc.desempate?.oxerPreso ?? []) {
+    const o = obstaculosDe(doc).find((x) => x.id === id);
+    if (o) avisos.push({ key: 'dsp.avisoOxerPreso', params: { o: `${o.number}${o.letter}` } });
+  }
 
   // 218.2.4: na tríplice ou quádrupla, o elemento do meio não sai.
   const usados = new Set(ordem);

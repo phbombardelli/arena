@@ -1,4 +1,5 @@
 import { useDocumentStore } from '@store/documentStore';
+import { useEditorStore } from '@store/editorStore';
 import { documentPdfDataUrl, exportDiagnosticPdf } from './exportPdf';
 
 /**
@@ -11,6 +12,7 @@ export function installDevBridge(): void {
       documentPdf: () => documentPdfDataUrl(useDocumentStore.getState().doc),
       diagnosticPdf: () => exportDiagnosticPdf(),
       store: useDocumentStore,
+      editor: useEditorStore,
     },
   });
 }

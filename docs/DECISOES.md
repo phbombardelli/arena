@@ -2344,3 +2344,28 @@ folhas com diagramação própria (B-107), folha de especificação (B-108).
 - Desempate em folha própria: a folha à vista mora nos campos de sempre e a
   outra em `desempate.outraFolha` (`trocaFolha`, `docDaFolha`); o conteúdo é
   um só. `titulo.folha` limita a caixa a uma folha.
+
+## 108. Desempate conforme o regulamento (1.7.0, 18/11/2026)
+
+Revisão contra a FEI 2026 (28ª ed.) e a CBH 2026, Art. 218.2, 222, 237 e 241.2.
+
+**Troca de tipo** (`desempate.oxer`, o nome antigo ficou): o vertical vira oxer e o oxer vira vertical, como na FEI 218.2.7.1. A CBH não traz essa frase e mantém o 218.2.4; o programa segue a FEI.
+
+**Vara que sai do oxer.** `syncVarasDoDesempate` recalcula, a cada edição, `varaFrente` e `oxerPreso`. Uma distância conta quando:
+- está marcada no croqui e/ou travada no cadeado;
+- o vizinho vem logo antes ou logo depois também na ordem do desempate;
+- nenhum dos dois está invertido.
+
+Com a distância do seguinte valendo, sai a vara da frente e o vertical fica onde estava a de trás. Com as duas valendo, o oxer não vira vertical: não conta como extra e aparece o aviso. Nos outros casos, sai a de trás.
+
+**Ao contrário na combinação:** só a combinação inteira de dois verticais, e ela conta 2 extras (218.2.7.2). Nas outras combinações, a caixa não aparece; uma marca antiga gera aviso.
+
+**Retirados** (`desempate.retirados`): saem da pista no desempate. Não são barreira para o assistente do desempate, nem interferência para o traçado do desempate, e somem da vista e da folha dele. Quem entra na ordem perde a marca. Fora da ordem e sem a marca, o obstáculo continua armado.
+
+**Avisos:**
+- a tríplice fora do 1º elemento da combinação entra no rodapé (237.5);
+- a 2ª fase da especial aceita até 13 menos a 1ª;
+- a extensão máxima (241.2.4) é uma linha do painel do quadro.
+
+Tudo isso só informa; nada é bloqueado, salvo a caixa "ao contrário" nas combinações que o regulamento não permite.
+

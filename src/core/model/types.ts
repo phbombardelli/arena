@@ -721,10 +721,28 @@ export interface Desempate {
   ordem: ObjectId[];
   /** O que sai no PDF e na impressão; sem escolha, só o percurso. */
   folha?: FolhaDesempate;
+  /**
+   * Obstáculos do percurso que saem da pista para o desempate: o traçado
+   * do desempate pode passar por onde eles estavam. Os que ficam de fora
+   * da ordem sem esta marca continuam armados, e o traçado desvia deles.
+   */
+  retirados?: ObjectId[];
   /** Obstáculos saltados no sentido contrário no desempate. */
   contrario?: ObjectId[];
-  /** Verticais que viram oxer no desempate. */
+  /** Os que trocam de tipo no desempate: vertical vira oxer, oxer vira vertical. */
   oxer?: ObjectId[];
+  /**
+   * Oxers que viram vertical perdendo a vara da FRENTE, porque a distância
+   * para o seguinte está marcada e vale no desempate. Calculado a cada
+   * edição (syncVarasDoDesempate); ausente = sai a de trás.
+   */
+  varaFrente?: ObjectId[];
+  /**
+   * Oxers marcados para virar vertical que não podem: as distâncias para o
+   * anterior e para o seguinte estão marcadas e valem no desempate.
+   * Calculado a cada edição.
+   */
+  oxerPreso?: ObjectId[];
   /**
    * A posição na ordem do desempate num círculo azul ao lado do número
    * (B-99), com o desempate à vista. Ausente = mostra.

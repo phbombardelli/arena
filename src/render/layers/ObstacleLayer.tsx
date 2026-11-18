@@ -22,7 +22,7 @@ interface Props {
    * Com o percurso e o desempate juntos, o que muda no desempate (B-92):
    * a seta azul do sentido contrário e a etiqueta do vertical que vira oxer.
    */
-  noDesempate?: { contrario: boolean; oxer: boolean };
+  noDesempate?: { contrario: boolean; oxer: boolean; retirado?: boolean };
   /** Posição na ordem do desempate (B-99): o círculo azul ao lado do número. */
   ordemDesempate?: number;
   onPointerDown?: (e: React.PointerEvent) => void;
@@ -59,7 +59,8 @@ export function ObstacleLayer({
   const comNumero = obstacle.numberLabel.visible && numero !== '';
   const etiquetas = [
     ...(obstacle.soDesempate && comNumero ? [{ chave: 'so', texto: t('dsp.soDesempate'), cor: color.ink }] : []),
-    ...(noDesempate?.oxer && comNumero ? [{ chave: 'oxer', texto: t('dsp.oxerNoDesempate'), cor: COR_DESEMPATE }] : []),
+    ...(noDesempate?.retirado && comNumero ? [{ chave: 'sai', texto: t('dsp.retiradoNoDesempate'), cor: COR_DESEMPATE }] : []),
+    ...(noDesempate?.oxer && comNumero ? [{ chave: 'oxer', texto: t(obstacle.type === 'oxer' ? 'dsp.verticalNoDesempate' : 'dsp.oxerNoDesempate'), cor: COR_DESEMPATE }] : []),
   ];
   const nx = cx + numeroEm.x * k;
   const ny = cy + numeroEm.y * k;

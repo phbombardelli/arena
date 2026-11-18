@@ -39,7 +39,8 @@ export type InterferenceKind =
   | 'tracado-cruza-obstaculo'
   | 'obstaculo-fora-da-pista'
   | 'obstaculo-na-agua'
-  | 'tracado-cruza-ornamento';
+  | 'tracado-cruza-ornamento'
+  | 'triplice-na-combinacao';
 
 export interface Interference {
   kind: InterferenceKind;
@@ -199,6 +200,22 @@ export function findInterferences(doc: CourseDocument): Interference[] {
     }
   }
 
+  // Na combinação, a tríplice só pode ser o primeiro elemento (FEI e CBH
+  // 237.5). É regra de montagem, e o aviso só informa.
+  for (const o of obstacles) {
+    if (o.type !== 'triplice' || o.number.trim() === '' || o.letter === '') continue;
+    const anteriores = obstacles.filter(
+      (x) => x !== o && x.number.trim() === o.number.trim() && x.letter !== '' && x.letter < o.letter,
+    );
+    if (anteriores.length === 0) continue;
+    out.push({
+      kind: 'triplice-na-combinacao',
+      ids: [o.id],
+      at: o.pos,
+      message: t('interf.tripliceNaCombinacao', { a: obstacleLabel(o) }),
+    });
+  }
+
   // Obstáculo fora do contorno da pista.
   if (arena) {
     const contorno = arenaPoints(arena);
@@ -252,9 +269,12 @@ export function findInterferences(doc: CourseDocument): Interference[] {
   }
 
   // O traçado contra cada obstáculo: ou salta ideal, ou está errado.
+  const retirados = new Set(doc.desempate?.retirados ?? []);
   for (const path of paths) {
     const pontos = flattenPath(path, 0.05);
     for (const o of obstacles) {
+      // O traçado do desempate passa por onde estava o que saiu da pista.
+      if (path.fase === 'desempate' && retirados.has(o.id)) continue;
       const medida = jumpCrossing(pontos, o);
       const cruz = medida && medida.offSquareDeg <= LIMITE_SALTO ? medida : null;
 

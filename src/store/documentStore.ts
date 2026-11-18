@@ -3,7 +3,7 @@ import { applyPatches, enablePatches, produceWithPatches, type Patch } from 'imm
 import type { CourseDocument } from '@core/model/types';
 import { createDocument } from '@core/model/document';
 import { syncTimingLines } from '@core/library/timing';
-import { ligaDesempateNosQuadros, syncQuadroDesempate } from '@core/library/desempate';
+import { ligaDesempateNosQuadros, syncQuadroDesempate, syncVarasDoDesempate } from '@core/library/desempate';
 import { syncDuasFases } from '@core/library/duasFases';
 import { syncArranjo } from '@core/model/sheetLayout';
 import { syncFolhas } from '@core/library/folhas';
@@ -74,6 +74,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       syncDuasFases(draft);
       syncPathAnchors(draft);
       enforceLockedDistances(draft);
+      syncVarasDoDesempate(draft);
       syncQuadroDesempate(draft);
       syncFolhas(draft);
       // Por último: o quadro já tem a altura final (desempate, duas fases).

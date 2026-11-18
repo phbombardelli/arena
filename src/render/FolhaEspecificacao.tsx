@@ -31,7 +31,7 @@ const LINHA = '#c9c6bc';
 interface Linha {
   o: Obstacle;
   /** Linha extra do desempate, com o que muda. */
-  desempate?: { oxer: boolean; contrario: boolean };
+  desempate?: { oxer: boolean; contrario: boolean; frente?: boolean };
 }
 
 /** Os obstáculos da folha, na ordem dela (sem as linhas do desempate). */
@@ -53,7 +53,11 @@ export function linhasDaEspecificacao(doc: CourseDocument): Linha[] {
     linhas.push({ o });
     if (!comDesempate) continue;
     const v = variacoesDe(doc.desempate, o.id);
-    if (v.length > 0) linhas.push({ o, desempate: { oxer: v.includes('oxer'), contrario: v.includes('contrario') } });
+    if (v.length > 0) {
+      const oxer = v.includes('oxer') && !doc.desempate?.oxerPreso?.includes(o.id);
+      const frente = doc.desempate?.varaFrente?.includes(o.id) === true;
+      if (oxer || v.includes('contrario')) linhas.push({ o, desempate: { oxer, contrario: v.includes('contrario'), frente } });
+    }
   }
   return linhas;
 }
@@ -111,7 +115,7 @@ export function FolhaEspecificacao({
   const larg = (i: number) => xs[i + 1]! - xs[i]!;
 
   const extras: Map<ItemMaterial, number>[] = linhas
-    .filter((l) => l.desempate?.oxer)
+    .filter((l) => l.desempate?.oxer && l.o.type === 'vertical')
     .map(() => new Map<ItemMaterial, number>([['vara', 1]]));
   const total = somaMaterial([...linhas.filter((l) => !l.desempate).map((l) => materialDe(l.o)), ...extras]);
 
@@ -220,7 +224,8 @@ function LinhaObstaculo({
 }) {
   const { o, desempate } = linha;
   const m = desempate?.contrario ? espelhaMontagem(montagemDe(o)) : montagemDe(o);
-  const { planos, deM, ateM, agua } = planosDoObstaculo(o, desempate?.oxer ?? false);
+  const frente = desempate?.oxer === true && o.type === 'oxer' && desempate.frente === true;
+  const { planos, deM, ateM, agua } = planosDoObstaculo(o, desempate?.oxer ?? false, frente);
   const pad = Math.min(1.5, h * 0.1);
   const traco = Math.max(0.12, Math.min(0.35, h * 0.018));
   const meioY = y + h / 2;
@@ -230,7 +235,7 @@ function LinhaObstaculo({
     return { x: xs[i]! + (larg(i) - ww) / 2, y: y + pad, w: ww, h: hh };
   };
   const material = desempate
-    ? [desempate.oxer && t('espec.viraOxer'), desempate.contrario && t('espec.contrario')].filter(Boolean).join('; ')
+    ? [desempate.oxer && t(o.type !== 'oxer' ? 'espec.viraOxer' : frente ? 'espec.viraVerticalFrente' : 'espec.viraVertical'), desempate.contrario && t('espec.contrario')].filter(Boolean).join('; ')
     : descreveMaterial(materialDe(o));
   const linhasMat = quebra(material, larg(3) - 3, fonte);
   const etiqueta = t('espec.desempate');

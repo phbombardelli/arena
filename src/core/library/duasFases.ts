@@ -149,7 +149,16 @@ export function avisosDuasFases(doc: CourseDocument): AvisoDuasFases[] {
   const out: AvisoDuasFases[] = [];
   const n1 = f.primeira.length;
   const n2 = f.segunda.length;
-  if (n2 < 4 || n2 > 6) out.push({ chave: 'df.avisoSegunda', params: { n: n2 } });
+  // Na especial (222.2.2) a 1ª tem de 5 a 7 e o total de 11 a 13: com
+  // menos de 7 na 1ª, a 2ª pode passar de 6 (5 + 8 = 13).
+  const maxSegunda = n1 >= 5 && n1 < 7 ? 13 - n1 : 6;
+  if (n2 < 4 || n2 > maxSegunda) {
+    out.push(
+      n2 > 6
+        ? { chave: 'df.avisoSegundaEspecial', params: { n: n2, n1, max: maxSegunda } }
+        : { chave: 'df.avisoSegunda', params: { n: n2 } },
+    );
+  }
   const combinacoes = f.segunda.filter((st) => st.elements.length > 1).length;
   if (combinacoes > 1) out.push({ chave: 'df.avisoCombinacoes', params: { n: combinacoes } });
   if (n1 < 5 || n1 > 9) out.push({ chave: 'df.avisoPrimeira', params: { n: n1 } });

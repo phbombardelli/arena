@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { courseOrder, phaseStops, viraOxer } from '@core/assist/courseRide';
-import { avisosDesempate, lerOrdem, limpaVariacoes, marcaVariacao, ordemTexto, variacoesDe } from '@core/library/desempate';
+import { courseOrder, phaseStops, podeContrario, tipoTrocado, viraOxer } from '@core/assist/courseRide';
+import { avisosDesempate, chaveDaTroca, lerOrdem, limpaVariacoes, marcaVariacao, ordemTexto, originaisDe, varaQueSai, variacoesDe } from '@core/library/desempate';
 import { traceCourse } from '@ui/actions/rideActions';
 import { avisosDuasFases, fasesDoPercurso, ligaDuasFases, mudaFimDaPrimeira } from '@core/library/duasFases';
 import { findInterferences } from '@core/assist/interference';
@@ -380,22 +380,26 @@ function Desempate() {
                 stop.elements.every((e) => variacoesDe(doc.desempate, e.id).includes(v));
               // O degrau já vem como é saltado: a pergunta é sobre o original.
               const original = obstaculos.find((o) => o.id === stop.elements[0]!.id);
-              const podeOxer = stop.elements.length === 1 && original != null && viraOxer(original);
+              const preso = original?.type === 'oxer' && stop.elements.length === 1 && varaQueSai(doc, original) === 'nenhuma';
+              const podeOxer = stop.elements.length === 1 && original != null && viraOxer(original) && (!preso || tem('oxer'));
+              const mostraContrario = podeContrario(originaisDe(doc, stop)) || tem('contrario');
               const alterna = (v: 'contrario' | 'oxer') =>
-                apply(t(v === 'contrario' ? 'dsp.contrario' : 'dsp.oxer'), (d) =>
+                apply(t(v === 'contrario' ? 'dsp.contrario' : chaveDaTroca(original)), (d) =>
                   marcaVariacao(d, stop, v, !tem(v)),
                 );
               return (
                 <div className="dsp-linha" key={`${stop.label}-${i}`}>
                   <strong>{stop.label}</strong>
-                  <label className="check">
-                    <input type="checkbox" checked={tem('contrario')} onChange={() => alterna('contrario')} />
-                    {t('dsp.aoContrario')}
-                  </label>
+                  {mostraContrario && (
+                    <label className="check">
+                      <input type="checkbox" checked={tem('contrario')} onChange={() => alterna('contrario')} />
+                      {t('dsp.aoContrario')}
+                    </label>
+                  )}
                   {podeOxer && (
                     <label className="check">
                       <input type="checkbox" checked={tem('oxer')} onChange={() => alterna('oxer')} />
-                      {t('dsp.viraOxer')}
+                      {t(tipoTrocado(original!) === 'vertical' ? 'dsp.viraVertical' : 'dsp.viraOxer')}
                     </label>
                   )}
                 </div>

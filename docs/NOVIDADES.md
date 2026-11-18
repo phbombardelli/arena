@@ -14,6 +14,21 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.7.0 — 18/11/2026
+
+- **Desempate conforme o regulamento (FEI e CBH, Art. 218.2):**
+  - **Oxer vira vertical**, além de vertical vira oxer. A vara que sai depende das distâncias marcadas no croqui ou travadas no cadeado e se elas valem no desempate:
+    - só a do seguinte vale: sai a vara da frente;
+    - só a do anterior, ou nenhuma: sai a de trás;
+    - as duas: o oxer não vira vertical.
+  - **Ao contrário, na combinação, só se for de dois verticais**, e ela conta como os dois obstáculos a mais (218.2.7.2).
+  - **Sai da pista no desempate:** um obstáculo fora da ordem continua armado, e o traçado do desempate desvia dele. Marcado, ele sai da pista: o traçado pode passar por onde ele estava, e ele some da vista e da folha do desempate.
+- **Avisos novos, que só informam:**
+  - a tríplice só pode ser o 1º elemento de uma combinação (Art. 237.5);
+  - na duas fases especial, a 2ª fase pode passar de 6 obstáculos quando a 1ª tem menos de 7.
+- **Extensão máxima no quadro técnico:** 60 m por obstáculo (Art. 241.2.4), ao lado da extensão no desenho e da corrigida, com aviso quando passa.
+- "Percurso + página do desempate" virou "Percurso + folha do desempate".
+
 ## 1.6.0 — 15/11/2026
 
 - **Caixa de texto na folha (B-106):** na aba Impressão, escolha "Caixa de texto" e arraste na folha para desenhá-la onde quiser: título da prova, patrocinador, observações. A caixa fica por cima de tudo e não mexe na pista nem nos quadros. Duplo clique para editar: Enter termina, Shift+Enter quebra a linha, Esc desiste. Pelos cantos, largura e altura mudam livremente, sem mudar a letra.

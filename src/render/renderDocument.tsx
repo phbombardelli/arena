@@ -83,6 +83,7 @@ export function RenderDocument(opts: RenderOptions) {
   const naOrdem = new Set(doc.desempate?.ordem ?? []);
   const vista: VistaProva = naOrdem.size === 0 ? 'ambos' : (opts.vista ?? 'ambos');
   const soDesempate = vista === 'desempate';
+  const retirados = new Set(doc.desempate?.retirados ?? []);
   // Posição de cada degrau na ordem do desempate (B-99), no primeiro
   // elemento dele: uma combinação leva um círculo só.
   const ordemDoDesempate = useMemo(() => {
@@ -102,7 +103,8 @@ export function RenderDocument(opts: RenderOptions) {
       if (o.kind !== 'obstacle' || !o.numberLabel.visible || o.number + o.letter === '') continue;
       const lista = [
         ...(o.soDesempate ? [t('dsp.soDesempate')] : []),
-        ...(vista === 'ambos' && naOrdem.has(o.id) && doc.desempate?.oxer?.includes(o.id) ? [t('dsp.oxerNoDesempate')] : []),
+        ...(vista === 'ambos' && doc.desempate?.retirados?.includes(o.id) ? [t('dsp.retiradoNoDesempate')] : []),
+        ...(vista === 'ambos' && naOrdem.has(o.id) && doc.desempate?.oxer?.includes(o.id) && !doc.desempate.oxerPreso?.includes(o.id) ? [t(o.type === 'oxer' ? 'dsp.verticalNoDesempate' : 'dsp.oxerNoDesempate')] : []),
       ];
       if (lista.length > 0) m.set(o.id, lista);
     }
@@ -136,6 +138,8 @@ export function RenderDocument(opts: RenderOptions) {
         if (someNaVista(obj)) return null;
         // Na vista do desempate, o obstáculo que fica de fora é cenário.
         const foraDoDesempate = soDesempate && obj.kind === 'obstacle' && !naOrdem.has(obj.id);
+        // O que saiu da pista no desempate não aparece na vista dele.
+        if (foraDoDesempate && retirados.has(obj.id)) return null;
 
         const papel = isPaperAnchored(obj);
         if (papel && semFolha) return null;
@@ -176,10 +180,11 @@ export function RenderDocument(opts: RenderOptions) {
                 key={obj.id}
                 obstacle={soDesempate ? comoNoDesempate(obj, doc.desempate) : obj}
                 noDesempate={
-                  vista === 'ambos' && naOrdem.has(obj.id)
+                  vista === 'ambos' && (naOrdem.has(obj.id) || retirados.has(obj.id))
                     ? {
+                        retirado: retirados.has(obj.id),
                         contrario: doc.desempate?.contrario?.includes(obj.id) === true,
-                        oxer: doc.desempate?.oxer?.includes(obj.id) === true,
+                        oxer: doc.desempate?.oxer?.includes(obj.id) === true && !doc.desempate?.oxerPreso?.includes(obj.id),
                       }
                     : undefined
                 }

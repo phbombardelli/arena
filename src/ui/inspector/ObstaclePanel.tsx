@@ -29,8 +29,8 @@ import { escalaCm, planosDoObstaculo, VistaFrente, VistaPerfil } from '@render/m
 import { nomePlano } from './MontagemEditor';
 import type { MessageKey } from '@core/i18n/messages';
 import { NumberField } from './NumberField';
-import { phaseStops, viraOxer } from '@core/assist/courseRide';
-import { marcaVariacao, variacoesDe } from '@core/library/desempate';
+import { phaseStops, podeContrario, viraOxer } from '@core/assist/courseRide';
+import { chaveDaTroca, marcaRetirado, marcaVariacao, originaisDe, varaQueSai, variacoesDe } from '@core/library/desempate';
 import { WingStyleField } from './WingStyleField';
 import { t } from '@core/i18n/i18n';
 
@@ -195,25 +195,54 @@ export function DesempateDoObstaculo({ obstacle }: { obstacle: Obstacle }) {
   if ((doc.desempate?.ordem.length ?? 0) === 0) return null;
   const stops = phaseStops(doc, 'desempate');
   const i = stops.findIndex((st) => st.elements.some((e) => e.id === obstacle.id));
-  if (i < 0) return null;
+  if (i < 0) {
+    // Fora da ordem: continua armado, a não ser que saia da pista.
+    if (obstacle.soDesempate) return null;
+    const sai = doc.desempate?.retirados?.includes(obstacle.id) === true;
+    return (
+      <>
+        <h3>{t('dsp.foraDaOrdem')}</h3>
+        <label className="check" title={t('dsp.retiradoDica')}>
+          <input
+            type="checkbox"
+            checked={sai}
+            disabled={obstacle.locked}
+            onChange={() => apply(t('dsp.retirado'), (d) => marcaRetirado(d, obstacle.id, !sai))}
+          />
+          {t('dsp.retirado')}
+        </label>
+      </>
+    );
+  }
   const stop = stops[i]!;
   const tem = (v: 'contrario' | 'oxer') => stop.elements.every((e) => variacoesDe(doc.desempate, e.id).includes(v));
-  const podeOxer = stop.elements.length === 1 && viraOxer(obstacle);
+  const originais = originaisDe(doc, stop);
+  // O oxer com as duas distâncias valendo no desempate não vira vertical.
+  const preso = obstacle.type === 'oxer' && stop.elements.length === 1 && varaQueSai(doc, obstacle) === 'nenhuma';
+  const podeOxer = stop.elements.length === 1 && viraOxer(obstacle) && (!preso || tem('oxer'));
+  // Combinação ao contrário, só inteira e de dois verticais (218.2.7.2);
+  // a marca que já estiver fica visível para poder ser tirada.
+  const mostraContrario = podeContrario(originais) || tem('contrario');
+  const troca = chaveDaTroca(obstacle);
   const alterna = (v: 'contrario' | 'oxer') =>
-    apply(t(v === 'contrario' ? 'dsp.contrario' : 'dsp.oxer'), (d) => marcaVariacao(d, stop, v, !tem(v)));
+    apply(t(v === 'contrario' ? 'dsp.contrario' : troca), (d) => marcaVariacao(d, stop, v, !tem(v)));
   return (
     <>
       <h3>{t('dsp.noDesempate', { n: i + 1 })}</h3>
-      <label className="check">
-        <input type="checkbox" checked={tem('contrario')} disabled={obstacle.locked} onChange={() => alterna('contrario')} />
-        {t('dsp.saltadoContrario')}
-      </label>
+      {mostraContrario && (
+        <label className="check">
+          <input type="checkbox" checked={tem('contrario')} disabled={obstacle.locked} onChange={() => alterna('contrario')} />
+          {t('dsp.saltadoContrario')}
+        </label>
+      )}
       {podeOxer && (
         <label className="check">
           <input type="checkbox" checked={tem('oxer')} disabled={obstacle.locked} onChange={() => alterna('oxer')} />
-          {t('dsp.oxer')}
+          {t(troca)}
         </label>
       )}
+      {preso && <p className="note">{t('dsp.oxerPresoNota')}</p>}
+      {!mostraContrario && <p className="note">{t('dsp.combNaoInverte')}</p>}
     </>
   );
 }

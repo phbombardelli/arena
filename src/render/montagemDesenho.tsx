@@ -217,7 +217,7 @@ export function VistaPerfil({ planos, deM, ateM, agua, caixa, maxCm, traco, sele
  * Os planos do obstáculo para o perfil: o 1º com a pilha, os outros com
  * uma vara na altura do elemento, repartidos na largura.
  */
-export function planosDoObstaculo(o: Obstacle, viraOxer = false): {
+export function planosDoObstaculo(o: Obstacle, viraOxer = false, saiFrente = false): {
   planos: PlanoPerfil[];
   deM: number;
   ateM: number;
@@ -235,7 +235,12 @@ export function planosDoObstaculo(o: Obstacle, viraOxer = false): {
   // profundidade troca de sinal (a entrada fica em +Y).
   let deM = Math.min(-ext.backM, -largura / 2);
   let ateM = Math.max(-ext.frontM, largura / 2);
-  if (viraOxer) {
+  if (viraOxer && o.type === 'oxer') {
+    // O oxer que vira vertical no desempate: fica uma vara só, a da frente
+    // ou, quando a distância para o seguinte vale no desempate, a de trás.
+    const fica = saiFrente ? planos[planos.length - 1]! : planos[0]!;
+    planos.splice(0, planos.length, fica);
+  } else if (viraOxer) {
     // O vertical que vira oxer no desempate: a vara de trás, tracejada,
     // na largura padrão do oxer (a real não está no croqui).
     const topo = Math.max(0, ...montagemDe(o).pecas.map(topoPeca));

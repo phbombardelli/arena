@@ -174,7 +174,7 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
       {doc.duasFases && temFase2(box) ? (
         <p className="note">{t('df.semCorrigida')}</p>
       ) : (
-        <Extensao box={box} medidaM={extensaoDesenho(doc)} travado={travado} edita={edita} />
+        <Extensao box={box} medidaM={extensaoDesenho(doc)} obstaculos={courseOrder(doc.objects.filter((o): o is Obstacle => o.kind === 'obstacle')).length} travado={travado} edita={edita} />
       )}
 
       <Tempos box={box} travado={travado} edita={edita} />
@@ -302,11 +302,13 @@ export function InfoBoxPanel({ box }: { box: InfoBox }) {
 function Extensao({
   box,
   medidaM,
+  obstaculos,
   travado,
   edita,
 }: {
   box: InfoBox;
   medidaM: number;
+  obstaculos: number;
   travado: boolean;
   edita: (rotulo: string, recipe: (b: InfoBox) => void) => void;
 }) {
@@ -334,6 +336,10 @@ function Extensao({
   };
 
   const diferenca = corrigida != null && medidaM > 0 ? corrigida - medidaM : null;
+  // Art. 241.2.4 (FEI e CBH): a extensão não passa de 60 m por obstáculo.
+  // Só informa: quem confirma é a trena de roda na pista.
+  const maxima = obstaculos * 60;
+  const vale = corrigida ?? medidaM;
   return (
     <>
       <h3>{t('quadrop.extensao')}</h3>
@@ -360,6 +366,15 @@ function Extensao({
             <em>m</em>
           </span>
         </label>
+        {maxima > 0 && (
+          <p className="field" title={t('quadrop.maxima', { n: obstaculos, d: formatDistance(maxima, 0) })}>
+            <span>{t('quadrop.maximaRotulo')}</span>
+            <strong>{metros(maxima)}</strong>
+          </p>
+        )}
+        {maxima > 0 && vale > maxima && (
+          <p className="state warn">{t('quadrop.maximaPassou', { n: obstaculos, d: formatDistance(maxima, 0) })}</p>
+        )}
         {diferenca != null && (
           <p className="note">
             {t('quadrop.diferenca', {
