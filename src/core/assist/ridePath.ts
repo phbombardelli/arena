@@ -192,6 +192,12 @@ export interface Field {
   blockers: Obstacle[];
   /** Ilhas e vasos: corpos que a volta contorna (decisão 74). */
   decor?: Vec2[][];
+  /**
+   * Vão entre os elementos das combinações da fase. NÃO é barreira: passar
+   * por dentro de uma combinação ou de uma linha é livre. Serve de
+   * referência para oferecer também a volta que a contorna por fora.
+   */
+  corridors?: Vec2[][];
 }
 
 export function fieldFrom(arena: Arena | null, obstacles: Obstacle[], decor: Vec2[][] = []): Field {

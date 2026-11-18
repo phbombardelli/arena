@@ -44,6 +44,7 @@ export const DIALOGS = {
   'dialogo.ginastica': { pt: 'Ginástica', en: 'Gridworks', es: 'Gimnasia' },
   'dialogo.percurso': { pt: 'Percurso', en: 'Course', es: 'Recorrido' },
   'dialogo.backup': { pt: 'Backup na nuvem', en: 'Cloud backup', es: 'Copia de seguridad en la nube' },
+  'dialogo.conta': { pt: 'Entrar com a conta Google', en: 'Sign in with Google', es: 'Entrar con la cuenta de Google' },
   'dialogo.admin': { pt: 'Painel de admin', en: 'Admin panel', es: 'Panel de administración' },
   'dialogo.abrirPercurso': { pt: 'Abrir percurso', en: 'Open course', es: 'Abrir recorrido' },
   'dialogo.configurarFolha': { pt: 'Configurar folha', en: 'Sheet settings', es: 'Configurar hoja' },

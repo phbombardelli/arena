@@ -18,6 +18,8 @@ import { useEditorStore } from '@store/editorStore';
 import { insertTimingLine } from '@ui/actions/timingActions';
 import { startMapWizard } from '@ui/actions/imageActions';
 import { GuidedPanel } from './GuidedPanel';
+import { startGuidedRide } from '@ui/actions/guidedActions';
+import { useFaseAtual } from '@ui/actions/faseActions';
 import { ObjectPanel } from './ObjectPanel';
 import { formatDate, t } from '@core/i18n/i18n';
 
@@ -143,7 +145,10 @@ function FolhasDaSaida() {
 function Resumo() {
   const mode = useEditorStore((s) => s.mode);
   const ginastica = useDocumentStore((s) => s.doc.kind === 'ginastica');
-  return mode === 'pista' ? <ResumoPista /> : ginastica ? <ResumoGinastica /> : <ResumoProva />;
+  const fase = useFaseAtual();
+  if (mode === 'pista') return <ResumoPista />;
+  if (ginastica) return <ResumoGinastica />;
+  return fase === 'desempate' ? <ResumoDesempate /> : <ResumoProva />;
 }
 
 /** Resumo da folha de ginástica (B-37): o que há nela, sem prova. */
@@ -234,7 +239,7 @@ function ResumoProva() {
 
       <DuasFases />
 
-      <Desempate />
+      <LinhaDoDesempate />
 
       <p className="note dim">
         {t('resumo.selecioneNota')}
@@ -340,7 +345,6 @@ function Desempate() {
 
   return (
     <>
-      <h3>{t('dsp.titulo')}</h3>
       <label className="field">
         <span>{t('dsp.ordem')}</span>
         <input
@@ -408,18 +412,21 @@ function Desempate() {
           </div>
           <p className="note dim">{t('dsp.variacoesNota')}</p>
 
-          <div className="row-buttons pares">
+          <h4>{t('resumo.partidaChegada')}</h4>
+          <div className="row-buttons">
             <button onClick={() => insertTimingLine('start', 'desempate')}>
-              {tem('start') ? t('resumo.recolocarPartida') : t('dsp.partidaDoDesempate')}
+              {tem('start') ? t('resumo.recolocarPartida') : t('resumo.colocarPartida')}
             </button>
             <button onClick={() => insertTimingLine('finish', 'desempate')}>
-              {tem('finish') ? t('resumo.recolocarChegada') : t('dsp.chegadaDoDesempate')}
+              {tem('finish') ? t('resumo.recolocarChegada') : t('resumo.colocarChegada')}
             </button>
           </div>
           <p className="note dim">{t('dsp.partidaNota')}</p>
 
+          <h4>{t('dsp.tracadoTitulo')}</h4>
           <div className="row-buttons">
-            <button onClick={() => traceCourse(undefined, 'desempate')}>{t('dsp.tracar')}</button>
+            <button onClick={startGuidedRide}>{t('rail.porTrechos')}</button>
+            <button onClick={() => traceCourse(undefined, 'desempate')}>{t('rail.automatico')}</button>
           </div>
           {tracado?.kind === 'path' && (
             <p className="note">{t('dsp.extensao', { d: formatDistance(pathLength(tracado), 0) })}</p>
@@ -441,6 +448,62 @@ function Desempate() {
           <p className="note dim">{t('dsp.vistaNota')}</p>
         </>
       )}
+    </>
+  );
+}
+
+/**
+ * Na vista Desempate (decisão 109), o painel da prova é o do desempate: a vista
+ * da barra de baixo é o modo de trabalho, e o assistente e as linhas de
+ * partida e chegada da barra da esquerda também passam a ser os dele.
+ */
+function ResumoDesempate() {
+  const doc = useDocumentStore((s) => s.doc);
+  const setVista = useEditorStore((s) => s.setVista);
+  const stops = phaseStops(doc, 'desempate');
+  return (
+    <section className="summary">
+      <h2>{t('dsp.titulo')}</h2>
+      <div className="stat-row">
+        <div className="stat">
+          <b>{stops.length}</b>
+          <span>{t('resumo.obstaculos')}</span>
+        </div>
+        <div className="stat">
+          <b>{stops.reduce((n, s) => n + s.elements.length, 0)}</b>
+          <span>{t('resumo.esforcos')}</span>
+        </div>
+      </div>
+      <Desempate />
+      <div className="row-buttons">
+        <button onClick={() => setVista('percurso')}>{t('dsp.voltarPercurso')}</button>
+      </div>
+    </section>
+  );
+}
+
+/** Na vista do percurso, o desempate é uma linha: clicar leva à vista dele. */
+function LinhaDoDesempate() {
+  const doc = useDocumentStore((s) => s.doc);
+  const setVista = useEditorStore((s) => s.setVista);
+  const stops = phaseStops(doc, 'desempate');
+  const avisos = useMemo(() => (stops.length > 0 ? avisosDesempate(doc) : []), [doc, stops.length]);
+  return (
+    <>
+      <h3>{t('dsp.titulo')}</h3>
+      <button
+        className={avisos.length > 0 ? 'state warn dsp-resumo' : 'dsp-resumo'}
+        onClick={() => setVista('desempate')}
+        title={t('dsp.abrirDica')}
+      >
+        {stops.length === 0
+          ? t('dsp.montar')
+          : t(avisos.length === 0 ? 'dsp.linha' : 'dsp.linhaAvisos', {
+              ordem: ordemTexto(stops),
+              n: stops.length,
+              a: avisos.length,
+            })}
+      </button>
     </>
   );
 }

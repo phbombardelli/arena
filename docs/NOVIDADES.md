@@ -14,6 +14,19 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.8.0 — 18/11/2026
+
+- **Salvar, exportar PDF e imprimir pedem a conta Google.** Desenhar continua livre, sem conta. Tentando sem conta, aparece o aviso de login; entrando, a ação segue sozinha (o PDF sai, o croqui é salvo). Quem já tinha conta confirma os termos novos uma vez.
+- **Contagem de uso:** o perfil soma PDFs, impressões e salvamentos, com a data do último uso. O painel de admin mostra a contagem de cada usuário.
+- **A vista manda no trabalho do desempate:**
+  - na vista Desempate (barra de baixo), o painel da prova é o do desempate, e o assistente de traçado e a partida e a chegada da barra da esquerda passam a ser os dele;
+  - na vista Percurso, o desempate é uma linha só no painel; clicar nela leva à vista Desempate;
+  - a seção do desempate no painel do obstáculo aparece nas vistas Desempate e Ambos.
+- **Traçado por trechos no desempate**, como no percurso.
+- **Por trechos sem os trechos da partida e da chegada:** são sempre reta, e o painel pula direto para os que têm escolha.
+- **Volta por fora da combinação:** o assistente oferece também a volta que contorna a combinação pelo outro lado, mesmo girando mais. Passar por dentro da combinação continua livre.
+- **Aviso de número repetido:** dois obstáculos com o mesmo número e letra, ou um "4" junto de um "4A". Só informa.
+
 ## 1.7.0 — 18/11/2026
 
 - **Desempate conforme o regulamento (FEI e CBH, Art. 218.2):**

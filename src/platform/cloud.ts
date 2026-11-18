@@ -21,9 +21,10 @@ import { t } from '@core/i18n/i18n';
 /**
  * Nuvem do Arena (B-36, B-78, decisão 90).
  *
- * Login com Google, OPCIONAL: sem ele tudo funciona no aparelho; com ele,
- * Minhas pistas e Meus percursos ganham cópia na nuvem e aparecem em
- * outros aparelhos. O Firebase só é baixado quando alguém entra (ou já
+ * Login com Google: sem ele dá para desenhar à vontade; salvar, exportar
+ * PDF e imprimir pedem a conta (decisão 110, para saber quem usa o Arena). Com
+ * ele, Minhas pistas e Meus percursos ganham cópia na nuvem e aparecem em
+ * outros aparelhos, e o perfil conta quantas vezes cada coisa foi feita. O Firebase só é baixado quando alguém entra (ou já
  * tinha entrado neste aparelho) — quem não usa a nuvem não paga o peso.
  *
  * No Firestore: usuarios/{uid} (perfil) → arquivos/{id} (metadados, data,
@@ -36,7 +37,8 @@ export const ADMIN_EMAIL = 'pedrohbombardelli@gmail.com';
 const FATIA = 700_000;
 const LEMBRA_LOGIN = 'arena.nuvem.logado';
 const SINCRONIZADO = 'arena.nuvem.sincronizado';
-export const ACEITE = 'arena.nuvem.aceite-v1';
+/** v2 (decisão 110): o aceite passou a cobrir o e-mail e a contagem de uso. */
+export const ACEITE = 'arena.nuvem.aceite-v2';
 
 export interface CloudUser {
   uid: string;
@@ -48,6 +50,8 @@ export interface CloudUser {
 
 interface CloudState {
   user: CloudUser | null;
+  /** Entrou antes do aceite atual (v1): precisa aceitar de novo ou sair. */
+  precisaAceite?: boolean;
   status: 'desligado' | 'conectando' | 'sincronizando' | 'em-dia' | 'erro';
   lastSync: string | null;
   error: string | null;
@@ -258,7 +262,7 @@ function aoEntrar(f: Fb, u: import('firebase/auth').User): void {
     photo: u.photoURL,
     admin: u.email === ADMIN_EMAIL && u.emailVerified,
   };
-  useCloudStore.setState({ user, status: 'em-dia' });
+  useCloudStore.setState({ user, status: 'em-dia', precisaAceite: !window.localStorage.getItem(ACEITE) });
   window.localStorage.setItem(LEMBRA_LOGIN, '1');
   // O perfil é o que o painel de admin lista.
   void f.fs
@@ -280,12 +284,49 @@ async function observar(): Promise<Fb> {
   return f;
 }
 
-/** Entrar com Google (o aceite da política já foi dado na interface). */
-export async function signIn(): Promise<void> {
+/**
+ * Quem está entrado. Se este aparelho lembra o login, espera o Firebase
+ * responder: o Ctrl+S logo ao abrir não pode pedir login de quem já entrou.
+ */
+export async function contaAtual(): Promise<CloudUser | null> {
+  const atual = useCloudStore.getState().user;
+  if (atual) return atual;
+  if (!window.localStorage.getItem(LEMBRA_LOGIN)) return null;
+  try {
+    const f = await observar();
+    await f.a.authStateReady();
+  } catch {
+    return null;
+  }
+  return useCloudStore.getState().user;
+}
+
+/** O que conta como uso (decisão 110). Vai somando no perfil do usuário. */
+export type Uso = 'pdf' | 'impressao' | 'percurso' | 'arquivo' | 'pista';
+
+export function registraUso(uso: Uso): void {
+  const u = useCloudStore.getState().user;
+  if (!u || !window.localStorage.getItem(ACEITE)) return;
+  void firebase()
+    .then((f) =>
+      f.fs.setDoc(
+        f.fs.doc(f.db, 'usuarios', u.uid),
+        { uso: { [uso]: f.fs.increment(1) }, ultimoUso: f.fs.serverTimestamp() },
+        { merge: true },
+      ),
+    )
+    .catch(() => undefined);
+}
+
+/** Entrar com Google (o aceite da política já foi dado na interface). Diz se entrou. */
+export async function signIn(): Promise<boolean> {
   useCloudStore.setState({ status: 'conectando', error: null });
   try {
     const f = await observar();
-    await f.auth.signInWithPopup(f.a, new f.auth.GoogleAuthProvider());
+    const cred = await f.auth.signInWithPopup(f.a, new f.auth.GoogleAuthProvider());
+    // O observador põe o usuário na loja; se ainda não pôs, põe aqui.
+    if (!useCloudStore.getState().user) aoEntrar(f, cred.user);
+    return true;
   } catch (err) {
     const codigo = (err as { code?: string }).code ?? '';
     const cancelado = codigo === 'auth/popup-closed-by-user' || codigo === 'auth/cancelled-popup-request';
@@ -293,6 +334,7 @@ export async function signIn(): Promise<void> {
       status: 'desligado',
       error: cancelado ? null : t('nuvem.naoEntrou'),
     });
+    return false;
   }
 }
 
@@ -300,7 +342,7 @@ export async function signOut(): Promise<void> {
   window.localStorage.removeItem(LEMBRA_LOGIN);
   const f = await firebase();
   await f.auth.signOut(f.a);
-  useCloudStore.setState({ user: null, status: 'desligado', lastSync: null });
+  useCloudStore.setState({ user: null, status: 'desligado', lastSync: null, precisaAceite: false });
 }
 
 /** Na abertura: quem já tinha entrado neste aparelho volta conectado. */
@@ -318,6 +360,9 @@ export interface AdminUser {
   email: string;
   nome: string;
   ultimoAcesso: Date | null;
+  /** Quantas vezes fez cada coisa (decisão 110), e quando foi a última. */
+  uso: Partial<Record<Uso, number>>;
+  ultimoUso: Date | null;
 }
 
 export async function listUsers(): Promise<AdminUser[]> {
@@ -327,7 +372,15 @@ export async function listUsers(): Promise<AdminUser[]> {
     .map((d) => {
       const v = d.data();
       const ts = v.ultimoAcesso as { toDate?: () => Date } | undefined;
-      return { uid: d.id, email: (v.email as string) ?? '', nome: (v.nome as string) ?? '', ultimoAcesso: ts?.toDate?.() ?? null };
+      const tu = v.ultimoUso as { toDate?: () => Date } | undefined;
+      return {
+        uid: d.id,
+        email: (v.email as string) ?? '',
+        nome: (v.nome as string) ?? '',
+        ultimoAcesso: ts?.toDate?.() ?? null,
+        uso: (v.uso as Partial<Record<Uso, number>>) ?? {},
+        ultimoUso: tu?.toDate?.() ?? null,
+      };
     })
     .sort((a, b) => (b.ultimoAcesso?.getTime() ?? 0) - (a.ultimoAcesso?.getTime() ?? 0));
 }

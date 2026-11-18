@@ -3,6 +3,7 @@ import { DEFAULT_RIDE } from '@core/assist/ridePath';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { t } from '@core/i18n/i18n';
+import { faseAtual } from './faseActions';
 
 /**
  * Começa o traçado por trechos.
@@ -13,11 +14,10 @@ import { t } from '@core/i18n/i18n';
  * uma prova real, então a escolhida à mão é a que dá para assinar.
  */
 export function startGuidedRide(): void {
-  const guiado = prepareGuidedRide(useDocumentStore.getState().doc, DEFAULT_RIDE);
+  const fase = faseAtual();
+  const guiado = prepareGuidedRide(useDocumentStore.getState().doc, DEFAULT_RIDE, fase);
   if (!guiado) {
-    window.alert(
-      t('aviso.nadaTracarGuiado'),
-    );
+    window.alert(t(fase === 'desempate' ? 'dsp.semOrdem' : 'aviso.nadaTracarGuiado'));
     return;
   }
   useEditorStore.getState().startGuided(guiado);

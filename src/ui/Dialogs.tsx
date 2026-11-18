@@ -1,3 +1,4 @@
+import { descartaPendente } from '@ui/actions/contaActions';
 import { HeightsEditor } from '@ui/inspector/HeightsEditor';
 import { useEditorStore } from '@store/editorStore';
 import { Dialog } from '@ui/common/Popover';
@@ -117,6 +118,13 @@ export function Dialogs() {
     return (
       <Dialog title={t('dialogo.backup')} onClose={fecha}>
         <CloudConsentBody />
+      </Dialog>
+    );
+  }
+  if (dialog === 'conta') {
+    return (
+      <Dialog title={t('dialogo.conta')} onClose={() => { descartaPendente(); fecha(); }}>
+        <CloudConsentBody motivo />
       </Dialog>
     );
   }

@@ -82,6 +82,16 @@ export const RAIL = {
     en: 'They follow the obstacle numbering, from start to finish.',
     es: 'Siguen la numeración de los obstáculos, de la partida a la llegada.',
   },
+  'rail.assistenteRodapeDsp': {
+    pt: 'Desempate: seguem a ordem do desempate, da partida à chegada dele.',
+    en: 'Jump-off: they follow the jump-off order, from its start to its finish.',
+    es: 'Desempate: siguen el orden del desempate, de su partida a su llegada.',
+  },
+  'rail.partidaRodapeDsp': {
+    pt: 'Desempate: antes do 1º e depois do último da ordem do desempate.',
+    en: 'Jump-off: before the 1st and after the last of the jump-off order.',
+    es: 'Desempate: antes del 1º y después del último del orden del desempate.',
+  },
   'rail.folha': { pt: 'Folha', en: 'Sheet', es: 'Hoja' },
   'rail.quadrosTecnicos': { pt: 'Quadros técnicos', en: 'Information boxes', es: 'Cuadros técnicos' },
   'rail.quadroTecnico': { pt: 'Quadro técnico', en: 'Course information box', es: 'Cuadro técnico' },

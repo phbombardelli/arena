@@ -1,3 +1,4 @@
+import { obstacleLabel } from '@core/library/obstacles';
 import {
   resetLabel,
   setBarAppearance,
@@ -43,6 +44,20 @@ const LETRAS: Obstacle['letter'][] = ['', 'A', 'B', 'C'];
  * depois, este último dentro de "Mais opções". As alturas moram na
  * configuração da tabela de alturas; as explicações viraram dica do mouse.
  */
+/** Outro obstáculo com o mesmo número e letra, ou um "4" solto junto de um "4A". */
+function numeroRepetido(doc: { kind?: string; objects: { kind: string; id: string }[] }, o: Obstacle): boolean {
+  const n = o.number.trim();
+  if (n === '' || doc.kind === 'ginastica') return false;
+  return doc.objects.some(
+    (x) =>
+      x.kind === 'obstacle' &&
+      x.id !== o.id &&
+      (x as Obstacle).visible &&
+      (x as Obstacle).number.trim() === n &&
+      ((x as Obstacle).letter === o.letter || (x as Obstacle).letter === '' || o.letter === ''),
+  );
+}
+
 export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
   const { apply, doc } = useDocumentStore();
   const def = obstacleDef(obstacle.type);
@@ -101,6 +116,9 @@ export function ObstaclePanel({ obstacle }: { obstacle: Obstacle }) {
           </select>
         </label>
       </div>
+      {numeroRepetido(doc, obstacle) && (
+        <p className="state warn">{t('interf.numeroRepetido', { a: obstacleLabel(obstacle) })}</p>
+      )}
 
       {doc.kind !== 'ginastica' && (
         <label className="check" title={t('dsp.soDesempateDica')}>

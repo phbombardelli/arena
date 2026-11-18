@@ -210,3 +210,23 @@ describe('regra da combinação (237.5)', () => {
     expect(tipos(doc('vertical', 'triplice'))).not.toContain('triplice-na-combinacao');
   });
 });
+
+describe('número repetido', () => {
+  const doc = (pares: [string, '' | 'A' | 'B'][]) =>
+    comPista((d) => {
+      pares.forEach(([n, l], i) => {
+        const o = createObstacle('vertical', { x: 20 + i * 12, y: 25 }, n);
+        o.letter = l;
+        addObject(d, o);
+      });
+    });
+  it('acusa o mesmo número e letra, e o número solto junto da combinação', () => {
+    expect(tipos(doc([['4', ''], ['4', '']]))).toContain('numero-repetido');
+    expect(tipos(doc([['4', 'A'], ['4', 'A']]))).toContain('numero-repetido');
+    expect(tipos(doc([['4', ''], ['4', 'A']]))).toContain('numero-repetido');
+  });
+  it('não acusa a combinação nem obstáculos sem número', () => {
+    expect(tipos(doc([['4', 'A'], ['4', 'B']]))).not.toContain('numero-repetido');
+    expect(tipos(doc([['', ''], ['', '']]))).not.toContain('numero-repetido');
+  });
+});

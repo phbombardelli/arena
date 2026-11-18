@@ -1,3 +1,4 @@
+import { comConta } from './contaActions';
 import { applyTemplate, buildTemplate, type ArenaTemplate } from '@core/library/arenaTemplate';
 import { deepClone } from '@core/model/clone';
 import { objectScope } from '@core/model/transform';
@@ -135,6 +136,10 @@ function nomeSugerido(): string {
  * nele também. Na primeira vez pede o nome.
  */
 export async function saveCourse(): Promise<ActionResult> {
+  return comConta('percurso', gravaPercurso);
+}
+
+async function gravaPercurso(): Promise<ActionResult> {
   const { doc, fileHandle, libraryId, fileName } = useDocumentStore.getState();
   let nome = fileName?.replace(/\.pcs$/i, '') ?? null;
   if (!libraryId || !nome) {
@@ -198,6 +203,10 @@ export async function openDocument(): Promise<ActionResult> {
 }
 
 export async function saveDocument(): Promise<ActionResult> {
+  return comConta('arquivo', gravaArquivo);
+}
+
+async function gravaArquivo(): Promise<ActionResult> {
   const { doc, fileHandle } = useDocumentStore.getState();
   try {
     const saved = await saveFile(serialize(doc), fileHandle, suggestedFileName(doc));
@@ -211,6 +220,10 @@ export async function saveDocument(): Promise<ActionResult> {
 }
 
 export async function saveDocumentAs(): Promise<ActionResult> {
+  return comConta('arquivo', gravaArquivoComo);
+}
+
+async function gravaArquivoComo(): Promise<ActionResult> {
   const { doc } = useDocumentStore.getState();
   try {
     const saved = await saveFileAs(serialize(doc), suggestedFileName(doc));

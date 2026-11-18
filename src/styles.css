@@ -980,3 +980,6 @@ p.state.warn { background: var(--warn-soft); color: var(--warn); font-weight: 50
 .espec-obs-campo { width: 100%; height: 100%; box-sizing: border-box; resize: none; border: 0.2px dashed #b9c4d0; border-radius: 0.6px; background: rgba(55,138,221,.04); padding: 0.4px 0.6px; font-family: Helvetica, Arial, sans-serif; color: #1a1a1a; line-height: 1.2; outline: none; }
 .espec-obs-campo:focus { border: 0.3px solid #378add; background: #fff; }
 .espec-obs-campo::placeholder { color: #a8b3bf; }
+
+/* Decisão 109: o desempate na vista do percurso é uma linha que leva à vista dele. */
+button.dsp-resumo { width: 100%; text-align: left; white-space: normal; margin-top: 4px; }

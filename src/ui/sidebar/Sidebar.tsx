@@ -1,3 +1,4 @@
+import { useFaseAtual } from '@ui/actions/faseActions';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { OBSTACLES, obstacleTypesFor } from '@core/library/obstacles';
 import { DEFAULT_CAVALETES, DEFAULT_LEQUE, DEFAULT_RELOGIO, defaultPeDeGalinha } from '@core/library/exercises';
@@ -67,6 +68,7 @@ export function Sidebar() {
     setStructureType,
   } = useEditorStore();
 
+  const fase = useFaseAtual();
   const usa = (alvo: Tool) => setTool(alvo);
   const desenhandoContorno = tool === 'arena-rect' || tool === 'arena-polygon';
   // A pista e as construções usam as mesmas ferramentas de contorno; o que
@@ -223,7 +225,7 @@ export function Sidebar() {
               { label: t('rail.partida'), hint: t('rail.partidaDica'), onSelect: () => insertTimingLine('start') },
               { label: t('rail.chegada'), hint: t('rail.chegadaDica'), onSelect: () => insertTimingLine('finish') },
             ]}
-            footer={t('rail.partidaRodape')}
+            footer={t(fase === 'desempate' ? 'rail.partidaRodapeDsp' : 'rail.partidaRodape')}
           />
           <RailFlyout
             icon={<IconPlant {...ICONE} />}
@@ -294,7 +296,7 @@ export function Sidebar() {
               { label: t('rail.porTrechos'), hint: t('rail.porTrechosDica'), onSelect: startGuidedRide },
               { label: t('rail.automatico'), hint: t('rail.automaticoDica'), onSelect: () => traceCourse() },
             ]}
-            footer={t('rail.assistenteRodape')}
+            footer={t(fase === 'desempate' ? 'rail.assistenteRodapeDsp' : 'rail.assistenteRodape')}
           />
 
           <RailGroup title={t('rail.medirAnotar')} />

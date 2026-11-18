@@ -335,8 +335,23 @@ export function legCandidates(
   // A mesma volta com o raio redistribuído pode passar uns graus do teto:
   // perto da melhor, o excesso de giro não é laçada, é variação (decisão 82).
   const giroBase = Math.min(...todos.filter((c) => galopavel(c, params)).map((c) => c.turnDeg), Infinity);
+  // Contornar uma combinação pelo outro lado é outra ideia de traçado, e
+  // costuma girar mais: o teto de giro compara a volta com as do mesmo lado
+  // (o 11 indo ao 5A por trás do 5B gira uns 310°, e é a volta certa).
+  const lados = new Map(todos.map((c) => [c, ladoDosVaos(c, field)]));
+  const ladoDoBase = (lado: string) =>
+    Math.min(
+      ...todos
+        .filter((c) => lados.get(c) === lado && galopavel(c, params) && !c.warnings.some((w) => w === 'fora-da-pista' || w === 'passa-por-obstaculo'))
+        .map((c) => c.turnDeg),
+      Infinity,
+    );
+  const basePorLado = new Map([...new Set(lados.values())].map((lado) => [lado, ladoDoBase(lado)]));
   for (const c of todos) {
-    if (c.warnings.includes('giro-excessivo') && c.turnDeg <= giroBase + GIRO_PARELHO) {
+    if (!c.warnings.includes('giro-excessivo')) continue;
+    const doLado = basePorLado.get(lados.get(c)!) ?? Infinity;
+    const outroLado = lados.get(c) !== lados.get(melhor);
+    if (c.turnDeg <= giroBase + GIRO_PARELHO || (outroLado && c.turnDeg <= doLado + GIRO_OUTRO_LADO)) {
       c.warnings = c.warnings.filter((w) => w !== 'giro-excessivo');
     }
   }
@@ -355,9 +370,15 @@ export function legCandidates(
 
   // As regras do armador (decisão 82). Cada uma só corta se sobrar
   // alternativa: melhor uma opção imperfeita que nenhuma.
+  // Cada lado da combinação concorre consigo mesmo: a regra corta a volta
+  // por trás do 5B só se sobrar outra por trás do 5B.
   const seSobrar = (fica: (c: CurveSolution) => boolean) => {
-    const restam = candidatos.filter(fica);
-    if (restam.length > 0) candidatos = restam;
+    const grupos = new Map<string, CurveSolution[]>();
+    for (const c of candidatos) grupos.set(lados.get(c)!, [...(grupos.get(lados.get(c)!) ?? []), c]);
+    candidatos = [...grupos.values()].flatMap((g) => {
+      const restam = g.filter(fica);
+      return restam.length > 0 ? restam : g;
+    });
   };
   // Contracurva franca (abrir para um lado e virar para o outro) sai;
   // a leve só sai se houver opção sem nenhuma, e senão paga no custo.
@@ -367,8 +388,9 @@ export function legCandidates(
   // Por fora só se não houver volta direta, ou se girar quase o mesmo.
   const diretas = candidatos.filter((c) => c.lead.after <= 0 && c.lead.before <= 0);
   if (diretas.length > 0) {
-    const giroDireto = Math.min(...diretas.map((c) => c.turnDeg));
-    seSobrar((c) => (c.lead.after <= 0 && c.lead.before <= 0) || c.turnDeg <= giroDireto + POR_FORA_FOLGA_DEG);
+    const giroDireto = (lado: string) =>
+      Math.min(...diretas.filter((c) => lados.get(c) === lado).map((c) => c.turnDeg), Infinity);
+    seSobrar((c) => (c.lead.after <= 0 && c.lead.before <= 0) || c.turnDeg <= giroDireto(lados.get(c)!) + POR_FORA_FOLGA_DEG);
   }
   // Chegada ao salto já alinhada, com reta de verdade.
   seSobrar((c) => c.arrivalM >= CHEGADA_MIN_M);
@@ -382,7 +404,7 @@ export function legCandidates(
 
   const porForma = new Map<string, CurveSolution>();
   for (const c of ordenados) {
-    const chave = assinatura(c);
+    const chave = `${assinatura(c)}|${lados.get(c)}`;
     if (!porForma.has(chave)) porForma.set(chave, c);
   }
 
@@ -442,6 +464,25 @@ function sameDrawing(a: CurveSolution, b: CurveSolution): boolean {
  * Assinatura da forma. Duas voltas com a mesma assinatura são a mesma
  * ideia desenhada com meio grau de diferença.
  */
+/**
+ * De que lado a volta passa do vão de cada combinação por perto. Contornar
+ * a combinação por um lado ou pelo outro são duas ideias de traçado, mesmo
+ * que girem o mesmo e tenham o mesmo raio.
+ *
+ * O teste: a linha fechada pela corda envolve o vão ou não.
+ */
+function ladoDosVaos(c: CurveSolution, field: Field): string {
+  const vaos = field.corridors ?? [];
+  if (vaos.length === 0 || c.samples.length < 3) return '';
+  const laco = [...c.samples];
+  return vaos
+    .map((v) => {
+      const centro = { x: v.reduce((s, p) => s + p.x, 0) / v.length, y: v.reduce((s, p) => s + p.y, 0) / v.length };
+      return insidePolygon(centro, laco) ? '1' : '0';
+    })
+    .join('');
+}
+
 function assinatura(c: CurveSolution): string {
   // Ir por fora não entra na assinatura: o GIRO já distingue a volta
   // direta da volta por fora, e marcar as duas coisas fazia a mesma reta
@@ -501,6 +542,8 @@ const GIRO_MANSO = 270;
  * isso ela já dá uma volta a mais, e é desvio.
  */
 const GIRO_PARELHO = 10;
+/** Do outro lado da combinação, quanto a volta pode girar além da menor daquele lado. */
+const GIRO_OUTRO_LADO = 30;
 
 const escolhe = (lista: CurveSolution[], params: RideParams): CurveSolution | null =>
   lista.length === 0 ? null : [...lista].sort((a, b) => compara(a, b, params))[0]!;
@@ -570,7 +613,9 @@ function avalia(
     // Desvio de ilha ou vaso (decisão 74): passa ao lado do corpo que
     // está no caminho, por um ponto de passagem — pela esquerda e pela
     // direita. As voltas acima seguem a corda e não teriam como contorná-lo.
-    for (const wp of pontosDeDesvio(saida, chegada, field)) {
+    for (const { pose: wp, vao } of pontosDeDesvio(saida, chegada, field)) {
+      // O desvio do vão da combinação só sem reta esticada: é caro, e é ali que serve.
+      if (vao && (lead.after > 0 || lead.before > 0)) continue;
       for (const tension of TENSIONS) {
         const c1 = legCurve(saida, wp, tension);
         const c2 = legCurve(wp, chegada, tension);
@@ -581,6 +626,22 @@ function avalia(
         ];
         const pontos = [...samplesOfCubic(c1), ...samplesOfCubic(c2).slice(1)];
         julga(lead, nodes, pontos, Math.min(minRadiusOf(c1), minRadiusOf(c2)), 'curva');
+      }
+      // Metade em volta grande: depois de passar ao lado, a volta ainda pode
+      // ter de girar meia volta ou mais para chegar ao salto, e a cúbica
+      // sozinha não gira tanto.
+      if (!vao) continue;
+      const c1 = legCurve(saida, wp, 1);
+      const c2 = legCurve(wp, chegada, 1);
+      for (const raio of [params.radiusM, params.radiusM * 0.85, params.tightRadiusM]) {
+        for (const path of dubinsPaths(wp, chegada, raio)) {
+          const r = roundDubins(path);
+          julga(lead, juntaNos(curveNodes(c1), r.nodes), [...samplesOfCubic(c1), ...r.pontos.slice(1)], Math.min(minRadiusOf(c1), r.minRadiusM), 'curva');
+        }
+        for (const path of dubinsPaths(saida, wp, raio)) {
+          const r = roundDubins(path);
+          julga(lead, juntaNos(r.nodes, curveNodes(c2)), [...r.pontos, ...samplesOfCubic(c2).slice(1)], Math.min(r.minRadiusM, minRadiusOf(c2)), 'curva');
+        }
       }
     }
 
@@ -1046,6 +1107,12 @@ function retaAtropelaDecor(
   return corpos.some((c) => pontos.some((p) => insidePolygon(p, c)));
 }
 
+/** Emenda dois pedaços que se encontram num nó: o último de um é o primeiro do outro. */
+function juntaNos(a: PathNode[], b: PathNode[]): PathNode[] {
+  const fim = a[a.length - 1]!;
+  return [...a.slice(0, -1), { ...fim, handleOut: b[0]!.handleOut }, ...b.slice(1)];
+}
+
 /** Folga entre o traçado e a borda da ilha ou do vaso que ele contorna. */
 const FOLGA_DECOR_M = 2;
 
@@ -1054,16 +1121,17 @@ const FOLGA_DECOR_M = 2;
  * caminho da corda: um de cada lado, além da borda do corpo, com a
  * direção da corda — a volta passa ao lado e segue.
  */
-function pontosDeDesvio(de: Pose, para: Pose, field: Field): Pose[] {
+function pontosDeDesvio(de: Pose, para: Pose, field: Field): { pose: Pose; vao: boolean }[] {
   const corpos = field.decor ?? [];
-  if (corpos.length === 0) return [];
+  const vaos = field.corridors ?? [];
+  if (corpos.length === 0 && vaos.length === 0) return [];
   const corda = sub(para.pos, de.pos);
   const len = Math.hypot(corda.x, corda.y);
   if (len < 1) return [];
   const u = { x: corda.x / len, y: corda.y / len };
   const n = { x: -u.y, y: u.x };
   const rumo = (Math.atan2(u.y, u.x) * 180) / Math.PI;
-  const out: Pose[] = [];
+  const out: { pose: Pose; vao: boolean }[] = [];
   for (const c of corpos) {
     const ao = c.map((p) => ({ t: (p.x - de.pos.x) * u.x + (p.y - de.pos.y) * u.y, l: (p.x - de.pos.x) * n.x + (p.y - de.pos.y) * n.y }));
     const tMin = Math.min(...ao.map((q) => q.t));
@@ -1074,8 +1142,27 @@ function pontosDeDesvio(de: Pose, para: Pose, field: Field): Pose[] {
     if (tMax < 0 || tMin > len || lMin > 0 || lMax < 0) continue;
     const t = (tMin + tMax) / 2;
     for (const l of [lMax + FOLGA_DECOR_M, lMin - FOLGA_DECOR_M]) {
-      out.push({ pos: { x: de.pos.x + u.x * t + n.x * l, y: de.pos.y + u.y * t + n.y * l }, heading: rumo });
+      out.push({ pose: { pos: { x: de.pos.x + u.x * t + n.x * l, y: de.pos.y + u.y * t + n.y * l }, heading: rumo }, vao: false });
+    }
+  }
+  // O vão de uma combinação não precisa cruzar a corda: a volta que chega
+  // a ela costuma passar rente, e contornar pelo lado de fora (o 11 indo ao
+  // 5A por trás do 5B) é a alternativa que o armador procura.
+  for (const c of vaos) {
+    const ao = c.map((p) => ({ t: (p.x - de.pos.x) * u.x + (p.y - de.pos.y) * u.y, l: (p.x - de.pos.x) * n.x + (p.y - de.pos.y) * n.y }));
+    const tMin = Math.min(...ao.map((q) => q.t));
+    const tMax = Math.max(...ao.map((q) => q.t));
+    const lMin = Math.min(...ao.map((q) => q.l));
+    const lMax = Math.max(...ao.map((q) => q.l));
+    if (tMax < 0 || tMin > len) continue;
+    if (Math.min(Math.abs(lMin), Math.abs(lMax)) > VAO_PERTO_M && lMin * lMax > 0) continue;
+    const t = (tMin + tMax) / 2;
+    for (const l of [lMax + FOLGA_DECOR_M, lMin - FOLGA_DECOR_M]) {
+      out.push({ pose: { pos: { x: de.pos.x + u.x * t + n.x * l, y: de.pos.y + u.y * t + n.y * l }, heading: rumo }, vao: true });
     }
   }
   return out;
 }
+
+/** Até que distância da corda o vão de uma combinação ainda pede desvio. */
+const VAO_PERTO_M = 20;

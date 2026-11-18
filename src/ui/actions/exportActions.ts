@@ -1,10 +1,15 @@
+import { comConta } from './contaActions';
 import { exportDocumentPdf } from '@platform/exportPdf';
 import { printDocument } from '@platform/print';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 
-/** Exporta o croqui aberto em PDF, com o nome do arquivo. */
+/** Exporta o croqui aberto em PDF, com o nome do arquivo. Pede a conta (decisão 110). */
 export async function exportCurrentPdf(): Promise<void> {
+  await comConta('pdf', geraPdf);
+}
+
+async function geraPdf(): Promise<void> {
   const { doc, fileName } = useDocumentStore.getState();
   try {
     await exportDocumentPdf(doc, (fileName ?? 'croqui').replace(/\.[^.]+$/, ''));
@@ -15,7 +20,7 @@ export async function exportCurrentPdf(): Promise<void> {
 }
 
 export function printCurrent(): void {
-  printDocument(useDocumentStore.getState().doc);
+  void comConta('impressao', () => printDocument(useDocumentStore.getState().doc));
 }
 
 /**

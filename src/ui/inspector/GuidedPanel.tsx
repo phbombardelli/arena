@@ -1,5 +1,5 @@
 import { placeAssistantPath } from '@core/commands/pathOps';
-import { buildFromChoices } from '@core/assist/guidedRide';
+import { buildFromChoices, trechosDeEscolha } from '@core/assist/guidedRide';
 import { formatDistance, pathLength } from '@core/model/path';
 import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
@@ -21,12 +21,15 @@ export function GuidedPanel() {
 
   const perna = guided.legs[guidedLeg];
   const total = buildFromChoices(guided);
-  const ultima = guidedLeg >= guided.legs.length - 1;
+  // Partida e chegada são sempre reta: o painel só passa pelos trechos com escolha.
+  const escolhas = trechosDeEscolha(guided);
+  const posicao = Math.max(0, escolhas.indexOf(guidedLeg));
+  const ultima = posicao >= escolhas.length - 1;
 
   const aplicar = () => {
     const path = buildFromChoices(guided);
     if (path) {
-      apply('Traçado por trechos', (d) => placeAssistantPath(d, path));
+      apply('Traçado por trechos', (d) => placeAssistantPath(d, path, guided.fase));
       setSelection([path.id]);
     }
     endGuided();
@@ -35,7 +38,8 @@ export function GuidedPanel() {
   return (
     <section className="object-panel">
       <h3>
-        {t('guiado.trecho', { n: guidedLeg + 1, total: guided.legs.length })}
+        {guided.fase === 'desempate' && `${t('vista.desempate')} · `}
+        {t('guiado.trecho', { n: posicao + 1, total: escolhas.length })}
       </h3>
       <p className="note total-distance">
         <strong>{perna?.where}</strong>
@@ -67,10 +71,10 @@ export function GuidedPanel() {
       )}
 
       <div className="row-buttons">
-        <button disabled={guidedLeg === 0} onClick={() => setGuidedLeg(guidedLeg - 1)}>
+        <button disabled={posicao === 0} onClick={() => setGuidedLeg(escolhas[posicao - 1]!)}>
           {t('guiado.anterior')}
         </button>
-        <button disabled={ultima} onClick={() => setGuidedLeg(guidedLeg + 1)}>
+        <button disabled={ultima} onClick={() => setGuidedLeg(escolhas[posicao + 1]!)}>
           {t('guiado.proximo')}
         </button>
       </div>

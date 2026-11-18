@@ -19,11 +19,13 @@ import { useDocumentStore } from '@store/documentStore';
 import { useEditorStore } from '@store/editorStore';
 import { Popover } from '@ui/common/Popover';
 import { newCourse } from '@ui/actions/documentActions';
+import { descartaPendente, seguePendente } from '@ui/actions/contaActions';
 import { formatDate, formatDateTime, formatTime, t } from '@core/i18n/i18n';
 
 /**
- * Conta e nuvem na barra de cima (B-36, B-78, B-79). Login opcional: o
- * botão "Entrar" pede o aceite na primeira vez; entrando, o ícone mostra o
+ * Conta e nuvem na barra de cima (B-36, B-78, B-79). Desenhar é livre;
+ * salvar, PDF e imprimir pedem a conta (decisão 110). O botão "Entrar" pede o
+ * aceite na primeira vez; entrando, o ícone mostra o
  * estado do backup e o menu traz sincronizar, sair e — para o admin — o
  * painel com os arquivos dos usuários.
  */
@@ -31,8 +33,12 @@ import { formatDate, formatDateTime, formatTime, t } from '@core/i18n/i18n';
 const hora = (iso: string | null) => (iso ? formatTime(new Date(iso)) : '');
 
 export function AccountButton() {
-  const { user, status, lastSync, error } = useCloudStore();
+  const { user, status, lastSync, error, precisaAceite } = useCloudStore();
   const setDialog = useEditorStore((s) => s.setDialog);
+  // Entrou com o aceite antigo: os termos mudaram (decisão 110), confirma ou sai.
+  useEffect(() => {
+    if (user && precisaAceite) setDialog('nuvem');
+  }, [user, precisaAceite, setDialog]);
 
   if (!user) {
     return (
@@ -105,29 +111,47 @@ export function AccountButton() {
   );
 }
 
-/** Aceite antes do primeiro login: o que acontece com os arquivos. */
-export function CloudConsentBody() {
+/**
+ * Aceite antes do login: o que acontece com os arquivos e com o uso.
+ *
+ * Três jeitos de chegar aqui: o botão Entrar; uma ação que pede a conta
+ * (`motivo`: salvar, PDF, imprimir — entrando, ela segue sozinha); e quem
+ * já estava entrado com o aceite antigo, que confirma ou sai.
+ */
+export function CloudConsentBody({ motivo = false }: { motivo?: boolean }) {
+  const reaceite = useCloudStore((s) => s.user != null && s.precisaAceite === true);
   const fecha = () => useEditorStore.getState().setDialog(null);
+  const desiste = () => {
+    descartaPendente();
+    fecha();
+    if (reaceite) void signOut();
+  };
+  const aceita = async () => {
+    window.localStorage.setItem(ACEITE, new Date().toISOString());
+    fecha();
+    if (useCloudStore.getState().user) {
+      useCloudStore.setState({ precisaAceite: false });
+      seguePendente();
+      return;
+    }
+    if (await signIn()) seguePendente();
+    else descartaPendente();
+  };
   return (
     <section className="file-dialog">
+      {motivo && <p><strong>{t('nuvem.contaMotivo')}</strong></p>}
+      {reaceite && <p><strong>{t('nuvem.reaceite')}</strong></p>}
       <p>
         {t('nuvem.aceite1')} <strong>{t('nuvem.minhasPistas')}</strong> {t('nuvem.e')} <strong>{t('arq.meusPercursos')}</strong>{' '}
         {t('nuvem.aceite2')}
       </p>
-      <p>{t('nuvem.semEntrar')}</p>
+      {!motivo && <p>{t('nuvem.semEntrar')}</p>}
       <p className="note">
         {t('nuvem.admin')}
       </p>
       <div className="row-buttons">
-        <button onClick={fecha}>{t('nuvem.agoraNao')}</button>
-        <button
-          className="primary"
-          onClick={() => {
-            window.localStorage.setItem(ACEITE, new Date().toISOString());
-            fecha();
-            void signIn();
-          }}
-        >
+        <button onClick={desiste}>{t(reaceite ? 'nuvem.sair' : 'nuvem.agoraNao')}</button>
+        <button className="primary" onClick={() => void aceita()}>
           {t('nuvem.concordo')}
         </button>
       </div>
@@ -194,6 +218,14 @@ export function AdminPanelBody() {
                   <em>
                     {u.email}
                     {u.ultimoAcesso ? ` · ${t('nuvem.ultimoAcesso', { data: formatDate(u.ultimoAcesso) })}` : ''}
+                  </em>
+                  <em>
+                    {t('nuvem.usoResumo', {
+                      pdf: u.uso.pdf ?? 0,
+                      imp: u.uso.impressao ?? 0,
+                      sal: (u.uso.percurso ?? 0) + (u.uso.arquivo ?? 0) + (u.uso.pista ?? 0),
+                    })}
+                    {u.ultimoUso ? ` · ${t('nuvem.ultimoUso', { data: formatDate(u.ultimoUso) })}` : ''}
                   </em>
                 </div>
                 <button className="primary" onClick={() => setAberto(u)}>

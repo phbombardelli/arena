@@ -12,7 +12,7 @@ import type {
   SceneObject,
   VistaProva,
 } from '@core/model/types';
-import { withChoice, type GuidedRide } from '@core/assist/guidedRide';
+import { trechosDeEscolha, withChoice, type GuidedRide } from '@core/assist/guidedRide';
 import type { Viewport } from '@core/scale/viewport';
 import type { ImportedImage } from '@core/commands/imageOps';
 import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
@@ -23,7 +23,7 @@ import { ZOOM_ACTUAL_SIZE } from '@core/scale/viewport';
  */
 
 /** Janelas que se abrem por menu. Só uma de cada vez. */
-export type DialogId = 'atalhos' | 'modelos' | 'folha' | 'sobre' | 'alturas' | 'novo' | 'nova-ginastica' | 'outro-ginastica' | 'outro-percurso' | 'abrir' | 'nuvem' | 'admin' | 'contato' | 'tutoriais' | 'boas-vindas' | 'saida' | 'montagem';
+export type DialogId = 'atalhos' | 'modelos' | 'folha' | 'sobre' | 'alturas' | 'novo' | 'nova-ginastica' | 'outro-ginastica' | 'outro-percurso' | 'abrir' | 'nuvem' | 'conta' | 'admin' | 'contato' | 'tutoriais' | 'boas-vindas' | 'saida' | 'montagem';
 
 export type Tool =
   | 'select'
@@ -237,7 +237,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   clearSelection: () => set({ selection: [] }),
   setCursor: (cursorM) => set({ cursorM }),
   setTimingDistance: (timingDistanceM) => set({ timingDistanceM }),
-  startGuided: (guided) => set({ guided, guidedLeg: 0, selection: [] }),
+  startGuided: (guided) => set({ guided, guidedLeg: trechosDeEscolha(guided)[0]!, selection: [] }),
   setGuidedLeg: (guidedLeg) => set({ guidedLeg }),
   chooseGuidedOption: (option) =>
     set((s) => (s.guided ? { guided: withChoice(s.guided, s.guidedLeg, option) } : s)),

@@ -1,3 +1,4 @@
+import { faseAtual } from './faseActions';
 import { addObject, deleteObjects } from '@core/commands/ops';
 import { faseDe, phaseStops, type Fase } from '@core/assist/courseRide';
 import { placeTimingLine, TIMING_DISTANCE } from '@core/library/timing';
@@ -16,7 +17,8 @@ import { t } from '@core/i18n/i18n';
  * assistente tinha de inventar uma volta entre ela e o primeiro salto.
  * Inventava, e o croqui saía com uma laçada onde só pode haver reta.
  */
-export function insertTimingLine(role: 'start' | 'finish', fase: Fase = 'percurso'): void {
+/** Sem fase dada, vale a da vista (decisão 109). */
+export function insertTimingLine(role: 'start' | 'finish', fase: Fase = faseAtual()): void {
   const { doc, apply } = useDocumentStore.getState();
   const distancia = useEditorStore.getState().timingDistanceM;
 

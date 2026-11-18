@@ -2,7 +2,7 @@ import { distance, type Vec2 } from '@core/geometry/vec';
 import { createPath } from '@core/model/path';
 import type { CourseDocument, CoursePath, PathNode } from '@core/model/types';
 import { legCandidates, type CurveSolution } from './legCurve';
-import type { CoursePrep } from './courseRide';
+import type { CoursePrep, Fase } from './courseRide';
 import { courseGates, gateStraightNodes, joinNodes } from './courseRide';
 import { DEFAULT_RIDE, type RideParams } from './ridePath';
 import { t } from '@core/i18n/i18n';
@@ -27,6 +27,8 @@ export interface GuidedLeg {
   options: CurveSolution[];
   /** Qual delas está escolhida. */
   chosen: number;
+  /** Partida ao 1º e último à chegada: sempre reta, o painel nem passa por ela. */
+  fixa?: boolean;
 }
 
 export interface GuidedRide {
@@ -35,6 +37,14 @@ export interface GuidedRide {
   gateNodes: PathNode[][];
   stops: string[];
   prep: CoursePrep;
+  /** Que traçado está sendo feito: o do percurso ou o do desempate. */
+  fase: Fase;
+}
+
+/** Os trechos em que há o que escolher, na ordem: os que o painel percorre. */
+export function trechosDeEscolha(ride: GuidedRide): number[] {
+  const out = ride.legs.flatMap((l, i) => (l.fixa ? [] : [i]));
+  return out.length > 0 ? out : [0];
 }
 
 /** O quanto de reta cada volta escolhida usa, na ordem dos degraus. */
@@ -67,8 +77,9 @@ export function withChoice(ride: GuidedRide, legIndex: number, option: number): 
 export function prepareGuidedRide(
   doc: CourseDocument,
   params: RideParams = DEFAULT_RIDE,
+  fase: Fase = 'percurso',
 ): GuidedRide | null {
-  const preparo = courseGates(doc, params);
+  const preparo = courseGates(doc, params, fase);
   if (!preparo) return null;
 
   const { gates, entradas, saidas, retaEntrada, retaSaida, field } = preparo;
@@ -81,7 +92,7 @@ export function prepareGuidedRide(
 
     // Cruzada de tempo nunca tem volta: reta, e nada a escolher.
     if ((g.kind === 'timing' && !g.line.divisa) || proximo.kind === 'timing') {
-      legs.push({ where, options: [retaComoOpcao(saidas[i]!.pos, entradas[i + 1]!.pos)], chosen: 0 });
+      legs.push({ where, options: [retaComoOpcao(saidas[i]!.pos, entradas[i + 1]!.pos)], chosen: 0, fixa: true });
       continue;
     }
 
@@ -104,6 +115,7 @@ export function prepareGuidedRide(
     gateNodes: gates.map((_, i) => gateStraightNodes(preparo, i, leadsDe(legs))),
     stops: gates.map((g) => g.label),
     prep: preparo,
+    fase,
   };
 }
 

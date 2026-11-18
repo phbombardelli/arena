@@ -1,3 +1,5 @@
+import { contaAtual, registraUso } from '@platform/cloud';
+import { pedeConta } from '@ui/actions/contaActions';
 import { useEffect, useState } from 'react';
 import { applyTemplate, arenaScopeObjects, buildTemplate, type ArenaTemplate } from '@core/library/arenaTemplate';
 import { SCHEMA_VERSION } from '@core/model/types';
@@ -63,7 +65,10 @@ function PistaPicker({ acao, onPick, versao }: { acao: string; onPick: (tpl: Are
     try {
       const tpl = await importTemplateFile();
       if (!tpl) return;
-      if (guardarImportada) {
+      // Guardar em Minhas pistas é salvar: só com conta (decisão 110). Sem ela,
+      // a pista importada é usada e não fica guardada.
+      if (guardarImportada && (await contaAtual())) {
+        registraUso('pista');
         await saveTemplate(tpl);
         recarrega();
       }
@@ -338,6 +343,12 @@ export function PistasDialogBody() {
   const salvar = async () => {
     const tpl = montar();
     if (!tpl) return;
+    // Salvar pista pede a conta (decisão 110); entrando, a janela volta.
+    if (!(await contaAtual())) {
+      pedeConta(() => useEditorStore.getState().setDialog('modelos'));
+      return;
+    }
+    registraUso('pista');
     try {
       await saveTemplate(tpl);
       setSalvo(tpl.name);

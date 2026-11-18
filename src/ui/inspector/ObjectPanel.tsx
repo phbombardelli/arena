@@ -45,7 +45,7 @@ const KIND_LABEL: Record<SceneObject['kind'], MessageKey> = {
 
 export function ObjectPanel() {
   const { doc, apply } = useDocumentStore();
-  const { selection, clearSelection } = useEditorStore();
+  const { selection, clearSelection, vista } = useEditorStore();
   const objs = doc.objects.filter((o) => selection.includes(o.id));
 
   if (objs.length === 0) return null;
@@ -214,7 +214,7 @@ export function ObjectPanel() {
             </>
           )}
           {/* A montagem vem depois da posição no chão (giro): é o próximo passo. */}
-          {single.kind === 'obstacle' && doc.kind !== 'ginastica' && <DesempateDoObstaculo obstacle={single} />}
+          {single.kind === 'obstacle' && doc.kind !== 'ginastica' && vista !== 'percurso' && <DesempateDoObstaculo obstacle={single} />}
           {single.kind === 'obstacle' && doc.kind !== 'ginastica' && temMontagem(single.type) && (
             <ResumoMontagem obstacle={single} />
           )}

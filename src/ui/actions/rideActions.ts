@@ -1,3 +1,4 @@
+import { faseAtual } from './faseActions';
 import { placeAssistantPath } from '@core/commands/pathOps';
 import { buildCourseRide, type Fase } from '@core/assist/courseRide';
 import { DEFAULT_RIDE, type RideParams } from '@core/assist/ridePath';
@@ -26,7 +27,7 @@ const MOTIVO: Record<CurveWarning, MessageKey> = {
 /** Giro a partir do qual a volta é por fora, para o aviso. */
 const GIRO_POR_FORA = 225;
 
-export function traceCourse(params: RideParams = DEFAULT_RIDE, fase: Fase = 'percurso'): void {
+export function traceCourse(params: RideParams = DEFAULT_RIDE, fase: Fase = faseAtual()): void {
   const { doc, apply } = useDocumentStore.getState();
   const resultado = buildCourseRide(doc, params, fase);
 

@@ -114,7 +114,9 @@ export async function saveFileAs(
       return { name: handle.name, handle };
     } catch (err) {
       if (isAbort(err)) return null;
-      throw err;
+      // Sem gesto recente (a gravação seguiu sozinha depois do login), o
+      // navegador recusa a janela: o arquivo vai como download.
+      if ((err as { name?: string })?.name !== 'SecurityError') throw err;
     }
   }
   const name = `${suggestedName}${FILE_EXTENSION}`;

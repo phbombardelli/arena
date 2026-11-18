@@ -2369,3 +2369,21 @@ Com a distância do seguinte valendo, sai a vara da frente e o vertical fica ond
 
 Tudo isso só informa; nada é bloqueado, salvo a caixa "ao contrário" nas combinações que o regulamento não permite.
 
+
+## 109. A vista é o modo de trabalho do desempate (1.8.0, 18/11/2026)
+
+O desempate tomava o painel da prova inteiro, o tempo todo, e só tinha o traçado automático. Agora a vista da barra de baixo (`vista`) decide a fase em que se trabalha (`faseAtual` em `ui/actions/faseActions.ts`): na vista Desempate, o painel da prova sem seleção é o do desempate (`ResumoDesempate`), e `traceCourse`, `startGuidedRide` e `insertTimingLine`, sem fase dada, usam a do desempate. Nas vistas Percurso e Ambos, a fase é o percurso; no painel da prova, o desempate vira uma linha (`LinhaDoDesempate`) que leva à vista dele. A seção do desempate no painel do obstáculo só aparece nas vistas Desempate e Ambos. O seletor de vista aparece também na vista Desempate sem ordem, para dar como voltar.
+
+O traçado por trechos carrega a fase (`GuidedRide.fase`). Os trechos da cruzada de tempo (partida ao 1º, último à chegada) são `fixa`: sempre reta, e o painel pula direto para os que têm escolha (`trechosDeEscolha`).
+
+**Volta por fora da combinação.** Passar por dentro de uma combinação ou de uma linha é livre, e o vão entre os elementos não é barreira (`Field.corridors` é só referência). Mas contornar a combinação por um lado ou pelo outro são duas ideias de traçado: a assinatura das opções ganha o lado de cada vão (`ladoDosVaos`, a volta fechada pela corda envolve o vão ou não), o teto de giro e as regras do armador (decisão 82) comparam a volta só com as do mesmo lado, e o vão perto da corda gera pontos de desvio dos dois lados, com metade em volta grande (`roundDubins`). O caso que motivou: no desempate 11 → 5AB, a volta natural contorna o 5B por fora, gira uns 310° e era descartada por girar mais que a fechada.
+
+**Número repetido** (`numero-repetido` em `interference.ts`): mesmo número e mesma letra, ou número sem letra junto da mesma combinação. Só avisa: renumerar passa por estados assim.
+
+## 110. Salvar, PDF e imprimir pedem a conta (1.8.0, 18/11/2026)
+
+Para saber quem usa o Arena. Desenhar e abrir são livres; Exportar PDF, Imprimir, Salvar percurso, Salvar como arquivo e Salvar pista passam por `comConta` (`ui/actions/contaActions.ts`). Sem conta, abre o aviso (`dialog 'conta'`) e a ação fica pendente; entrando, ela segue sozinha. `contaAtual` espera o Firebase quando o aparelho lembra o login, para o Ctrl+S logo ao abrir não pedir login de quem já entrou. A pista importada só fica guardada em Minhas pistas com conta. Sem gesto recente (a gravação seguiu depois do login), a janela de salvar arquivo cai no download.
+
+**Contagem de uso** (`registraUso`): `usuarios/{uid}.uso.{pdf|impressao|percurso|arquivo|pista}` soma com `increment`, e `ultimoUso` guarda a data. As regras do Firestore já deixavam o dono escrever o próprio perfil. O painel de admin mostra a contagem.
+
+**Aceite v2** (`arena.nuvem.aceite-v2`): o aviso diz que o e-mail e a contagem são guardados. Quem entrou com o aceite antigo vê o aviso uma vez (`precisaAceite`) e escolhe entre concordar e sair; a contagem só começa depois do aceite.

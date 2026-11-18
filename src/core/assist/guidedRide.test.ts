@@ -7,7 +7,9 @@ import { createDocument } from '@core/model/document';
 import { createRectangleArena } from '@core/model/arena';
 import { pathLength } from '@core/model/path';
 import type { CourseDocument, Obstacle } from '@core/model/types';
-import { buildFromChoices, prepareGuidedRide, withChoice } from './guidedRide';
+import { buildFromChoices, prepareGuidedRide, trechosDeEscolha, withChoice } from './guidedRide';
+import { corredoresDasCombinacoes, phaseStops } from './courseRide';
+import { insidePolygon } from './ridePath';
 
 const salto = (numero: string, x: number, y: number, rotacao = 0): Obstacle => {
   const o = createObstacle('vertical', { x, y }, numero);
@@ -103,5 +105,35 @@ describe('traçado por trechos', () => {
       d.objects.length = 0;
     });
     expect(prepareGuidedRide(vazio)).toBeNull();
+  });
+});
+
+describe('trechos de escolha (decisão 109)', () => {
+  it('partida e chegada ficam de fora: são sempre reta', () => {
+    const guiado = prepareGuidedRide(percurso())!;
+    expect(guiado.legs[0]!.fixa).toBe(true);
+    expect(guiado.legs[guiado.legs.length - 1]!.fixa).toBe(true);
+    expect(trechosDeEscolha(guiado)).toEqual([1, 2]);
+  });
+});
+
+describe('vão da combinação', () => {
+  it('cobre o espaço entre os elementos, sem os elementos', () => {
+    const doc = produce(createDocument(), (d) => {
+      d.objects.length = 0;
+      addObject(d, createRectangleArena({ x: 0, y: 0 }, 90, 55));
+      const a = salto('4', 40, 30, 90);
+      a.letter = 'A';
+      const b = salto('4', 48, 30, 90);
+      b.letter = 'B';
+      addObject(d, a);
+      addObject(d, b);
+    });
+    const [vao] = corredoresDasCombinacoes(phaseStops(doc, 'percurso'));
+    expect(vao).toBeDefined();
+    expect(insidePolygon({ x: 44, y: 30 }, vao!)).toBe(true);
+    expect(insidePolygon({ x: 40, y: 30 }, vao!)).toBe(false);
+    expect(insidePolygon({ x: 48, y: 30 }, vao!)).toBe(false);
+    expect(insidePolygon({ x: 44, y: 36 }, vao!)).toBe(false);
   });
 });

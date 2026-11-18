@@ -40,7 +40,8 @@ export type InterferenceKind =
   | 'obstaculo-fora-da-pista'
   | 'obstaculo-na-agua'
   | 'tracado-cruza-ornamento'
-  | 'triplice-na-combinacao';
+  | 'triplice-na-combinacao'
+  | 'numero-repetido';
 
 export interface Interference {
   kind: InterferenceKind;
@@ -196,6 +197,30 @@ export function findInterferences(doc: CourseDocument): Interference[] {
         ids: [a.id, b.id],
         at: { x: (a.pos.x + b.pos.x) / 2, y: (a.pos.y + b.pos.y) / 2 },
         message: frase(t('interf.sobrepoem', { a: nomeDe(a), b: nomeDe(b) })),
+      });
+    }
+  }
+
+  // Número repetido: dois obstáculos com o mesmo número e a mesma letra,
+  // ou um "4" solto junto de um "4A". Pode ser estado de passagem enquanto
+  // se renumera, por isso só avisa.
+  if (doc.kind !== 'ginastica') {
+    const jaAvisado = new Set<ObjectId>();
+    for (let i = 0; i < obstacles.length; i += 1) {
+      const a = obstacles[i]!;
+      const na = a.number.trim();
+      if (na === '' || jaAvisado.has(a.id)) continue;
+      const iguais = obstacles.filter((b, j) => {
+        if (j <= i || b.number.trim() !== na) return false;
+        return b.letter === a.letter || b.letter === '' || a.letter === '';
+      });
+      if (iguais.length === 0) continue;
+      for (const b of iguais) jaAvisado.add(b.id);
+      out.push({
+        kind: 'numero-repetido',
+        ids: [a.id, ...iguais.map((b) => b.id)],
+        at: a.pos,
+        message: t('interf.numeroRepetido', { a: obstacleLabel(a) }),
       });
     }
   }

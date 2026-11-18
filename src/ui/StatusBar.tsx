@@ -23,7 +23,8 @@ export function StatusBar() {
   const { cursorM, viewport, mode, setDialog, vista, setVista } = useEditorStore();
   // Só no Percurso: na Pista não há prova, e na Impressão cada folha já
   // mostra o que sai nela.
-  const temDesempate = doc.kind !== 'ginastica' && (doc.desempate?.ordem.length ?? 0) > 0 && mode === 'percurso';
+  const temDesempate =
+    doc.kind !== 'ginastica' && mode === 'percurso' && ((doc.desempate?.ordem.length ?? 0) > 0 || vista === 'desempate');
 
   const mpp = metersPerPixel(viewport, doc.page.printScale);
   const step = doc.grid.stepM > 0 ? doc.grid.stepM : visibleGridStep(mpp, 8);

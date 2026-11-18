@@ -10,6 +10,7 @@ import {
   entryPose,
   exitPose,
   fieldFrom,
+  obstacleFootprint,
   timingPose,
   type Field,
   type RideParams,
@@ -315,6 +316,38 @@ export interface CoursePrep {
   params: RideParams;
 }
 
+/**
+ * O vão entre os elementos de uma combinação que se salta nesta fase.
+ *
+ * Passar por ali é livre. O vão serve de referência: a volta que corta
+ * entre o 5A e o 5B e a que contorna o 5B por fora são duas ideias, e as
+ * duas têm de aparecer como opção. O retângulo vai da face de saída de um
+ * elemento à de entrada do seguinte, na largura dos dois.
+ */
+export function corredoresDasCombinacoes(stops: RideStop[]): Vec2[][] {
+  const out: Vec2[][] = [];
+  for (const stop of stops) {
+    for (let i = 0; i + 1 < stop.elements.length; i += 1) {
+      const a = stop.elements[i]!;
+      const b = stop.elements[i + 1]!;
+      const len = distance(a.pos, b.pos);
+      if (len < 0.5) continue;
+      const u = { x: (b.pos.x - a.pos.x) / len, y: (b.pos.y - a.pos.y) / len };
+      const n = { x: -u.y, y: u.x };
+      const ao = (p: Vec2) => ({ t: (p.x - a.pos.x) * u.x + (p.y - a.pos.y) * u.y, l: (p.x - a.pos.x) * n.x + (p.y - a.pos.y) * n.y });
+      const ca = obstacleFootprint(a).map(ao);
+      const cb = obstacleFootprint(b).map(ao);
+      const t1 = Math.max(...ca.map((q) => q.t));
+      const t2 = Math.min(...cb.map((q) => q.t));
+      if (t2 - t1 < 0.5) continue;
+      const w = Math.max(...[...ca, ...cb].map((q) => Math.abs(q.l)));
+      const ponto = (t: number, l: number): Vec2 => ({ x: a.pos.x + u.x * t + n.x * l, y: a.pos.y + u.y * t + n.y * l });
+      out.push([ponto(t1, -w), ponto(t2, -w), ponto(t2, w), ponto(t1, w)]);
+    }
+  }
+  return out;
+}
+
 export function courseGates(
   doc: CourseDocument,
   params: RideParams = DEFAULT_RIDE,
@@ -324,11 +357,14 @@ export function courseGates(
   const arena = doc.objects.find((o) => o.kind === 'arena' && !o.structure);
   // No desempate, o que saiu da pista não é barreira.
   const retirados = fase === 'desempate' ? new Set(doc.desempate?.retirados ?? []) : new Set<string>();
-  const field: Field = fieldFrom(
-    arena?.kind === 'arena' ? arena : null,
-    obstacles.filter((o) => !retirados.has(o.id)),
-    decorBodies(doc).map((d) => d.outline),
-  );
+  const field: Field = {
+    ...fieldFrom(
+      arena?.kind === 'arena' ? arena : null,
+      obstacles.filter((o) => !retirados.has(o.id)),
+      decorBodies(doc).map((d) => d.outline),
+    ),
+    corridors: corredoresDasCombinacoes(phaseStops(doc, fase)),
+  };
 
   const partida = phaseTiming(doc, fase, 'start');
   const chegada = phaseTiming(doc, fase, 'finish');
