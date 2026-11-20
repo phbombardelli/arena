@@ -14,6 +14,12 @@ commit e marcar com a tag `vX.Y.Z` (`git tag v1.2.0 && git push --tags`).
 
 ---
 
+## 1.9.0 — 20/11/2026
+
+- **Tutoriais novos:** seis vídeos curtos (antes eram quatro), com capítulos para pular direto ao assunto: do zero à folha impressa, a pista, obstáculos e percurso, desempate e duas fases, a folha, e ginástica, arquivos e nuvem.
+- **Rótulo da partida e da chegada fora da cerca:** a folha agora reserva espaço para ele, e ele não fica mais embaixo da tabela.
+- **"1ª fase" e "2ª fase" na linha de duas fases** não se sobrepõem mais quando a linha está em pé.
+
 ## 1.8.0 — 18/11/2026
 
 - **Salvar, exportar PDF e imprimir pedem a conta Google.** Desenhar continua livre, sem conta. Tentando sem conta, aparece o aviso de login; entrando, a ação segue sozinha (o PDF sai, o croqui é salvo). Quem já tinha conta confirma os termos novos uma vez.

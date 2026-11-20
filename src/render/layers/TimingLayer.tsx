@@ -41,8 +41,15 @@ export function TimingLayer({ line, printScale, originMm, labelAt, onPointerDown
     ? ([
         { texto: t('tim.fase1'), y: line.arrow.reversed ? -1 : 1 },
         { texto: t('tim.fase2'), y: line.arrow.reversed ? 1 : -1 },
-      ] as const).map(({ texto, y }) => {
-        const p = rotate({ x: line.widthM / 2 + 2.2, y: y * 1.3 }, line.rotation);
+      ] as const).map(({ texto, y }, _i, todos) => {
+        // Afasta os dois textos o bastante para não se cobrirem: com a linha
+        // em pé (normal na horizontal) conta a largura do texto; deitada, a
+        // altura. Nunca menos que 1,3 m, como antes.
+        const n = rotate({ x: 0, y: 1 }, line.rotation);
+        const largura = Math.max(...todos.map((l) => l.texto.length)) * text.small * 0.6;
+        const meia = (Math.abs(n.x) * largura + Math.abs(n.y) * text.small) / 2 + 0.6;
+        const d = Math.max(1.3, meia / k);
+        const p = rotate({ x: line.widthM / 2 + 2.2, y: y * d }, line.rotation);
         return { texto, x: cx + p.x * k, y: cy + p.y * k };
       })
     : [];

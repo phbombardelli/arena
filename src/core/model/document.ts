@@ -3,6 +3,9 @@ import { fitScale, pageSize, usableArea } from '@core/scale/units';
 import { heightTableLayout, infoBoxLayout, parteDaFolha, tituloAparece, tituloLayout } from './annotationLayout';
 import { arenaExtent, createRectangleArena } from './arena';
 import { rotuloDoPortao } from '@core/library/ornaments';
+import { timingLabel } from '@core/library/timing';
+import { faseDe } from '@core/assist/courseRide';
+import { LABEL_FONT_MM, layoutLabels, textWidth } from '@core/assist/labelLayout';
 import { getBounds, isPaperAnchored, unionBounds } from './transform';
 import type {
   Arena,
@@ -10,6 +13,7 @@ import type {
   Layer,
   LayerId,
   ObjectId,
+  TimingLine,
   Obstacle,
   SceneObject,
 } from './types';
@@ -231,6 +235,24 @@ export function extensaoDoDesenho(doc: CourseDocument): { origin: Vec2; widthM: 
     const w = r.meiaLarguraMm / k;
     const h = r.meiaAlturaMm / k;
     caixas.push({ min: { x: r.centro.x - w, y: r.centro.y - h }, max: { x: r.centro.x + w, y: r.centro.y + h } });
+  }
+  // Partida e chegada: o rótulo pode sair por fora da cerca ("Chegada do
+  // desempate" à direita da pista ficava embaixo da tabela). Só as linhas da
+  // folha à vista: a do desempate não sai na folha do percurso.
+  const parte = parteDaFolha(doc);
+  const cruzadas = objs.filter(
+    (o): o is TimingLine =>
+      o.kind === 'timing' && o.labelVisible && o.label !== '' && (parte === 'tudo' || faseDe(o) === parte || (parte === 'desempate' && faseDe(o) === 'percurso')),
+  );
+  if (cruzadas.length > 0) {
+    const pos = layoutLabels(doc, new Set(), new Map(), true).timing;
+    for (const t of cruzadas) {
+      const c = pos.get(t.id);
+      if (!c) continue;
+      const w = textWidth(timingLabel(t), LABEL_FONT_MM.timing) / 2 / k;
+      const h = LABEL_FONT_MM.timing / 2 / k;
+      caixas.push({ min: { x: c.x - w, y: c.y - h }, max: { x: c.x + w, y: c.y + h } });
+    }
   }
   const b = unionBounds(caixas);
   if (!b) {

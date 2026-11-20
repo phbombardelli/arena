@@ -254,6 +254,8 @@ export function layoutLabels(
    * ficar perto de outro salto a ponto de parecer dele.
    */
   etiquetas: ReadonlyMap<ObjectId, string[]> = new Map(),
+  /** Só até a partida e a chegada (a diagramação da folha só precisa delas). */
+  soCruzadas = false,
 ): LabelLayout {
   const k = mmPerMeter(doc.page.printScale);
   const textoDoNumero = (o: Obstacle) => obstacleLabel(o) + (comOrdem.has(o.id) ? ORDEM_NO_NUMERO : '');
@@ -417,6 +419,7 @@ export function layoutLabels(
     const b = escolhe(emVolta(t.pos, t.rotation, angulos, raio, t.label, LABEL_FONT_MM.timing, true), idx);
     resultado.timing.set(t.id, centro(b));
   });
+  if (soCruzadas) return resultado;
 
   /* ------------------------------------------ número e alturas */
 

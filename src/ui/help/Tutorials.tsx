@@ -5,7 +5,7 @@ import { useEditorStore } from '@store/editorStore';
 import { marcaTutorialVisto, tutoriaisVistos } from '@platform/tutorialPrefs';
 
 /**
- * Tutoriais em vídeo (B-25): a lista dos quatro vídeos e o player, com
+ * Tutoriais em vídeo (B-25): a lista dos seis vídeos e o player, com
  * capítulos. Os arquivos moram fora do programa (VITE_TUTORIAIS_URL):
  * NN.mp4, NN-capa.jpg e NN.vtt para cada vídeo.
  */
@@ -21,20 +21,28 @@ interface Tutorial {
 
 const TUTORIAIS: Tutorial[] = [
   {
-    id: '01', titulo: 'tut.v1', resumo: 'tut.v1r', duracaoS: 260,
-    capitulos: [[0, 'tut.c1a'], [43, 'tut.c1b'], [119, 'tut.c1c'], [151, 'tut.c1d'], [186, 'tut.c1e'], [210, 'tut.c1f'], [228, 'tut.c1g']],
+    id: '01', titulo: 'tut.v1', resumo: 'tut.v1r', duracaoS: 178,
+    capitulos: [[0, 'tut.c1a'], [39, 'tut.c1b'], [81, 'tut.c1c'], [103, 'tut.c1d'], [126, 'tut.c1e'], [146, 'tut.c1f']],
   },
   {
     id: '02', titulo: 'tut.v2', resumo: 'tut.v2r', duracaoS: 291,
-    capitulos: [[0, 'tut.c2a'], [41, 'tut.c2b'], [54, 'tut.c2c'], [91, 'tut.c2d'], [117, 'tut.c2e'], [163, 'tut.c2f'], [193, 'tut.c2g'], [226, 'tut.c2h'], [242, 'tut.c2i']],
+    capitulos: [[0, 'tut.c2a'], [55, 'tut.c2b'], [76, 'tut.c2c'], [104, 'tut.c2d'], [138, 'tut.c2e'], [185, 'tut.c2f'], [222, 'tut.c2g'], [253, 'tut.c2h']],
   },
   {
-    id: '03', titulo: 'tut.v3', resumo: 'tut.v3r', duracaoS: 365,
-    capitulos: [[0, 'tut.c1b'], [35, 'tut.c3a'], [68, 'tut.c3b'], [112, 'tut.c3c'], [141, 'tut.c3d'], [172, 'tut.c3e'], [217, 'tut.c3f'], [247, 'tut.c3g'], [263, 'tut.c3h'], [304, 'tut.c3i'], [331, 'tut.c3j']],
+    id: '03', titulo: 'tut.v3', resumo: 'tut.v3r', duracaoS: 312,
+    capitulos: [[0, 'tut.c1b'], [44, 'tut.c3a'], [68, 'tut.c3b'], [97, 'tut.c3c'], [181, 'tut.c3d'], [200, 'tut.c3e'], [214, 'tut.c3f'], [258, 'tut.c3g'], [278, 'tut.c3h'], [288, 'tut.c3i']],
   },
   {
-    id: '04', titulo: 'tut.v4', resumo: 'tut.v4r', duracaoS: 276,
-    capitulos: [[0, 'tut.c4a'], [25, 'tut.c4b'], [49, 'tut.c4c'], [75, 'tut.c4d'], [113, 'tut.c4e'], [147, 'tut.c4f'], [178, 'tut.c4g'], [195, 'tut.c4h'], [218, 'tut.c4i'], [240, 'tut.c4j']],
+    id: '04', titulo: 'tut.v4', resumo: 'tut.v4r', duracaoS: 190,
+    capitulos: [[0, 'tut.c4a'], [22, 'tut.c4b'], [47, 'tut.c4c'], [74, 'tut.c4d'], [113, 'tut.c4e'], [132, 'tut.c4f'], [141, 'tut.c4g']],
+  },
+  {
+    id: '05', titulo: 'tut.v5', resumo: 'tut.v5r', duracaoS: 187,
+    capitulos: [[0, 'tut.c5a'], [35, 'tut.c5b'], [70, 'tut.c5c'], [102, 'tut.c5d'], [123, 'tut.c5e'], [150, 'tut.c5f'], [165, 'tut.c5g']],
+  },
+  {
+    id: '06', titulo: 'tut.v6', resumo: 'tut.v6r', duracaoS: 140,
+    capitulos: [[0, 'tut.c6a'], [20, 'tut.c6b'], [54, 'tut.c6c'], [64, 'tut.c6d'], [90, 'tut.c6e'], [104, 'tut.c6f'], [112, 'tut.c6g']],
   },
 ];
 

@@ -59,6 +59,17 @@ interface CloudState {
 
 export const useCloudStore = create<CloudState>(() => ({ user: null, status: 'desligado', lastSync: null, error: null }));
 
+/**
+ * Conta de gravação dos tutoriais (só no servidor de desenvolvimento): o robô
+ * não entra no Google, então "entrar" põe um usuário fictício e nada vai para
+ * o Firebase. Ligada pela oficina com window.__arenaContaDeGravacao = true.
+ */
+const UID_GRAVACAO = 'gravacao-tutorial';
+function contaDeGravacao(): boolean {
+  return import.meta.env.DEV && (window as { __arenaContaDeGravacao?: boolean }).__arenaContaDeGravacao === true;
+}
+const deGravacao = (u: CloudUser | null) => u?.uid === UID_GRAVACAO;
+
 /* ---------------------------------------------------------- firebase */
 
 type Fb = Awaited<ReturnType<typeof carregar>>;
@@ -156,7 +167,7 @@ let sincronizando: Promise<void> | null = null;
 export function syncNow(): Promise<void> {
   sincronizando ??= (async () => {
     const user = useCloudStore.getState().user;
-    if (!user) return;
+    if (!user || deGravacao(user)) return;
     useCloudStore.setState({ status: 'sincronizando', error: null });
     try {
       const f = await firebase();
@@ -222,7 +233,7 @@ export function syncNow(): Promise<void> {
 /** Mudou algo aqui: manda para a nuvem (ou marca apagado lá). */
 async function aoMudar(m: LocalChange): Promise<void> {
   const user = useCloudStore.getState().user;
-  if (!user) return;
+  if (!user || deGravacao(user)) return;
   try {
     const f = await firebase();
     const sinc = lerSincronizado();
@@ -306,7 +317,7 @@ export type Uso = 'pdf' | 'impressao' | 'percurso' | 'arquivo' | 'pista';
 
 export function registraUso(uso: Uso): void {
   const u = useCloudStore.getState().user;
-  if (!u || !window.localStorage.getItem(ACEITE)) return;
+  if (!u || deGravacao(u) || !window.localStorage.getItem(ACEITE)) return;
   void firebase()
     .then((f) =>
       f.fs.setDoc(
@@ -320,6 +331,11 @@ export function registraUso(uso: Uso): void {
 
 /** Entrar com Google (o aceite da política já foi dado na interface). Diz se entrou. */
 export async function signIn(): Promise<boolean> {
+  if (contaDeGravacao()) {
+    const user: CloudUser = { uid: UID_GRAVACAO, email: '', name: 'Arena', photo: null, admin: false };
+    useCloudStore.setState({ user, status: 'em-dia', precisaAceite: false, lastSync: new Date().toISOString() });
+    return true;
+  }
   useCloudStore.setState({ status: 'conectando', error: null });
   try {
     const f = await observar();
